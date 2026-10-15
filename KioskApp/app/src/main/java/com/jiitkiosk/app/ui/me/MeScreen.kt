@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.selection.toggleable
@@ -30,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +57,8 @@ import com.jiitkiosk.app.ui.components.Toggle
 import com.jiitkiosk.app.ui.components.attempt
 import com.jiitkiosk.app.ui.components.friendly
 import com.jiitkiosk.app.ui.components.rememberCached
+import com.jiitkiosk.app.ui.components.scrollDepth
+import com.jiitkiosk.app.ui.entrance
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
@@ -146,76 +151,101 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
     val state = rememberMe(vm, attempt)
     val data = (state as? Load.Ok)?.value
     val general = data?.info?.general
+    val list = rememberLazyListState()
+    val titleCollapse = (list.scrollDepth() / 100f).coerceIn(0f, 1f)
 
-    LazyColumn(
-        Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
-    ) {
-        item {
-            Row(
-                Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AvatarTile(96.dp)
-                Column(Modifier.weight(1f)) {
-                    D(
-                        general?.name?.takeIf { it.isNotBlank() } ?: vm.session?.username.orEmpty(),
-                        40.sp,
-                        maxLines = 2,
-                    )
-                    MonoText(
-                        listOf(general?.enrollmentNo, general?.program, general?.branch)
-                            .filter { !it.isNullOrBlank() }
-                            .joinToString(" · ")
-                            .ifBlank { "SIGNED IN" },
-                        modifier = Modifier.padding(top = 4.dp),
+    Box(Modifier.fillMaxWidth()) {
+        LazyColumn(
+            Modifier.fillMaxWidth(),
+            state = list,
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
+        ) {
+            item {
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 20.dp).entrance(0),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AvatarTile(96.dp)
+                    Column(Modifier.weight(1f)) {
+                        D(
+                            general?.name?.takeIf { it.isNotBlank() } ?: vm.session?.username.orEmpty(),
+                            40.sp,
+                            maxLines = 2,
+                        )
+                        MonoText(
+                            listOf(general?.enrollmentNo, general?.program, general?.branch)
+                                .filter { !it.isNullOrBlank() }
+                                .joinToString(" · ")
+                                .ifBlank { "SIGNED IN" },
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
+            }
+
+            if (state is Load.Ok) {
+                item {
+                    FreshnessLine(
+                        state.at,
+                        state.stale,
+                        state.refreshing,
+                        Modifier.padding(bottom = 10.dp).entrance(1),
                     )
                 }
             }
-        }
 
-        if (state is Load.Ok) {
+            item { NavRow("Profile", Modifier.entrance(2)) { open(MePage.Profile) } }
+            item { NavRow("Fees", Modifier.entrance(3)) { open(MePage.Fees) } }
+            item { NavRow("Hostel", Modifier.entrance(4)) { open(MePage.Hostel) } }
+
             item {
-                FreshnessLine(
-                    state.at,
-                    state.stale,
-                    state.refreshing,
-                    Modifier.padding(bottom = 10.dp),
+                NavRow(
+                    label = "Bank details",
+                    modifier = Modifier.entrance(5),
+                    onClick = { revealed = !revealed },
+                    detail = if (revealed) "HIDE" else "•••• •••• — TAP TO REVEAL",
                 )
             }
-        }
 
-        item { NavRow("Profile") { open(MePage.Profile) } }
-        item { NavRow("Fees") { open(MePage.Fees) } }
-        item { NavRow("Hostel") { open(MePage.Hostel) } }
-
-        item {
-            NavRow(
-                label = "Bank details",
-                onClick = { revealed = !revealed },
-                detail = if (revealed) "HIDE" else "•••• •••• — TAP TO REVEAL",
-            )
-        }
-
-        if (revealed) {
-            item {
-                val bank = data?.bank
-                Card2(Modifier.padding(top = 10.dp)) {
-                    KeyRow("Bank", bank?.bank.orEmpty())
-                    KeyRow("Account", bank?.account.orEmpty())
-                    KeyRow("IFSC", bank?.ifsc.orEmpty())
-                    KeyRow("Holder", bank?.holder.orEmpty())
-                    if (bank?.frozen?.isNotBlank() == true) KeyRow("Frozen", bank.frozen)
+            if (revealed) {
+                item {
+                    val bank = data?.bank
+                    Card2(Modifier.padding(top = 10.dp)) {
+                        KeyRow("Bank", bank?.bank.orEmpty())
+                        KeyRow("Account", bank?.account.orEmpty())
+                        KeyRow("IFSC", bank?.ifsc.orEmpty())
+                        KeyRow("Holder", bank?.holder.orEmpty())
+                        if (bank?.frozen?.isNotBlank() == true) KeyRow("Frozen", bank.frozen)
+                    }
                 }
+            }
+
+            item { NavRow("Feedback", Modifier.entrance(6)) { open(MePage.Feedback) } }
+            item { NavRow("Settings & About", Modifier.entrance(7)) { open(MePage.Settings) } }
+
+            if (state is Load.Failed) {
+                item { StateBox(state, onRetry) }
             }
         }
 
-        item { NavRow("Feedback") { open(MePage.Feedback) } }
-        item { NavRow("Settings & About") { open(MePage.Settings) } }
-
-        if (state is Load.Failed) {
-            item { StateBox(state, onRetry) }
+        // compact name once the avatar header has scrolled away
+        if (titleCollapse > 0f) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+                    .background(Ink)
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
+                    .graphicsLayer { alpha = titleCollapse },
+            ) {
+                D(
+                    general?.name?.takeIf { it.isNotBlank() } ?: vm.session?.username.orEmpty(),
+                    22.sp,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }
@@ -238,9 +268,9 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
         Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
     ) {
-        item { BackRow(onBack) }
-        item { D("Profile", 56.sp, modifier = Modifier.padding(top = 4.dp)) }
-        item { FreshnessLine(state, Modifier.padding(top = 8.dp, bottom = 12.dp)) }
+        item { BackRow(onBack, Modifier.entrance(0)) }
+        item { D("Profile", 56.sp, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
+        item { FreshnessLine(state, Modifier.padding(top = 8.dp, bottom = 12.dp).entrance(1)) }
 
         if (state is Load.Loading) item { StateBox(state) }
         if (state is Load.Failed) item { StateBox(state, onRetry) }
@@ -249,9 +279,9 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
         }
 
         if (general != null) {
-            item { SectionHead("Student", Modifier.padding(top = 10.dp, bottom = 4.dp)) }
+            item { SectionHead("Student", Modifier.padding(top = 10.dp, bottom = 4.dp).entrance(2)) }
             item {
-                Card2 {
+                Card2(Modifier.entrance(3)) {
                     KeyRow("Name", general.name)
                     KeyRow("Enrolment", general.enrollmentNo)
                     KeyRow("Programme", listOf(general.program, general.branch).filter { it.isNotBlank() }.joinToString(" · "))
@@ -263,9 +293,9 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                 }
             }
 
-            item { SectionHead("Contact", Modifier.padding(top = 16.dp, bottom = 4.dp)) }
+            item { SectionHead("Contact", Modifier.padding(top = 16.dp, bottom = 4.dp).entrance(4)) }
             item {
-                Card2 {
+                Card2(Modifier.entrance(5)) {
                     KeyRow("College email", general.collegeEmail)
                     KeyRow("Personal email", general.personalEmail)
                     KeyRow("Phone", general.phone)
@@ -273,9 +303,9 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                 }
             }
 
-            item { SectionHead("Personal", Modifier.padding(top = 16.dp, bottom = 4.dp)) }
+            item { SectionHead("Personal", Modifier.padding(top = 16.dp, bottom = 4.dp).entrance(6)) }
             item {
-                Card2 {
+                Card2(Modifier.entrance(7)) {
                     KeyRow("Date of birth", general.dateOfBirth)
                     KeyRow("Blood group", general.bloodGroup)
                     KeyRow("Gender", general.gender)
@@ -334,9 +364,9 @@ private fun FeesScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, on
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { BackRow(onBack) }
-        item { D("Fees", 56.sp, modifier = Modifier.padding(top = 4.dp)) }
-        item { FreshnessLine(state, Modifier.padding(top = 8.dp)) }
+        item { BackRow(onBack, Modifier.entrance(0)) }
+        item { D("Fees", 56.sp, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
+        item { FreshnessLine(state, Modifier.padding(top = 8.dp).entrance(1)) }
 
         if (state is Load.Loading) item { StateBox(state) }
         if (state is Load.Failed) item { StateBox(state, onRetry) }
@@ -351,20 +381,20 @@ private fun FeesScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, on
 
         if (heads.isNotEmpty()) {
             item {
-                Card2 {
-                    KeyRow("Outstanding", "${currency} ${money(due)}")
-                    KeyRow("Paid so far", "${currency} ${money(paid)}")
+                Card2(Modifier.entrance(2)) {
+                    KeyRow("Outstanding", "$currency ${money(due)}")
+                    KeyRow("Paid so far", "$currency ${money(paid)}")
                 }
             }
-            item { MonoText("This is a reading of the portal's ledger. Payments happen on the portal itself, in a browser.") }
-            item { SectionHead("Semesters", Modifier.padding(top = 6.dp)) }
+            item { MonoText("This is a reading of the portal's ledger. Payments happen on the portal itself, in a browser.", modifier = Modifier.entrance(3)) }
+            item { SectionHead("Semesters", Modifier.padding(top = 6.dp).entrance(4)) }
             items(heads, key = { "${it.semester}-${it.academicYear}-${it.type}" }) { head ->
                 DetailRow(
                     title = "Semester ${head.semester}${if (head.type.isNotBlank()) " · ${head.type}" else ""}",
                     detail = listOf(head.academicYear, "fee ${money(head.fee)}", "paid ${money(head.paid)}")
                         .filter { it.isNotBlank() }
                         .joinToString(" · "),
-                    trailing = if (head.due > 0) "${currency} ${money(head.due)}" else "CLEAR",
+                    trailing = if (head.due > 0) "$currency ${money(head.due)}" else "CLEAR",
                     titleColor = if (head.due > 0) Bad else Bone,
                 )
             }
@@ -381,9 +411,9 @@ private fun HostelScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, 
         Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
     ) {
-        item { BackRow(onBack) }
-        item { D("Hostel", 56.sp, modifier = Modifier.padding(top = 4.dp)) }
-        item { FreshnessLine(state, Modifier.padding(top = 8.dp, bottom = 12.dp)) }
+        item { BackRow(onBack, Modifier.entrance(0)) }
+        item { D("Hostel", 56.sp, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
+        item { FreshnessLine(state, Modifier.padding(top = 8.dp, bottom = 12.dp).entrance(1)) }
 
         if (state is Load.Loading) item { StateBox(state) }
         if (state is Load.Failed) item { StateBox(state, onRetry) }
@@ -398,7 +428,7 @@ private fun HostelScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, 
 
         if (hostel != null) {
             item {
-                Card2 {
+                Card2(Modifier.entrance(2)) {
                     KeyRow("Hostel", hostel.hostel)
                     KeyRow("Room", hostel.room)
                     KeyRow("Floor", hostel.floor)
@@ -427,12 +457,12 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { BackRow(onBack) }
-        item { D("Settings", 56.sp) }
-        item { MonoText("UNOFFICIAL · NOT AFFILIATED WITH JIIT") }
+        item { BackRow(onBack, Modifier.entrance(0)) }
+        item { D("Settings", 56.sp, modifier = Modifier.entrance(1)) }
+        item { MonoText("UNOFFICIAL · NOT AFFILIATED WITH JIIT", modifier = Modifier.entrance(1)) }
 
         item {
-            Card2 {
+            Card2(Modifier.entrance(2)) {
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -451,7 +481,7 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         }
 
         item {
-            Card2 {
+            Card2(Modifier.entrance(3)) {
                 MonoText("LICENCES", color = Bone, medium = true)
                 Spacer(Modifier.height(8.dp))
                 BodyText("This app is GPL-3.0. It uses codelif's ktjiit portal client (GPL-3.0) and the OFL-licensed Barlow Condensed and IBM Plex families.", color = Muted)
@@ -459,7 +489,7 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         }
 
         item {
-            Card2 {
+            Card2(Modifier.entrance(4)) {
                 MonoText("SESSION", color = Bone, medium = true)
                 Spacer(Modifier.height(8.dp))
                 BodyText("Your portal token lives on this phone only. Signing out deletes it along with everything cached by this app.", color = Muted)
@@ -467,11 +497,11 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         }
 
         item {
-            PrimaryButton("Sign out", onClick = { vm.signOut() }, modifier = Modifier.padding(top = 4.dp))
+            PrimaryButton("Sign out", onClick = { vm.signOut() }, modifier = Modifier.padding(top = 4.dp).entrance(5))
         }
 
         if (version.isNotBlank()) {
-            item { MonoText("VERSION $version") }
+            item { MonoText("VERSION $version", modifier = Modifier.entrance(6)) }
         }
     }
 }
@@ -498,9 +528,9 @@ private fun FeedbackScreen(vm: KioskViewModel, onBack: () -> Unit) {
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { BackRow(onBack) }
-        item { D("Feedback", 56.sp, modifier = Modifier.padding(top = 4.dp)) }
-        item { FreshnessLine(state, Modifier.padding(top = 8.dp)) }
+        item { BackRow(onBack, Modifier.entrance(0)) }
+        item { D("Feedback", 56.sp, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
+        item { FreshnessLine(state, Modifier.padding(top = 8.dp).entrance(1)) }
 
         when {
             state is Load.Loading -> item { StateBox(state) }
@@ -511,7 +541,7 @@ private fun FeedbackScreen(vm: KioskViewModel, onBack: () -> Unit) {
                 }
             }
             else -> {
-                item { MonoText("The portal opens these for a few days each semester. Rating all of them is what closes it.") }
+                item { MonoText("The portal opens these for a few days each semester. Rating all of them is what closes it.", modifier = Modifier.entrance(2)) }
                 events.forEach { e ->
                     item { NavRow(e.description.ifBlank { e.code }, onClick = { open = e }) }
                 }
@@ -546,10 +576,10 @@ private fun FeedbackRows(vm: KioskViewModel, event: FeedbackEvent, onBack: () ->
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        item { BackRow(onBack) }
-        item { D(event.description.ifBlank { "Feedback" }, 40.sp, maxLines = 3, modifier = Modifier.padding(top = 4.dp)) }
-        item { FreshnessLine(state, Modifier.padding(top = 8.dp)) }
-        item { MonoText("1 UNSATISFIED · 3 GOOD · 5 EXCELLENT") }
+        item { BackRow(onBack, Modifier.entrance(0)) }
+        item { D(event.description.ifBlank { "Feedback" }, 40.sp, maxLines = 3, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
+        item { FreshnessLine(state, Modifier.padding(top = 8.dp).entrance(1)) }
+        item { MonoText("1 UNSATISFIED · 3 GOOD · 5 EXCELLENT", modifier = Modifier.entrance(2)) }
 
         when {
             state is Load.Loading -> item { StateBox(state) }

@@ -1,13 +1,17 @@
 package com.jiitkiosk.app.ui.exams
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,9 +20,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.ui.KioskViewModel
+import com.jiitkiosk.app.ui.Motion
 import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.ChipRow
 import com.jiitkiosk.app.ui.components.D
@@ -33,6 +39,8 @@ import com.jiitkiosk.app.ui.components.SectionHead
 import com.jiitkiosk.app.ui.components.Stamp
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.rememberCached
+import com.jiitkiosk.app.ui.components.scrollDepth
+import com.jiitkiosk.app.ui.entrance
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.LineStrong
@@ -70,6 +78,7 @@ data class ExamSheet(val papers: List<Paper> = emptyList())
 fun ExamsScreen(vm: KioskViewModel) {
     var attempt by remember { mutableStateOf(0) }
     var semIndex by rememberSaveable { mutableStateOf(0) }
+    val list = rememberLazyListState()
 
     val token = vm.session?.token.orEmpty()
     val periods = rememberCached(vm, "exam-sems/$token", LIST_OF_SEMESTER, attempt) { it.examSemesters() }
@@ -94,70 +103,91 @@ fun ExamsScreen(vm: KioskViewModel) {
 
     val stamp = (sheet as? Load.Ok) ?: (periods as? Load.Ok)
 
-    LazyColumn(
-        Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            Column(Modifier.padding(bottom = 4.dp)) {
-                ScreenTitle("Exams")
-                if (stamp != null) {
-                    FreshnessLine(stamp.at, stamp.stale, stamp.refreshing, Modifier.padding(top = 8.dp))
-                }
-            }
-        }
+    // collapsed title bar mirrors SubjectScreen pattern
+    val titleCollapse = (list.scrollDepth() / 120f).coerceIn(0f, 1f)
 
-        if (semesters.size > 1) {
-            item { ChipRow(semesters.map { it.description.ifBlank { it.code } }, semIndex) { semIndex = it } }
-        }
-
-        when {
-            periods is Load.Loading -> item { StateBox(periods) }
-
-            periods is Load.Failed -> item { StateBox(periods) { attempt++ } }
-
-            periods is Load.Ok && semesters.isEmpty() -> item {
-                EmptyState("No Exams", "The portal has no exam event published for you.") {
-                    PlanetMark(planet = LineStrong, ring = LineStrong, speck = LineStrong, detail = LineStrong, size = 110.dp)
-                }
-            }
-
-            sheet is Load.Loading -> item { StateBox(sheet) }
-
-            sheet is Load.Failed -> item { StateBox(sheet) { attempt++ } }
-
-            sheet is Load.Ok -> {
-                val papers = sheet.value.papers
-                if (papers.isEmpty()) {
-                    item {
-                        EmptyState("No Dates Yet", "The exam event exists but no paper has a date on it.") {
-                            PlanetMark(planet = LineStrong, ring = LineStrong, speck = LineStrong, detail = LineStrong, size = 110.dp)
-                        }
-                    }
-                } else {
-                    val now = LocalDateTime.now()
-                    val next = papers.firstOrNull { it.at?.isAfter(now) == true }
-                    val current = next ?: papers.last()
-                    val rest = papers.dropWhile { it !== current }.drop(1)
-
-                    item { NextPaperHero(current, upcoming = next != null, Modifier.padding(bottom = 4.dp)) }
-
-                    if (rest.isNotEmpty()) {
-                        item { SectionHead("Then", Modifier.padding(top = 6.dp)) }
-                        items(rest, key = { it.slot.code + it.slot.date }) { paper ->
-                            DetailRow(
-                                title = paper.slot.subjectName,
-                                detail = paperDetail(paper),
-                                trailing = paper.slot.let { listOf(it.room, it.seat.ifBlank { null }).filterNotNull().joinToString(" · ") },
-                            )
-                        }
+    Box(Modifier.fillMaxWidth()) {
+        LazyColumn(
+            Modifier.fillMaxWidth(),
+            state = list,
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Column(Modifier.padding(bottom = 4.dp).entrance(0)) {
+                    ScreenTitle("Exams")
+                    if (stamp != null) {
+                        FreshnessLine(stamp.at, stamp.stale, stamp.refreshing, Modifier.padding(top = 8.dp))
                     }
                 }
             }
+
+            if (semesters.size > 1) {
+                item { ChipRow(semesters.map { it.description.ifBlank { it.code } }, semIndex, Modifier.entrance(1)) { semIndex = it } }
+            }
+
+            when {
+                periods is Load.Loading -> item { StateBox(periods) }
+
+                periods is Load.Failed -> item { StateBox(periods) { attempt++ } }
+
+                periods is Load.Ok && semesters.isEmpty() -> item {
+                    EmptyState("No Exams", "The portal has no exam event published for you.") {
+                        PlanetMark(planet = LineStrong, ring = LineStrong, speck = LineStrong, detail = LineStrong, size = 110.dp)
+                    }
+                }
+
+                sheet is Load.Loading -> item { StateBox(sheet) }
+
+                sheet is Load.Failed -> item { StateBox(sheet) { attempt++ } }
+
+                sheet is Load.Ok -> {
+                    val papers = sheet.value.papers
+                    if (papers.isEmpty()) {
+                        item {
+                            EmptyState("No Dates Yet", "The exam event exists but no paper has a date on it.") {
+                                PlanetMark(planet = LineStrong, ring = LineStrong, speck = LineStrong, detail = LineStrong, size = 110.dp)
+                            }
+                        }
+                    } else {
+                        val now = LocalDateTime.now()
+                        val next = papers.firstOrNull { it.at?.isAfter(now) == true }
+                        val current = next ?: papers.last()
+                        val rest = papers.dropWhile { it !== current }.drop(1)
+
+                        item { NextPaperHero(current, upcoming = next != null, Modifier.padding(bottom = 4.dp).entrance(2)) }
+
+                        if (rest.isNotEmpty()) {
+                            item { SectionHead("Then", Modifier.padding(top = 6.dp).entrance(3)) }
+                            items(rest, key = { it.slot.code + it.slot.date }) { paper ->
+                                DetailRow(
+                                    title = paper.slot.subjectName,
+                                    detail = paperDetail(paper),
+                                    trailing = paper.slot.let { listOf(it.room, it.seat.ifBlank { null }).filterNotNull().joinToString(" · ") },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item { MonoText("Room and seat numbers land about a day before the paper.", modifier = Modifier.entrance(Motion.MAX_STAGGER)) }
         }
 
-        item { MonoText("Room and seat numbers land about a day before the paper.") }
+        // compact title bar once the header has scrolled away
+        if (titleCollapse > 0f) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+                    .background(Ink)
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
+                    .graphicsLayer { alpha = titleCollapse },
+            ) {
+                D("Exams", 22.sp, maxLines = 1)
+            }
+        }
     }
 }
 

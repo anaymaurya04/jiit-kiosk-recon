@@ -1,7 +1,9 @@
 package com.jiitkiosk.app.ui.grades
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,8 +11,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.ui.KioskViewModel
@@ -38,11 +43,15 @@ import com.jiitkiosk.app.ui.components.ScreenTitle
 import com.jiitkiosk.app.ui.components.SectionHead
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.rememberCached
+import com.jiitkiosk.app.ui.components.scrollDepth
+import com.jiitkiosk.app.ui.entrance
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
+import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.LineStrong
 import com.jiitkiosk.app.ui.theme.MarkCore
 import com.jiitkiosk.app.ui.theme.MarkRing
+import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.VinylMark
 import `in`.codelif.ktjiit.marks.MarksReport
 import `in`.codelif.ktjiit.marks.Score
@@ -97,71 +106,94 @@ fun GradesScreen(vm: KioskViewModel) {
 private fun GradesOverview(vm: KioskViewModel, open: (GradesPage) -> Unit) {
     var attempt by remember { mutableStateOf(0) }
     val state = rememberGrades(vm, attempt)
+    val list = rememberLazyListState()
+    val titleCollapse = (list.scrollDepth() / 120f).coerceIn(0f, 1f)
 
-    LazyColumn(
-        Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            Column(Modifier.padding(bottom = 4.dp)) {
-                ScreenTitle("Grades")
-                (state as? Load.Ok)?.let {
-                    FreshnessLine(it.at, it.stale, it.refreshing, Modifier.padding(top = 8.dp))
+    Box(Modifier.fillMaxWidth()) {
+        LazyColumn(
+            Modifier.fillMaxWidth(),
+            state = list,
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Column(Modifier.padding(bottom = 4.dp).entrance(0)) {
+                    ScreenTitle("Grades")
+                    (state as? Load.Ok)?.let {
+                        FreshnessLine(it.at, it.stale, it.refreshing, Modifier.padding(top = 8.dp))
+                    }
+                }
+            }
+
+            when (state) {
+                is Load.Loading -> item { StateBox(state) }
+
+                is Load.Failed -> item { StateBox(state) { attempt++ } }
+
+                is Load.Ok -> {
+                    val results = state.value.results.sortedBy { it.semester }
+                    val latest = results.lastOrNull()
+                    if (results.isEmpty()) {
+                        item {
+                            EmptyState("No Results", "No semester result has been published on the portal yet.") {
+                                VinylMark(label = LineStrong, groove = LineStrong, disc = MarkCore, size = 110.dp)
+                            }
+                        }
+                    } else {
+                        item {
+                            Row(
+                                Modifier.fillMaxWidth().padding(bottom = 4.dp).entrance(1),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                VinylMark(label = Crimson, groove = MarkRing, disc = MarkCore, size = 130.dp)
+                                Column {
+                                    MonoText("CGPA")
+                                    D(twoDecimals(latest?.cgpa ?: 0.0), 72.sp, maxLines = 1)
+                                    MonoText("SGPA ${twoDecimals(latest?.sgpa ?: 0.0)} LATEST")
+                                }
+                            }
+                        }
+
+                        item {
+                            Card2(Modifier.entrance(2)) {
+                                MonoText("SGPA BY SEMESTER")
+                                Bars(results, Modifier.padding(top = 8.dp))
+                            }
+                        }
+
+                        item { SectionHead("Documents", Modifier.padding(top = 6.dp).entrance(3)) }
+
+                        item {
+                            Column(Modifier.entrance(4)) {
+                                NavRow("Grade cards") { open(GradesPage.GradeCards) }
+                                NavRow("Marks by exam event") { open(GradesPage.Marks) }
+                            }
+                        }
+
+                        item {
+                            MonoText(
+                                "Marks are read from the portal's own PDF. The portal decides what each event is worth.",
+                                modifier = Modifier.entrance(5),
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        when (state) {
-            is Load.Loading -> item { StateBox(state) }
-
-            is Load.Failed -> item { StateBox(state) { attempt++ } }
-
-            is Load.Ok -> {
-                val results = state.value.results.sortedBy { it.semester }
-                val latest = results.lastOrNull()
-                if (results.isEmpty()) {
-                    item {
-                        EmptyState("No Results", "No semester result has been published on the portal yet.") {
-                            VinylMark(label = LineStrong, groove = LineStrong, disc = MarkCore, size = 110.dp)
-                        }
-                    }
-                } else {
-                    item {
-                        Row(
-                            Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            VinylMark(label = Crimson, groove = MarkRing, disc = MarkCore, size = 130.dp)
-                            Column {
-                                MonoText("CGPA")
-                                D(twoDecimals(latest?.cgpa ?: 0.0), 72.sp, maxLines = 1)
-                                MonoText("SGPA ${twoDecimals(latest?.sgpa ?: 0.0)} LATEST")
-                            }
-                        }
-                    }
-
-                    item {
-                        Card2 {
-                            MonoText("SGPA BY SEMESTER")
-                            Bars(results, Modifier.padding(top = 8.dp))
-                        }
-                    }
-
-                    item { SectionHead("Documents", Modifier.padding(top = 6.dp)) }
-
-                    item {
-                        Column {
-                            NavRow("Grade cards") { open(GradesPage.GradeCards) }
-                            NavRow("Marks by exam event") { open(GradesPage.Marks) }
-                        }
-                    }
-
-                    item {
-                        MonoText("Marks are read from the portal's own PDF. The portal decides what each event is worth.")
-                    }
-                }
+        // compact title bar
+        if (titleCollapse > 0f) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+                    .background(Ink)
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
+                    .graphicsLayer { alpha = titleCollapse },
+            ) {
+                D("Grades", 22.sp, maxLines = 1)
             }
         }
     }
@@ -224,9 +256,9 @@ private fun GradeCardsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
     ) {
-        item { BackRow(onBack) }
-        item { D("Grade Cards", 56.sp, modifier = Modifier.padding(top = 4.dp)) }
-        item { FreshnessLine(state, Modifier.padding(top = 8.dp, bottom = 12.dp)) }
+        item { BackRow(onBack, Modifier.entrance(0)) }
+        item { D("Grade Cards", 56.sp, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
+        item { FreshnessLine(state, Modifier.padding(top = 8.dp, bottom = 12.dp).entrance(1)) }
 
         when (state) {
             is Load.Loading -> item { StateBox(state) }
@@ -276,12 +308,12 @@ private fun MarksScreen(vm: KioskViewModel, onBack: () -> Unit) {
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { BackRow(onBack) }
-        item { D("Marks", 56.sp, modifier = Modifier.padding(top = 4.dp)) }
-        item { FreshnessLine(report, Modifier.padding(top = 8.dp)) }
+        item { BackRow(onBack, Modifier.entrance(0)) }
+        item { D("Marks", 56.sp, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
+        item { FreshnessLine(report, Modifier.padding(top = 8.dp).entrance(1)) }
 
         if (list.size > 1) {
-            item { ChipRow(list.map { it.description.ifBlank { it.code } }, index) { index = it } }
+            item { ChipRow(list.map { it.description.ifBlank { it.code } }, index, Modifier.entrance(2)) { index = it } }
         }
 
         when {
