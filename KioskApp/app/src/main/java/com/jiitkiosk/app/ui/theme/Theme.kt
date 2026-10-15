@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
@@ -14,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.R
+import com.jiitkiosk.app.ui.LocalReducedMotion
+import com.jiitkiosk.app.ui.rememberReducedMotion
 
 // The palette is transcribed from the design mockups, not invented here.
 val Ink = Color(0xFF0B0B0D) // page
@@ -132,9 +135,12 @@ private val type = Typography(
 @Composable
 fun KioskTheme(content: @Composable () -> Unit) {
     val black = LocalPureBlack.current
-    MaterialTheme(
-        colorScheme = remember(black) { schemeFor(black) },
-        typography = type,
-        content = content,
-    )
+    val reduced = rememberReducedMotion()
+    CompositionLocalProvider(LocalReducedMotion provides reduced) {
+        MaterialTheme(
+            colorScheme = remember(black) { schemeFor(black) },
+            typography = type,
+            content = content,
+        )
+    }
 }

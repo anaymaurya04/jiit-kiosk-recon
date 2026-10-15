@@ -1,14 +1,13 @@
 package com.jiitkiosk.app.ui.theme
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,9 +29,16 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jiitkiosk.app.ui.LocalReducedMotion
+import com.jiitkiosk.app.ui.Motion
+import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -157,16 +163,33 @@ fun TrooperMark(band: Color, card: Color, clip: Color, size: Dp, modifier: Modif
 
 /**
  * The percentage ring from the mockups: r=26 in a 64 box, 6 wide, starting at
- * twelve o'clock, mono number in the middle. [a11y] replaces the number for
- * screen readers, e.g. "86 percent attendance, safe".
+ * twelve o'clock. The sweep and the number count up together, drawn in the same
+ * pass, so a running entrance costs a redraw and never a recomposition.
+ * [a11y] replaces the number for screen readers, e.g. "86 percent attendance, safe".
  */
 @Composable
-fun Ring(percent: Double, color: Color, size: Dp, modifier: Modifier = Modifier, a11y: String? = null) {
-    val sweep by animateFloatAsState(
-        targetValue = percent.coerceIn(0.0, 100.0).toFloat(),
-        animationSpec = tween(700),
-        label = "ring",
-    )
+fun Ring(
+    percent: Double,
+    color: Color,
+    size: Dp,
+    modifier: Modifier = Modifier,
+    a11y: String? = null,
+    delayMs: Int = 0,
+) {
+    val reduced = LocalReducedMotion.current
+    val sweep = remember { Animatable(if (reduced) percent.toFloat() else 0f) }
+    LaunchedEffect(percent) {
+        if (reduced) {
+            sweep.snapTo(percent.toFloat())
+        } else {
+            if (delayMs > 0) delay(delayMs.toLong())
+            sweep.animateTo(
+                targetValue = percent.coerceIn(0.0, 100.0).toFloat(),
+                animationSpec = tween(Motion.HERO, easing = Motion.emphasizedDecelerate),
+            )
+        }
+    }
+    val measurer = rememberTextMeasurer()
     val m = if (a11y != null) modifier.clearAndSetSemantics { contentDescription = a11y } else modifier
     Box(m.size(size), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
@@ -175,20 +198,31 @@ fun Ring(percent: Double, color: Color, size: Dp, modifier: Modifier = Modifier,
             val r = 26f * u
             val c = Offset(32f * u, 32f * u)
             drawCircle(Line, r, c, style = Stroke(stroke))
+            val v = sweep.value
             drawArc(
                 color = color,
                 startAngle = -90f,
-                sweepAngle = sweep * 3.6f,
+                sweepAngle = v * 3.6f,
                 useCenter = false,
                 topLeft = Offset(c.x - r, c.y - r),
                 size = Size(2f * r, 2f * r),
                 style = Stroke(stroke),
             )
+            val layout = measurer.measure(
+                text = AnnotatedString(v.roundToInt().toString()),
+                style = Mono.copy(
+                    fontSize = (size.value * 14f / 64f).sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Bone,
+                ),
+            )
+            drawText(
+                textLayoutResult = layout,
+                topLeft = Offset(
+                    (this.size.width - layout.size.width) / 2f,
+                    (this.size.height - layout.size.height) / 2f,
+                ),
+            )
         }
-        Text(
-            text = percent.roundToInt().toString(),
-            style = Mono.copy(fontSize = (size.value * 14f / 64f).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
-            color = Bone,
-        )
     }
 }

@@ -1,5 +1,9 @@
 package com.jiitkiosk.app.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,6 +11,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -16,9 +21,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -38,15 +47,28 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.ui.KioskViewModel
+import com.jiitkiosk.app.ui.LocalReducedMotion
+import com.jiitkiosk.app.ui.Motion
+import com.jiitkiosk.app.ui.entrance
+import com.jiitkiosk.app.ui.shimmer
+import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
@@ -63,13 +85,18 @@ import com.jiitkiosk.app.ui.theme.LineStrong
 import com.jiitkiosk.app.ui.theme.Mono
 import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.Sans
+import com.jiitkiosk.app.ui.theme.Steel
 import com.jiitkiosk.app.ui.theme.Surface1
 import com.jiitkiosk.app.ui.theme.cssGradient
 import com.jiitkiosk.app.ui.theme.halftone
 import `in`.codelif.ktjiit.http.PortalException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import `in`.codelif.ktjiit.api.Portal
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 // ------------------------------------------------------------------- type
 
@@ -140,22 +167,28 @@ private fun Modifier.underline(): Modifier = drawBehind {
     drawLine(Line, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
 }
 
-/** `.c` — a 2px-bordered block, square corners, nothing rounded anywhere */
+/** `.c` — a 2px-bordered block, square corners, nothing rounded anywhere.
+ *  [art] is the ghost motif the v2 artboards put behind a card's top-right corner. */
 @Composable
 fun Card2(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    art: (@Composable BoxScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(
-        modifier = modifier
+    Box(
+        modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .clipToBounds()
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .border(2.dp, Line)
-            .padding(12.dp),
-        content = content,
-    )
+            .then(if (onClick != null) Modifier.tap(onClick) else Modifier),
+    ) {
+        if (art != null) {
+            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-12).dp).alpha(0.16f)) { art() }
+        }
+        Column(Modifier.padding(12.dp), content = content)
+    }
 }
 
 /** `.st` — the solid stamp, bone by default, tinted for the three verdicts */
@@ -181,7 +214,7 @@ fun RowLine(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.tap(onClick) else Modifier)
             .heightIn(min = 48.dp)
             .underline(),
         verticalAlignment = Alignment.CenterVertically,
@@ -197,7 +230,7 @@ fun KeyRow(label: String, value: String, modifier: Modifier = Modifier, onClick:
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.tap(onClick) else Modifier)
             .heightIn(min = 48.dp)
             .padding(vertical = 4.dp)
             .underline(),
@@ -220,7 +253,7 @@ fun NavRow(label: String, modifier: Modifier = Modifier, detail: String? = null,
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .tap(onClick)
             .heightIn(min = 48.dp)
             .underline(),
         verticalAlignment = Alignment.CenterVertically,
@@ -236,7 +269,7 @@ fun NavRow(label: String, modifier: Modifier = Modifier, detail: String? = null,
 @Composable
 fun BackRow(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClick = onBack),
+        modifier = modifier.fillMaxWidth().heightIn(min = 48.dp).tap(onBack),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(IconBack, contentDescription = "Back", tint = Bone)
@@ -256,7 +289,7 @@ fun DetailRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.tap(onClick) else Modifier)
             .padding(vertical = 10.dp)
             .underline(),
         verticalAlignment = Alignment.CenterVertically,
@@ -297,13 +330,18 @@ fun ChipRow(labels: List<String>, selected: Int, modifier: Modifier = Modifier, 
     ) {
         labels.forEachIndexed { i, label ->
             val on = i == selected
+            val bg by animateColorAsState(
+                targetValue = if (on) Crimson else Line,
+                animationSpec = tween(Motion.FAST),
+                label = "chip",
+            )
             Text(
                 text = label.uppercase(),
                 style = Mono.copy(fontWeight = FontWeight.Medium),
                 color = Bone,
                 modifier = Modifier
-                    .clickable { onSelect(i) }
-                    .background(if (on) Crimson else Line)
+                    .tap { onSelect(i) }
+                    .background(bg)
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             )
         }
@@ -342,39 +380,65 @@ enum class Tab(val label: String, val icon: ImageVector) {
     Me("Me", IconMe),
 }
 
+/**
+ * The bottom bar. The crimson pill is one shared element: it slides between the
+ * four tabs on a soft spring and stretches slightly while it travels, and the
+ * icons and labels crossfade as it arrives.
+ */
 @Composable
 fun BottomNav(current: Tab, modifier: Modifier = Modifier, onSelect: (Tab) -> Unit) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Tab.entries.forEach { tab ->
-            val on = tab == current
-            Column(
-                modifier = Modifier
-                    .clickable { onSelect(tab) }
-                    .widthIn(min = 72.dp)
-                    .padding(vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Box(
-                    Modifier
-                        .background(
-                            if (on) com.jiitkiosk.app.ui.theme.Crimson else Color.Transparent,
-                            androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                        )
-                        .padding(horizontal = 20.dp, vertical = 4.dp),
+    val tabs = Tab.entries
+    val target = tabs.indexOf(current)
+    val x = remember { Animatable(target.toFloat()) }
+    LaunchedEffect(target) { x.animateTo(target.toFloat(), Motion.soft) }
+
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val slot = maxWidth / tabs.size
+        val slotPx = with(LocalDensity.current) { slot.toPx() }
+        Box(
+            Modifier
+                .offset { IntOffset((x.value * slotPx).roundToInt(), 12.dp.roundToPx()) }
+                .width(slot)
+                .height(32.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                Modifier
+                    .size(64.dp, 32.dp)
+                    .graphicsLayer {
+                        // stretched while the pill is still travelling, at rest it is exactly 64
+                        val stretch = 1f + 0.18f * abs(x.value - target)
+                        scaleX = stretch
+                    }
+                    .background(Crimson, androidx.compose.foundation.shape.RoundedCornerShape(16.dp)),
+            )
+        }
+        Row(Modifier.fillMaxWidth()) {
+            tabs.forEach { tab ->
+                val on = tab == current
+                val tint by animateColorAsState(
+                    targetValue = if (on) Bone else Muted,
+                    animationSpec = tween(Motion.FAST),
+                    label = "tint",
+                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .tap { onSelect(tab) }
+                        .padding(vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Icon(
-                        tab.icon,
-                        contentDescription = tab.label,
-                        tint = if (on) Bone else Muted,
-                        modifier = Modifier.size(24.dp),
-                    )
+                    Box(Modifier.width(64.dp).height(32.dp), contentAlignment = Alignment.Center) {
+                        Icon(
+                            tab.icon,
+                            contentDescription = tab.label,
+                            tint = tint,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                    Text(tab.label, style = Sans.copy(fontSize = 12.sp), color = tint)
                 }
-                Text(tab.label, style = Sans.copy(fontSize = 12.sp), color = if (on) Bone else Muted)
             }
         }
     }
@@ -487,12 +551,7 @@ fun friendly(e: Throwable): String = when (e) {
 @Composable
 fun StateBox(state: Load<*>, onRetry: (() -> Unit)? = null) {
     when (state) {
-        is Load.Loading -> Box(
-            Modifier.fillMaxWidth().padding(vertical = 40.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            MonoText("LOADING…")
-        }
+        is Load.Loading -> SkeletonScreen()
 
         is Load.Failed -> Card2 {
             MonoText("COULDN'T LOAD", color = Bad, medium = true)
@@ -519,6 +578,10 @@ fun StateBox(state: Load<*>, onRetry: (() -> Unit)? = null) {
 /** the full-screen version, for when there is nothing to show behind it */
 @Composable
 fun FullState(state: Load<*>, onRetry: (() -> Unit)? = null) {
+    if (state is Load.Loading) {
+        Column(Modifier.fillMaxSize().padding(20.dp)) { SkeletonScreen() }
+        return
+    }
     Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.Center) {
         StateBox(state, onRetry)
     }
@@ -612,7 +675,7 @@ fun PrimaryButton(
             .fillMaxWidth()
             .height(52.dp)
             .background(if (enabled) Bone else Line)
-            .clickable(enabled = enabled, onClick = onClick),
+            .then(if (enabled) Modifier.tap(onClick) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -653,4 +716,458 @@ private fun Modifier.dashedBorder(color: Color, width: Dp = 2.dp): Modifier = dr
         size = Size(size.width - stroke, size.height - stroke),
         style = Stroke(stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10.dp.toPx(), 8.dp.toPx()))),
     )
+}
+
+// ----------------------------------------------------------- loading shapes
+
+/** a slab in the shape of the content that is coming: surface, no border, one shimmer */
+@Composable
+fun SkeletonBlock(height: Dp, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(height)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .shimmer(),
+    )
+}
+
+/** the loading state: a hero slab and stacked cards, as the real screens lay out */
+@Composable
+fun SkeletonScreen(modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SkeletonBlock(250.dp)
+        SkeletonBlock(72.dp)
+        SkeletonBlock(72.dp)
+        SkeletonBlock(72.dp)
+    }
+}
+
+// --------------------------------------------------------------- collapsing
+
+/** the list's scroll depth in px; a scrolled-away first item counts as fully collapsed */
+fun LazyListState.scrollDepth(): Float =
+    if (firstVisibleItemIndex > 0) 10_000f else firstVisibleItemScrollOffset.toFloat()
+
+/**
+ * The 56sp display title pinned above a list: it shrinks to 22sp as the list
+ * scrolls ([offset] is the scroll depth in px) and its mono line fades and
+ * collapses away. Only this composable re-reads the scroll.
+ */
+@Composable
+fun CollapsingTitle(
+    title: String,
+    meta: String? = null,
+    offset: () -> Float,
+    modifier: Modifier = Modifier,
+    collapseAt: Float = 150f,
+) {
+    val p = (offset() / collapseAt).coerceIn(0f, 1f)
+    Column(modifier.fillMaxWidth()) {
+        D(title, (56f + (22f - 56f) * p).sp, maxLines = 1)
+        if (!meta.isNullOrBlank()) {
+            MonoText(
+                meta,
+                modifier = Modifier
+                    .height(16.dp * (1f - p))
+                    .graphicsLayer { alpha = 1f - p }
+                    .padding(top = 8.dp * (1f - p)),
+            )
+        }
+    }
+}
+
+// ------------------------------------------------------------------ data viz
+
+/** 4 → "4", 10.5 → "10.5": marks are written the way the portal writes them */
+fun num(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
+
+/**
+ * The segmented score meter: one 12dp block per mark, 2dp gaps, half blocks
+ * allowed, filled left to right at about 15ms a block. The score is always
+ * written out as text beside it.
+ */
+@Composable
+fun ScoreMeter(
+    label: String,
+    score: Double,
+    outOf: Double,
+    modifier: Modifier = Modifier,
+) {
+    val reduced = LocalReducedMotion.current
+    val blocks = 20
+    val target = (score / outOf * blocks).coerceIn(0.0, blocks.toDouble())
+    val fill = remember { Animatable(if (reduced) target.toFloat() else 0f) }
+    LaunchedEffect(target) {
+        if (reduced) {
+            fill.snapTo(target.toFloat())
+        } else {
+            fill.animateTo(
+                targetValue = target.toFloat(),
+                animationSpec = tween(
+                    (target * 15).toInt().coerceAtLeast(Motion.FAST),
+                    easing = Motion.standard,
+                ),
+            )
+        }
+    }
+    Row(
+        modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        BodyText(label.uppercase(), size = 13.sp, modifier = Modifier.width(64.dp), maxLines = 1)
+        Canvas(
+            Modifier
+                .weight(1f)
+                .height(12.dp)
+                .clearAndSetSemantics { contentDescription = "${num(score)} of ${num(outOf)}" },
+        ) {
+            val gap = 2.dp.toPx()
+            val w = (size.width - gap * (blocks - 1)) / blocks
+            repeat(blocks) { i ->
+                val x = i * (w + gap)
+                drawRect(Line, Offset(x, 0f), Size(w, size.height))
+                val f = (fill.value - i).coerceIn(0f, 1f)
+                if (f > 0f) drawRect(Bone, Offset(x, 0f), Size(w * f, size.height))
+            }
+        }
+        MonoText("${num(score)}/${num(outOf)}", color = Bone, modifier = Modifier.width(56.dp), align = TextAlign.End)
+    }
+}
+
+/** one bar of a marks chart; a null value means "not yet", drawn as a bare dash */
+data class Bar(val label: String, val value: Double?)
+
+/**
+ * The marks bar chart: the dashed threshold line draws first, then the bars grow
+ * from the baseline, each value label appearing as its bar lands. Bars under the
+ * threshold are crimson and get one soft pulse after the last one lands. Values
+ * and axis labels are always text, and the whole chart carries a text equivalent.
+ */
+@Composable
+fun BarChart(
+    bars: List<Bar>,
+    modifier: Modifier = Modifier,
+    height: Dp = 134.dp,
+    max: Double = 20.0,
+    threshold: Double = 10.0,
+    thresholdLabel: String = "HALF",
+) {
+    val reduced = LocalReducedMotion.current
+    val grow = remember(bars) { bars.map { Animatable(if (reduced) 1f else 0f) } }
+    val line = remember { Animatable(if (reduced) 1f else 0f) }
+    val pulse = remember { Animatable(0f) }
+    LaunchedEffect(bars) {
+        if (reduced) {
+            grow.forEach { it.snapTo(1f) }
+            line.snapTo(1f)
+        } else {
+            line.animateTo(1f, tween(Motion.FAST, easing = Motion.standard))
+            grow.forEachIndexed { i, bar ->
+                launch {
+                    delay((i * 60).toLong())
+                    bar.animateTo(1f, tween(Motion.SLOW, easing = Motion.emphasizedDecelerate))
+                }
+            }
+            delay((grow.size * 60 + Motion.SLOW).toLong())
+            pulse.animateTo(1f, tween(200, easing = Motion.standard))
+            pulse.animateTo(0f, tween(400, easing = Motion.standard))
+        }
+    }
+    val measurer = rememberTextMeasurer()
+    Canvas(
+        Modifier
+            .fillMaxWidth()
+            .height(height)
+            .clearAndSetSemantics {
+                contentDescription = bars.joinToString(", ") { bar ->
+                    if (bar.value == null) "${bar.label} not yet" else "${bar.label} ${num(bar.value)}"
+                }
+            },
+    ) {
+        val labelH = 22.dp.toPx()
+        val valueH = 18.dp.toPx()
+        val baseline = size.height - labelH
+        val scale = (baseline - valueH) / max.toFloat()
+        val n = bars.size.coerceAtLeast(1)
+        val pitch = size.width / n
+        val barW = pitch * 0.6f
+
+        val ty = baseline - threshold.toFloat() * scale
+        val halfW = size.width / 2f * line.value
+        drawLine(
+            color = Muted,
+            start = Offset(size.width / 2f - halfW, ty),
+            end = Offset(size.width / 2f + halfW, ty),
+            strokeWidth = 1.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 3.dp.toPx())),
+        )
+        val halfLabel = measurer.measure(
+            AnnotatedString(thresholdLabel),
+            style = Mono.copy(fontSize = 9.sp, color = Muted),
+        )
+        drawText(
+            textLayoutResult = halfLabel,
+            alpha = line.value,
+            topLeft = Offset(size.width - halfLabel.size.width, ty - halfLabel.size.height - 2.dp.toPx()),
+        )
+
+        bars.forEachIndexed { i, bar ->
+            val cx = pitch * i + pitch / 2f
+            val v = grow[i].value
+            val value = bar.value
+            val under = value != null && value < threshold
+            if (value != null) {
+                val h = (value * scale).toFloat() * v
+                val bump = if (under) 1f + 0.05f * pulse.value else 1f
+                drawRect(
+                    color = if (under) Bad else Bone,
+                    topLeft = Offset(cx - barW / 2f, baseline - h * bump),
+                    size = Size(barW, h * bump),
+                )
+            }
+            val label = measurer.measure(
+                AnnotatedString(if (value == null) "–" else num(value)),
+                style = Mono.copy(fontSize = 11.sp, color = Bone),
+            )
+            val top = if (value == null) baseline - label.size.height - 4.dp.toPx()
+            else baseline - (value * scale).toFloat() - label.size.height - 4.dp.toPx()
+            drawText(
+                textLayoutResult = label,
+                alpha = ((v - 0.85f) / 0.15f).coerceIn(0f, 1f),
+                topLeft = Offset(cx - label.size.width / 2f, top),
+            )
+            val axis = measurer.measure(
+                AnnotatedString(bar.label),
+                style = Mono.copy(fontSize = 9.sp, color = Muted),
+            )
+            drawText(
+                textLayoutResult = axis,
+                topLeft = Offset(cx - axis.size.width / 2f, baseline + 6.dp.toPx()),
+            )
+        }
+    }
+}
+
+/** a grade letter in the design's 44dp square: filled for B+ or better, outline below */
+@Composable
+fun GradeBadge(grade: String, modifier: Modifier = Modifier) {
+    val filled = filledGrade(grade)
+    Box(
+        modifier
+            .size(44.dp)
+            .background(if (filled) Bone else Color.Transparent)
+            .border(2.dp, Bone),
+        contentAlignment = Alignment.Center,
+    ) {
+        D(grade, 24.sp, color = if (filled) Ink else Bone, maxLines = 1)
+    }
+}
+
+/** the design's rule: B+ and above is a filled square, everything else outline */
+fun filledGrade(grade: String): Boolean =
+    grade.trim().uppercase() in setOf("B+", "A-", "A", "A+", "O", "S")
+
+/** one 8dp square per credit, right-aligned on a course row */
+@Composable
+fun CreditPips(count: Int, modifier: Modifier = Modifier) {
+    Row(
+        modifier.clearAndSetSemantics { contentDescription = "$count credits" },
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        repeat(count.coerceIn(0, 12)) { Box(Modifier.size(8.dp).background(Bone)) }
+    }
+}
+
+/** one day of the exams week strip */
+data class DayCell(
+    val weekday: String,
+    val date: Int,
+    val today: Boolean = false,
+    val hasExam: Boolean = false,
+)
+
+/** the seven-day strip: today is crimson, exam days carry a white frame and a dot */
+@Composable
+fun WeekStrip(days: List<DayCell>, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        days.forEach { day ->
+            Column(
+                Modifier
+                    .weight(1f)
+                    .background(if (day.today) Crimson else Color.Transparent)
+                    .border(2.dp, if (day.today || day.hasExam) Bone else Line)
+                    .padding(vertical = 8.dp)
+                    .clearAndSetSemantics {
+                        contentDescription = buildString {
+                            append(day.weekday)
+                            append(' ')
+                            append(day.date)
+                            if (day.today) append(", today")
+                            if (day.hasExam) append(", exam")
+                        }
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                MonoText(day.weekday, color = Bone)
+                D(day.date.toString(), 24.sp, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+                Box(Modifier.padding(top = 6.dp).size(6.dp)) {
+                    if (day.hasExam) Box(Modifier.fillMaxSize().background(Bone))
+                }
+            }
+        }
+    }
+}
+
+/** a paper in the "Then" list: a date block, then a card with its ghost motif */
+@Composable
+fun TimelineEvent(
+    day: String,
+    month: String,
+    title: String,
+    detail: String,
+    modifier: Modifier = Modifier,
+    tag: String? = null,
+    room: String? = null,
+    art: @Composable BoxScope.() -> Unit,
+) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(
+            Modifier.width(56.dp).border(2.dp, Bone).padding(vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            D(day, 32.sp, maxLines = 1)
+            MonoText(month, color = Bone)
+        }
+        Card2(art = art, modifier = Modifier.weight(1f)) {
+            BodyText(title, size = 17.sp, maxLines = 3)
+            MonoText(detail, color = Bone, modifier = Modifier.padding(top = 4.dp))
+            if (tag != null || room != null) {
+                Row(
+                    Modifier.padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (tag != null) Stamp(tag, background = Line, color = Bone)
+                    if (room != null) {
+                        MonoText(room, color = if (room.equals("room tba", true)) Muted else Bone)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One segment per semester: completed white, current crimson, future grey. The
+ * segments land one after another and the current one arrives with a small
+ * overshoot. The strip carries the same sentence a screen reader would want.
+ */
+@Composable
+fun SemesterTrack(current: Int, total: Int, modifier: Modifier = Modifier) {
+    val reduced = LocalReducedMotion.current
+    val land = remember(total) { List(total) { Animatable(if (reduced) 1f else 0f) } }
+    LaunchedEffect(current, total) {
+        land.forEachIndexed { i, segment ->
+            val isCurrent = i == current - 1
+            if (!reduced) delay((i * 120).toLong())
+            if (isCurrent && !reduced) segment.animateTo(1f, Motion.snappy) else segment.snapTo(1f)
+        }
+    }
+    Row(
+        modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = "Semester $current of $total" },
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        repeat(total) { i ->
+            val color = when {
+                i < current - 1 -> Bone
+                i == current - 1 -> Crimson
+                else -> Line
+            }
+            Box(
+                Modifier
+                    .weight(1f)
+                    .height(14.dp)
+                    .graphicsLayer {
+                        val v = land[i].value
+                        alpha = v
+                        scaleY = 0.5f + 0.5f * v
+                    }
+                    .background(color),
+            )
+        }
+    }
+}
+
+/** bars derived from the enrolment digits: decoration, never scannable */
+@Composable
+private fun Barcode(seed: String, modifier: Modifier = Modifier) {
+    val digits = seed.filter { it.isDigit() }.map { it - '0' }.ifEmpty { listOf(1) }
+    Canvas(modifier.fillMaxWidth().height(28.dp).clearAndSetSemantics { }) {
+        val u = size.width / 88f
+        var x = 0f
+        var i = 0
+        while (x < size.width) {
+            val d = digits[i % digits.size]
+            val w = (1 + d % 3) * u
+            drawRect(Bone, Offset(x, 0f), Size(w, size.height))
+            x += w + (1 + (d + 1) % 2) * u
+            i++
+        }
+    }
+}
+
+/**
+ * The student file card from the v2 Me and Profile artboards: steel gradient,
+ * halftone, the trooper cropped off the right edge, the name at 46sp and the
+ * enrolment in mono, with the decorative barcode along the bottom.
+ */
+@Composable
+fun StudentFileCard(
+    name: String,
+    enrolment: String,
+    modifier: Modifier = Modifier,
+    height: Dp = 190.dp,
+    art: @Composable BoxScope.() -> Unit,
+) {
+    Box(modifier.fillMaxWidth().height(height).clipToBounds()) {
+        Box(Modifier.matchParentSize().cssGradient(160f, arrayOf(0f to Steel, 0.85f to Ink)).halftone())
+        art()
+        Column(Modifier.align(Alignment.TopStart).padding(14.dp).fillMaxWidth(0.62f)) {
+            Stamp("Student file")
+            D(name, 46.sp, modifier = Modifier.padding(top = 12.dp))
+            MonoText(enrolment, color = Bone, modifier = Modifier.padding(top = 8.dp))
+        }
+        Barcode(enrolment, Modifier.align(Alignment.BottomCenter).padding(horizontal = 14.dp).padding(bottom = 12.dp))
+        Box(Modifier.matchParentSize().border(2.dp, Bone))
+    }
+}
+
+/** a hub tile: colour, halftone, a motif cropped top-right, the name bottom-left */
+@Composable
+fun ArtTile(
+    name: String,
+    sub: String,
+    background: Color,
+    rotate: Float = 0f,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    art: @Composable BoxScope.() -> Unit,
+) {
+    Box(
+        modifier
+            .graphicsLayer { rotationZ = rotate }
+            .clipToBounds()
+            .background(background)
+            .halftone()
+            .then(if (onClick != null) Modifier.tap(onClick) else Modifier)
+            .border(2.dp, Bone),
+    ) {
+        art()
+        Column(Modifier.align(Alignment.BottomStart).padding(12.dp)) {
+            D(name, 28.sp, maxLines = 1)
+            MonoText(sub, color = Bone, modifier = Modifier.padding(top = 2.dp))
+        }
+    }
 }

@@ -1,5 +1,7 @@
 package com.jiitkiosk.app.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,11 +52,14 @@ fun AppShell(vm: KioskViewModel) {
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            when (tab) {
-                Tab.Attendance -> AttendanceScreen(vm)
-                Tab.Exams -> ExamsScreen(vm)
-                Tab.Grades -> GradesScreen(vm)
-                Tab.Me -> MeScreen(vm)
+            // top-level tabs crossfade; the slide is for pages inside a tab
+            Crossfade(targetState = tab, animationSpec = tween(Motion.FAST), label = "tab") { shown ->
+                when (shown) {
+                    Tab.Attendance -> AttendanceScreen(vm)
+                    Tab.Exams -> ExamsScreen(vm)
+                    Tab.Grades -> GradesScreen(vm)
+                    Tab.Me -> MeScreen(vm)
+                }
             }
         }
     }
