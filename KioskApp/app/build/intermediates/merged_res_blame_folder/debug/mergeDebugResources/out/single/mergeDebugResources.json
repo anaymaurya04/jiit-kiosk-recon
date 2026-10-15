@@ -1,0 +1,34 @@
+[
+    {
+        "merged": "com.jiitkiosk.app-debug-37:/font_ibm_plex_mono_medium.ttf.flat",
+        "source": "com.jiitkiosk.app-main-39:/font/ibm_plex_mono_medium.ttf"
+    },
+    {
+        "merged": "com.jiitkiosk.app-debug-37:/font_barlow_condensed_semibold.ttf.flat",
+        "source": "com.jiitkiosk.app-main-39:/font/barlow_condensed_semibold.ttf"
+    },
+    {
+        "merged": "com.jiitkiosk.app-debug-37:/font_barlow_condensed_bold.ttf.flat",
+        "source": "com.jiitkiosk.app-main-39:/font/barlow_condensed_bold.ttf"
+    },
+    {
+        "merged": "com.jiitkiosk.app-debug-37:/font_ibm_plex_sans_medium.ttf.flat",
+        "source": "com.jiitkiosk.app-main-39:/font/ibm_plex_sans_medium.ttf"
+    },
+    {
+        "merged": "com.jiitkiosk.app-debug-37:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.jiitkiosk.app-main-39:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.jiitkiosk.app-debug-37:/font_ibm_plex_sans_regular.ttf.flat",
+        "source": "com.jiitkiosk.app-main-39:/font/ibm_plex_sans_regular.ttf"
+    },
+    {
+        "merged": "com.jiitkiosk.app-debug-37:/font_ibm_plex_mono_regular.ttf.flat",
+        "source": "com.jiitkiosk.app-main-39:/font/ibm_plex_mono_regular.ttf"
+    },
+    {
+        "merged": "com.jiitkiosk.app-debug-37:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.jiitkiosk.app-main-39:/mipmap-anydpi-v26/ic_launcher.xml"
+    }
+]

@@ -1,0 +1,31 @@
+[package]
+name = "jiit-core"
+version = "0.1.0"
+edition = "2021"
+description = "CampusLynx (JIIT web kiosk) API client: crypto, session, endpoints"
+license = "MIT"
+
+[lib]
+name = "jiit_core"
+path = "src/lib.rs"
+
+[dependencies]
+# Crypto — the portal's "AES256" is really AES-128-CBC (16-byte date-derived key).
+aes = "0.8"
+cbc = { version = "0.1.2", features = ["alloc"] }
+cipher = { version = "0.4", features = ["block-padding"] }
+base64 = "0.22"
+rand = "0.8"
+
+# Date — must be device-local (IST), the key rotates at local midnight.
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+
+# HTTP + JSON
+reqwest = { version = "0.12", features = ["json", "cookies"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+thiserror = "1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

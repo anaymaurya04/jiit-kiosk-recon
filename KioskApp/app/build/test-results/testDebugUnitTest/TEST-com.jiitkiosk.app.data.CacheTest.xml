@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.jiitkiosk.app.data.CacheTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T19:04:02.602Z" hostname="REES" time="0.106">
+  <properties/>
+  <testcase name="aWrittenAnswerComesBack" classname="com.jiitkiosk.app.data.CacheTest" time="0.078"/>
+  <testcase name="signingOutTakesTheDataWithIt" classname="com.jiitkiosk.app.data.CacheTest" time="0.011"/>
+  <testcase name="anUnreadableEntryIsNotAnError" classname="com.jiitkiosk.app.data.CacheTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
