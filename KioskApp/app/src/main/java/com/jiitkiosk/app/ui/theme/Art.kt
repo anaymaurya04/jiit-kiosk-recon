@@ -226,3 +226,191 @@ fun Ring(
         }
     }
 }
+
+/** Tower/Keep: campus, hostel, institute */
+@Composable
+fun TowerMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Color.Transparent) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(color, Offset(28f, 38f), Size(44f, 54f))
+            listOf(28f, 45f, 62f).forEach { drawRect(color, Offset(it, 26f), Size(10f, 12f)) }
+            drawRect(color, Offset(49f, 4f), Size(2f, 22f))
+            drawPath(pathOf("M51 5 L74 11 L51 17 Z"), accent)
+            drawPath(pathOf("M42 92 V72 Q50 62 58 72 V92 Z"), cut)
+            drawRect(cut, Offset(48f, 46f), Size(4f, 10f))
+        }
+    }
+}
+
+/** Heater shield: privacy, bank, protected data */
+@Composable
+fun ShieldMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Color.Transparent) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(pathOf("M18 12 H82 V50 Q82 78 50 94 Q18 78 18 50 Z"), color)
+            drawPath(pathOf("M50 12 H82 V50 Q82 78 50 94 Z"), accent)
+            drawRect(cut, Offset(48.5f, 12f), Size(3f, 82f))
+            drawPath(pathOf("M50 30 L58 44 L50 58 L42 44 Z"), cut)
+        }
+    }
+}
+
+/** Comet: deadlines, fees due */
+@Composable
+fun CometMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, tail: Color = Violet) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(pathOf("M64 62 L6 12 L54 56 Z"), accent)
+            drawPath(pathOf("M68 70 L10 44 L56 74 Z"), tail.copy(alpha = 0.7f))
+            drawCircle(color, 16f, Offset(72f, 72f))
+            drawCircle(LineStrong, 4f, Offset(67f, 67f))
+            drawCircle(color, 1.5f, Offset(90f, 20f))
+            drawCircle(color, 1.5f, Offset(24f, 86f))
+            drawCircle(color, 1f, Offset(86f, 46f))
+        }
+    }
+}
+
+/** Vintage Mic: announcements, feedback */
+@Composable
+fun MicMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Color.Transparent) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawCircle(color, 20f, Offset(50f, 30f))
+            listOf(24f, 32f, 40f).forEach { y -> drawLine(cut, Offset(34f, y), Offset(66f, y), 2.5f) }
+            drawRect(accent, Offset(38f, 48f), Size(24f, 8f))
+            drawRect(LineStrong, Offset(44f, 56f), Size(12f, 28f))
+            drawRect(color, Offset(34f, 84f), Size(32f, 7f))
+        }
+    }
+}
+
+/** Cog / Gear: settings */
+@Composable
+fun GearMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Color.Transparent) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            listOf(0f, 45f, 90f, 135f).forEach { rot ->
+                rotate(rot, Offset(50f, 50f)) {
+                    drawRect(color, Offset(43f, 6f), Size(14f, 88f))
+                }
+            }
+            drawCircle(color, 30f, Offset(50f, 50f))
+            drawCircle(cut, 13f, Offset(50f, 50f))
+            drawCircle(accent, 5f, Offset(50f, 50f))
+        }
+    }
+}
+
+/** Dossier: profile, records */
+@Composable
+fun DossierMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Color.Transparent) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(pathOf("M10 24 H40 L48 32 H90 V88 H10 Z"), color)
+            drawRect(color, Offset(10f, 36f), Size(80f, 52f))
+            listOf(48f to 56f, 58f to 50f, 68f to 44f).forEach { (y, w) ->
+                drawLine(cut, Offset(20f, y), Offset(w, y), 3f)
+            }
+            rotate(-12f, Offset(72f, 66f)) {
+                drawCircle(accent, 14f, Offset(72f, 66f), style = Stroke(4f))
+                drawLine(accent, Offset(63f, 66f), Offset(81f, 66f), 3f)
+            }
+        }
+    }
+}
+
+/** Satellite: sync, connectivity, exams timeline */
+@Composable
+fun SatelliteMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, panel: Color = Violet, cut: Color = Color.Transparent) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(color, Offset(38f, 38f), Size(24f, 24f))
+            drawRect(panel, Offset(4f, 42f), Size(30f, 16f))
+            drawRect(panel, Offset(66f, 42f), Size(30f, 16f))
+            listOf(14f, 24f, 76f, 86f).forEach { x -> drawLine(cut, Offset(x, 42f), Offset(x, 58f), 2f) }
+            drawLine(color, Offset(50f, 38f), Offset(50f, 22f), 3f)
+            drawCircle(accent, 5f, Offset(50f, 18f))
+            drawPath(pathOf("M36 10 Q50 -2 64 10"), color, style = Stroke(2.5f))
+            drawRect(LineStrong, Offset(44f, 62f), Size(12f, 10f))
+        }
+    }
+}
+
+/** Tome: syllabus, marks, subjects */
+@Composable
+fun TomeMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, spine: Color = Violet) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(spine, Offset(18f, 8f), Size(64f, 82f))
+            drawRect(accent, Offset(18f, 8f), Size(12f, 82f))
+            drawRect(color, Offset(22f, 90f), Size(60f, 5f))
+            drawRect(color, Offset(76f, 42f), Size(10f, 14f))
+            drawPath(pathOf("M56 34 L68 49 L56 64 L44 49 Z"), color, style = Stroke(3f))
+            drawCircle(color, 3f, Offset(56f, 49f))
+        }
+    }
+}
+
+/** Hourglass: countdown, pending */
+@Composable
+fun HourglassMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, sand: Color = Violet) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(color, Offset(18f, 6f), Size(64f, 8f))
+            drawRect(color, Offset(18f, 86f), Size(64f, 8f))
+            drawPath(pathOf("M26 14 H74 L54 50 L74 86 H26 L46 50 Z"), color, style = Stroke(4f))
+            drawPath(pathOf("M34 86 H66 L50 62 Z"), accent)
+            drawPath(pathOf("M36 22 H64 L52 40 H48 Z"), sand)
+        }
+    }
+}
+
+/** Raven: notices, messages, contact */
+@Composable
+fun RavenMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Color.Transparent) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(pathOf("M10 58 Q36 28 68 36 L92 28 L80 46 Q82 72 58 82 L62 94 H50 L44 84 Q22 82 10 58 Z"), color)
+            drawPath(pathOf("M68 36 L94 30 L80 46 Z"), accent)
+            drawCircle(cut, 3f, Offset(70f, 40f))
+            drawPath(pathOf("M24 58 Q40 48 58 54"), cut, style = Stroke(2f))
+        }
+    }
+}
+
+/** Dead Sun: offline, sync failed */
+@Composable
+fun DeadSunMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            val ray = pathOf("M50 2 L56 22 H44 Z")
+            (0 until 360 step 30).forEach { deg ->
+                rotate(deg.toFloat(), Offset(50f, 50f)) {
+                    drawPath(ray, accent)
+                }
+            }
+            drawCircle(Ink, 28f, Offset(50f, 50f))
+            drawCircle(color, 28f, Offset(50f, 50f), style = Stroke(3f))
+            drawPath(pathOf("M50 24 L45 40 L55 50 L47 64 L52 76"), color, style = Stroke(2f))
+        }
+    }
+}
+
+/** Radar sweep: attendance, scan */
+@Composable
+fun RadarMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            listOf(42f, 28f, 14f).forEach { r ->
+                drawCircle(LineStrong, r, Offset(50f, 50f), style = Stroke(2f))
+            }
+            drawLine(LineStrong, Offset(50f, 8f), Offset(50f, 92f), 2f)
+            drawLine(LineStrong, Offset(8f, 50f), Offset(92f, 50f), 2f)
+            drawPath(pathOf("M50 50 L50 8 A42 42 0 0 1 86 29 Z"), accent.copy(alpha = 0.85f))
+            drawCircle(color, 3.5f, Offset(68f, 68f))
+            drawCircle(color, 3f, Offset(34f, 36f))
+        }
+    }
+}
+

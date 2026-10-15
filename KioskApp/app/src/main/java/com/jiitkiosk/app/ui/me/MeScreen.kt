@@ -75,6 +75,7 @@ import `in`.codelif.ktjiit.model.BankInfo
 import `in`.codelif.ktjiit.model.FeeSummary
 import `in`.codelif.ktjiit.model.FeedbackEvent
 import `in`.codelif.ktjiit.model.FeedbackRow
+import `in`.codelif.ktjiit.model.GeneralInfo
 import `in`.codelif.ktjiit.model.HostelInfo
 import `in`.codelif.ktjiit.model.PersonalInfo
 import `in`.codelif.ktjiit.model.Rating
@@ -84,6 +85,29 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonObject
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import com.jiitkiosk.app.ui.components.ArtTile
+import com.jiitkiosk.app.ui.components.RowLine
+import com.jiitkiosk.app.ui.components.SemesterTrack
+import com.jiitkiosk.app.ui.components.StudentFileCard
+import com.jiitkiosk.app.ui.components.ago
+import com.jiitkiosk.app.ui.rememberSpin
+import com.jiitkiosk.app.ui.theme.CometMark
+import com.jiitkiosk.app.ui.theme.DossierMark
+import com.jiitkiosk.app.ui.theme.GearMark
+import com.jiitkiosk.app.ui.theme.HelmMark
+import com.jiitkiosk.app.ui.theme.HourglassMark
+import com.jiitkiosk.app.ui.theme.MarkCore
+import com.jiitkiosk.app.ui.theme.MicMark
+import com.jiitkiosk.app.ui.theme.RavenMark
+import com.jiitkiosk.app.ui.theme.ShieldMark
+import com.jiitkiosk.app.ui.theme.TowerMark
+import com.jiitkiosk.app.ui.theme.VinylMark
+import kotlinx.coroutines.delay
 import java.util.Locale
 
 /** everything the Me tab shows, fetched together so one fetch feeds four screens */
@@ -154,6 +178,19 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
     val list = rememberLazyListState()
     val titleCollapse = (list.scrollDepth() / 100f).coerceIn(0f, 1f)
 
+    val currentSem = general?.semester?.takeIf { it > 0 } ?: 1
+    val totalSem = programSemesters(general)
+
+    val feeDue = data?.fees?.heads.orEmpty().sumOf { it.due }
+    val feeSub = if (data?.fees == null) "LEDGER" else if (feeDue > 0) "DUE: ${money(feeDue)}" else "ALL CLEAR"
+    val hostelSub = data?.hostel?.let {
+        listOf(it.hostel, it.room).filter { s -> s.isNotBlank() }.joinToString(" · ")
+    }?.ifBlank { "NO ROOM" } ?: "HOSTEL"
+    val profileSub = listOf(general?.program, general?.batch)
+        .filter { !it.isNullOrBlank() }
+        .joinToString(" · ")
+        .ifBlank { "STUDENT FILE" }
+
     Box(Modifier.fillMaxWidth()) {
         LazyColumn(
             Modifier.fillMaxWidth(),
@@ -161,71 +198,146 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
         ) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 20.dp).entrance(0),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                StudentFileCard(
+                    name = general?.name?.takeIf { it.isNotBlank() } ?: vm.session?.username.orEmpty(),
+                    enrolment = general?.enrollmentNo ?: vm.session?.username.orEmpty(),
+                    modifier = Modifier.entrance(0),
+                    height = 190.dp,
                 ) {
-                    AvatarTile(96.dp)
-                    Column(Modifier.weight(1f)) {
-                        D(
-                            general?.name?.takeIf { it.isNotBlank() } ?: vm.session?.username.orEmpty(),
-                            40.sp,
-                            maxLines = 2,
-                        )
-                        MonoText(
-                            listOf(general?.enrollmentNo, general?.program, general?.branch)
-                                .filter { !it.isNullOrBlank() }
-                                .joinToString(" · ")
-                                .ifBlank { "SIGNED IN" },
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
+                    Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = 10.dp)) {
+                        TrooperMark(band = Violet, card = Bone, clip = Crimson, size = 150.dp)
                     }
                 }
             }
 
-            if (state is Load.Ok) {
-                item {
-                    FreshnessLine(
-                        state.at,
-                        state.stale,
-                        state.refreshing,
-                        Modifier.padding(bottom = 10.dp).entrance(1),
-                    )
+            item {
+                Column(Modifier.padding(top = 14.dp).entrance(1)) {
+                    val age = if (state is Load.Ok) ago(state.at) else "JUST NOW"
+                    MonoText("SEMESTER $currentSem OF $totalSem · SYNCED $age", color = Muted)
+                    Spacer(Modifier.height(6.dp))
+                    SemesterTrack(current = currentSem, total = totalSem)
                 }
             }
 
-            item { NavRow("Profile", Modifier.entrance(2)) { open(MePage.Profile) } }
-            item { NavRow("Fees", Modifier.entrance(3)) { open(MePage.Fees) } }
-            item { NavRow("Hostel", Modifier.entrance(4)) { open(MePage.Hostel) } }
+            item {
+                D("YOUR FILES", 22.sp, color = Muted, modifier = Modifier.padding(top = 22.dp, bottom = 12.dp).entrance(2))
+            }
 
             item {
-                NavRow(
-                    label = "Bank details",
-                    modifier = Modifier.entrance(5),
-                    onClick = { revealed = !revealed },
-                    detail = if (revealed) "HIDE" else "•••• •••• — TAP TO REVEAL",
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth().entrance(3),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    // Row 1: Profile & Fees
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        ArtTile(
+                            name = "Profile",
+                            sub = profileSub,
+                            background = Color(0xFF14202E),
+                            rotate = -1f,
+                            modifier = Modifier.weight(1f).height(130.dp),
+                            onClick = { open(MePage.Profile) },
+                        ) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
+                                DossierMark(size = 100.dp)
+                            }
+                        }
+                        ArtTile(
+                            name = "Fees",
+                            sub = feeSub,
+                            background = Color(0xFF5A1522),
+                            rotate = 1f,
+                            modifier = Modifier.weight(1f).height(130.dp),
+                            onClick = { open(MePage.Fees) },
+                        ) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
+                                CometMark(size = 100.dp)
+                            }
+                        }
+                    }
+
+                    // Row 2: Hostel & Bank
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        ArtTile(
+                            name = "Hostel",
+                            sub = hostelSub,
+                            background = Color(0xFF1C1C22),
+                            rotate = 1f,
+                            modifier = Modifier.weight(1f).height(130.dp),
+                            onClick = { open(MePage.Hostel) },
+                        ) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
+                                TowerMark(size = 100.dp)
+                            }
+                        }
+                        ArtTile(
+                            name = "Bank",
+                            sub = if (revealed) (data?.bank?.account?.takeIf { it.isNotBlank() } ?: "REVEALED") else "•••• TAP TO REVEAL",
+                            background = Color(0xFF2B2060),
+                            rotate = -1f,
+                            modifier = Modifier.weight(1f).height(130.dp),
+                            onClick = { revealed = !revealed },
+                        ) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
+                                ShieldMark(size = 100.dp)
+                            }
+                        }
+                    }
+
+                    // Row 3: Feedback & Settings
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        ArtTile(
+                            name = "Feedback",
+                            sub = "RATINGS",
+                            background = Color(0xFF1C1C22),
+                            rotate = -1f,
+                            modifier = Modifier.weight(1f).height(130.dp),
+                            onClick = { open(MePage.Feedback) },
+                        ) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
+                                MicMark(size = 100.dp)
+                            }
+                        }
+                        ArtTile(
+                            name = "Settings",
+                            sub = "About · privacy",
+                            background = Color(0xFF2A0A12),
+                            rotate = 1f,
+                            modifier = Modifier.weight(1f).height(130.dp),
+                            onClick = { open(MePage.Settings) },
+                        ) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
+                                GearMark(size = 100.dp)
+                            }
+                        }
+                    }
+                }
             }
 
             if (revealed) {
                 item {
                     val bank = data?.bank
-                    Card2(Modifier.padding(top = 10.dp)) {
-                        KeyRow("Bank", bank?.bank.orEmpty())
-                        KeyRow("Account", bank?.account.orEmpty())
-                        KeyRow("IFSC", bank?.ifsc.orEmpty())
-                        KeyRow("Holder", bank?.holder.orEmpty())
+                    Card2(Modifier.padding(top = 14.dp)) {
+                        KeyRow("Bank", bank?.bank.orEmpty().ifBlank { "—" })
+                        KeyRow("Account", bank?.account.orEmpty().ifBlank { "—" })
+                        KeyRow("IFSC", bank?.ifsc.orEmpty().ifBlank { "—" })
+                        KeyRow("Holder", bank?.holder.orEmpty().ifBlank { "—" })
                         if (bank?.frozen?.isNotBlank() == true) KeyRow("Frozen", bank.frozen)
                     }
                 }
             }
 
-            item { NavRow("Feedback", Modifier.entrance(6)) { open(MePage.Feedback) } }
-            item { NavRow("Settings & About", Modifier.entrance(7)) { open(MePage.Settings) } }
-
             if (state is Load.Failed) {
-                item { StateBox(state, onRetry) }
+                item { Spacer(Modifier.height(14.dp)); StateBox(state, onRetry) }
             }
         }
 
@@ -250,19 +362,29 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
     }
 }
 
-/** the trooper tile the design puts at the top of this tab */
-@Composable
-private fun AvatarTile(size: androidx.compose.ui.unit.Dp) {
-    Box(Modifier.size(size).clipToBounds().background(Steel).border(2.dp, Bone)) {
-        Box(Modifier.matchParentSize().halftone())
-        TrooperMark(band = Violet, card = Bone, clip = Crimson, size = size)
+private fun programSemesters(general: GeneralInfo?): Int {
+    val sem = general?.semester ?: 1
+    val prog = general?.program.orEmpty().uppercase()
+    val default = when {
+        prog.contains("TECH") || prog.contains("B.E") -> 8
+        prog.contains("INT") || prog.contains("DUAL") -> 10
+        prog.contains("M.") || prog.contains("MCA") || prog.contains("MBA") -> 4
+        prog.contains("PHD") -> 6
+        else -> 8
     }
+    return maxOf(sem, default)
 }
 
 @Composable
 private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, onBack: () -> Unit) {
     val state = rememberMe(vm, attempt)
     val general = (state as? Load.Ok)?.value?.info?.general
+    val clipboard = LocalClipboardManager.current
+    var copied by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val currentSem = general?.semester?.takeIf { it > 0 } ?: 1
+    val totalSem = programSemesters(general)
 
     LazyColumn(
         Modifier.fillMaxWidth(),
@@ -279,33 +401,173 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
         }
 
         if (general != null) {
-            item { SectionHead("Student", Modifier.padding(top = 10.dp, bottom = 4.dp).entrance(2)) }
             item {
-                Card2(Modifier.entrance(3)) {
-                    KeyRow("Name", general.name)
-                    KeyRow("Enrolment", general.enrollmentNo)
+                StudentFileCard(
+                    name = general.name.ifBlank { vm.session?.username.orEmpty() },
+                    enrolment = general.enrollmentNo.ifBlank { vm.session?.username.orEmpty() },
+                    modifier = Modifier.entrance(2),
+                    height = 170.dp,
+                ) {
+                    Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = 10.dp)) {
+                        TrooperMark(band = Violet, card = Bone, clip = Crimson, size = 150.dp)
+                    }
+                }
+            }
+
+            item {
+                D("PROGRAM", 22.sp, color = Muted, modifier = Modifier.padding(top = 22.dp, bottom = 12.dp).entrance(3))
+            }
+
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().entrance(4),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    // 2x2 grid
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Card2(
+                            modifier = Modifier.weight(1f),
+                            art = {
+                                Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
+                                    TowerMark(size = 70.dp, color = LineStrong)
+                                }
+                            },
+                        ) {
+                            MonoText("BATCH", color = Muted)
+                            D(general.batch.ifBlank { "—" }, 40.sp, modifier = Modifier.padding(top = 4.dp), maxLines = 1)
+                        }
+                        Card2(
+                            modifier = Modifier.weight(1f),
+                            art = {
+                                Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
+                                    HelmMark(arch = LineStrong, accent = LineStrong, detail = Line, size = 70.dp)
+                                }
+                            },
+                        ) {
+                            MonoText("SECTION", color = Muted)
+                            D(general.section.ifBlank { "—" }, 40.sp, modifier = Modifier.padding(top = 4.dp), maxLines = 1)
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Card2(
+                            modifier = Modifier.weight(1f),
+                            art = {
+                                Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
+                                    HourglassMark(size = 70.dp, color = LineStrong)
+                                }
+                            },
+                        ) {
+                            MonoText("SEMESTER", color = Muted)
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                D("$currentSem", 40.sp, modifier = Modifier.padding(top = 4.dp), maxLines = 1)
+                                MonoText(" OF $totalSem", color = Muted, modifier = Modifier.padding(bottom = 6.dp, start = 4.dp))
+                            }
+                        }
+                        Card2(
+                            modifier = Modifier.weight(1f),
+                            art = {
+                                Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
+                                    TowerMark(size = 70.dp, color = LineStrong)
+                                }
+                            },
+                        ) {
+                            MonoText("ACADEMIC YEAR", color = Muted)
+                            D(general.academicYear.ifBlank { "—" }, 40.sp, modifier = Modifier.padding(top = 4.dp), maxLines = 1)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Column(Modifier.padding(top = 14.dp).entrance(5)) {
+                    MonoText("PROGRESS", color = Muted)
+                    Spacer(Modifier.height(6.dp))
+                    SemesterTrack(current = currentSem, total = totalSem)
+                }
+            }
+
+            item {
+                Column(Modifier.padding(top = 14.dp).entrance(6)) {
                     KeyRow("Programme", listOf(general.program, general.branch).filter { it.isNotBlank() }.joinToString(" · "))
-                    KeyRow("Batch", general.batch)
-                    KeyRow("Section", general.section)
-                    KeyRow("Semester", general.semester.takeIf { it > 0 }?.toString().orEmpty())
-                    KeyRow("Academic year", general.academicYear)
-                    KeyRow("Institute", general.institute)
+                    KeyRow("Institute", general.institute.ifBlank { "—" })
                 }
             }
 
-            item { SectionHead("Contact", Modifier.padding(top = 16.dp, bottom = 4.dp).entrance(4)) }
             item {
-                Card2(Modifier.entrance(5)) {
-                    KeyRow("College email", general.collegeEmail)
-                    KeyRow("Personal email", general.personalEmail)
-                    KeyRow("Phone", general.phone)
-                    KeyRow("Parent phone", general.parentPhone)
+                D("CONTACT", 22.sp, color = Muted, modifier = Modifier.padding(top = 22.dp, bottom = 12.dp).entrance(7))
+            }
+
+            item {
+                val email = general.collegeEmail.ifBlank { general.personalEmail }.ifBlank { "—" }
+                Card2(
+                    modifier = Modifier.entrance(8),
+                    art = {
+                        Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
+                            RavenMark(size = 80.dp, color = LineStrong)
+                        }
+                    },
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                            MonoText("COLLEGE EMAIL", color = Muted)
+                            MonoText(email, color = Bone, modifier = Modifier.padding(top = 4.dp))
+                        }
+                        if (email != "—") {
+                            Box(
+                                modifier = Modifier
+                                    .background(Bone)
+                                    .clickable {
+                                        clipboard.setText(AnnotatedString(email))
+                                        copied = true
+                                        scope.launch {
+                                            delay(1500)
+                                            copied = false
+                                        }
+                                    }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    if (copied) "COPIED" else "COPY",
+                                    style = Mono.copy(fontWeight = FontWeight.Medium, fontSize = 11.sp),
+                                    color = Ink,
+                                )
+                            }
+                        }
+                    }
+
+                    if (general.personalEmail.isNotBlank() && general.personalEmail != email) {
+                        Spacer(Modifier.height(10.dp))
+                        KeyRow("Personal email", general.personalEmail)
+                    }
+                    if (general.phone.isNotBlank()) {
+                        Spacer(Modifier.height(6.dp))
+                        KeyRow("Phone", general.phone)
+                    }
+                    if (general.parentPhone.isNotBlank()) {
+                        Spacer(Modifier.height(6.dp))
+                        KeyRow("Parent phone", general.parentPhone)
+                    }
                 }
             }
 
-            item { SectionHead("Personal", Modifier.padding(top = 16.dp, bottom = 4.dp).entrance(6)) }
             item {
-                Card2(Modifier.entrance(7)) {
+                D("PERSONAL", 22.sp, color = Muted, modifier = Modifier.padding(top = 22.dp, bottom = 12.dp))
+            }
+
+            item {
+                Card2 {
                     KeyRow("Date of birth", general.dateOfBirth)
                     KeyRow("Blood group", general.bloodGroup)
                     KeyRow("Gender", general.gender)
@@ -325,17 +587,23 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                 general.currentCity, general.currentDistrict, general.currentState, general.currentPin,
             )
 
-            item { SectionHead("Address", Modifier.padding(top = 16.dp, bottom = 4.dp)) }
-            item {
-                Card2 {
-                    KeyRow("Permanent", permanent)
-                    KeyRow("Current", current)
+            if (permanent.isNotBlank() || current.isNotBlank()) {
+                item {
+                    D("ADDRESS", 22.sp, color = Muted, modifier = Modifier.padding(top = 22.dp, bottom = 12.dp))
+                }
+                item {
+                    Card2 {
+                        if (permanent.isNotBlank()) KeyRow("Permanent", permanent)
+                        if (current.isNotBlank()) KeyRow("Current", current)
+                    }
                 }
             }
 
             val qualifications = (state as? Load.Ok)?.value?.info?.qualifications.orEmpty()
             if (qualifications.isNotEmpty()) {
-                item { SectionHead("Qualifications", Modifier.padding(top = 16.dp)) }
+                item {
+                    D("QUALIFICATIONS", 22.sp, color = Muted, modifier = Modifier.padding(top = 22.dp, bottom = 12.dp))
+                }
                 items(qualifications, key = { it.code + it.year }) { q ->
                     DetailRow(
                         title = q.board.ifBlank { q.code },
@@ -447,61 +715,118 @@ private fun HostelScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, 
 @Composable
 private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+    val scope = rememberCoroutineScope()
+    var copiedReport by remember { mutableStateOf(false) }
+    var dynamicColor by remember { mutableStateOf(false) }
+    var checkUpdates by remember { mutableStateOf(true) }
+
     val version = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
-            .getOrNull().orEmpty()
+            .getOrNull()?.ifBlank { "1.0.0" } ?: "1.0.0"
     }
 
     LazyColumn(
         Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item { BackRow(onBack, Modifier.entrance(0)) }
         item { D("Settings", 56.sp, modifier = Modifier.entrance(1)) }
-        item { MonoText("UNOFFICIAL · NOT AFFILIATED WITH JIIT", modifier = Modifier.entrance(1)) }
+        item { MonoText("UNOFFICIAL · NOT AFFILIATED WITH JIIT", modifier = Modifier.entrance(1).padding(bottom = 8.dp)) }
+
+        // Toggles
+        item {
+            RowLine(
+                label = "Dynamic color",
+                modifier = Modifier
+                    .toggleable(value = dynamicColor, role = Role.Switch) { dynamicColor = it }
+                    .entrance(2),
+                trailing = { Toggle(dynamicColor) },
+            )
+        }
 
         item {
-            Card2(Modifier.entrance(2)) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        // the whole row is the switch, so the target is never 44dp of switch
-                        .toggleable(value = vm.pureBlack, role = Role.Switch) { vm.applyPureBlack(it) }
-                        .padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        BodyText("Pure black")
-                        MonoText("Paints the page true black instead of near black.")
-                    }
-                    Toggle(vm.pureBlack)
+            RowLine(
+                label = "Pure black mode",
+                modifier = Modifier
+                    .toggleable(value = vm.pureBlack, role = Role.Switch) { vm.applyPureBlack(it) }
+                    .entrance(3),
+                trailing = { Toggle(vm.pureBlack) },
+            )
+        }
+
+        item {
+            RowLine(
+                label = "Check GitHub for updates",
+                modifier = Modifier
+                    .toggleable(value = checkUpdates, role = Role.Switch) { checkUpdates = it }
+                    .entrance(4),
+                trailing = { Toggle(checkUpdates) },
+            )
+        }
+
+        // Spinning vinyl JPortal block
+        item {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp, bottom = 12.dp)
+                    .entrance(5),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val spin by rememberSpin(active = false, idle = true)
+                Box(Modifier.graphicsLayer { rotationZ = spin }) {
+                    VinylMark(label = Crimson, groove = LineStrong, disc = MarkCore, size = 64.dp)
+                }
+                Column {
+                    BodyText("JPortal", size = 16.sp)
+                    MonoText("VERSION $version", modifier = Modifier.padding(top = 2.dp))
                 }
             }
         }
 
+        // Links
         item {
-            Card2(Modifier.entrance(3)) {
-                MonoText("LICENCES", color = Bone, medium = true)
-                Spacer(Modifier.height(8.dp))
-                BodyText("This app is GPL-3.0. It uses codelif's ktjiit portal client (GPL-3.0) and the OFL-licensed Barlow Condensed and IBM Plex families.", color = Muted)
-            }
+            RowLine(
+                label = "Copy debug report",
+                modifier = Modifier
+                    .clickable {
+                        val report = "JPortal $version\nAndroid: ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})\nModel: ${android.os.Build.MODEL}"
+                        clipboard.setText(AnnotatedString(report))
+                        copiedReport = true
+                        scope.launch {
+                            delay(1500)
+                            copiedReport = false
+                        }
+                    }
+                    .entrance(6),
+                trailing = {
+                    MonoText(if (copiedReport) "COPIED" else "NO TOKENS, NAMES OR IDS")
+                },
+            )
         }
 
         item {
-            Card2(Modifier.entrance(4)) {
-                MonoText("SESSION", color = Bone, medium = true)
-                Spacer(Modifier.height(8.dp))
-                BodyText("Your portal token lives on this phone only. Signing out deletes it along with everything cached by this app.", color = Muted)
-            }
+            NavRow(
+                label = "Privacy policy",
+                detail = "",
+                modifier = Modifier.entrance(7),
+            ) { }
         }
 
         item {
-            PrimaryButton("Sign out", onClick = { vm.signOut() }, modifier = Modifier.padding(top = 4.dp).entrance(5))
+            RowLine(
+                label = "Licences",
+                modifier = Modifier.entrance(8),
+                trailing = { MonoText("GPL-3.0") },
+            )
         }
 
-        if (version.isNotBlank()) {
-            item { MonoText("VERSION $version", modifier = Modifier.entrance(6)) }
+        item {
+            Spacer(Modifier.height(16.dp))
+            PrimaryButton("Sign out", onClick = { vm.signOut() }, modifier = Modifier.entrance(9))
         }
     }
 }

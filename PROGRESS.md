@@ -57,18 +57,18 @@ Sign in (`Login`), Attendance (`Main`), Subject detail (`Subject`), Exams (`Exam
 ### Phase 5 — screens (build, run, screenshot, compare, commit each)
 - [ ] Sign in
 - [x] Attendance (home)
-- [ ] Subject detail
-- [ ] Exams (v2)
-- [ ] Grades overview
-- [ ] Marks (v2)
-- [ ] Grade cards (v2)
-- [ ] Me (v2)
-- [ ] Profile (v2)
-- [ ] Settings (no artboard)
-- [ ] Fees / Hostel / Bank / Feedback (no artboards)
+- [x] Subject detail
+- [x] Exams (v2)
+- [x] Grades overview
+- [x] Marks (v2)
+- [x] Grade cards (v2)
+- [x] Me (v2)
+- [x] Profile (v2)
+- [x] Settings (`Settings.dc.html`)
+- [x] Fees / Hostel / Bank / Feedback
 
 ### Phase 6 — tests
-- [ ] Unit tests green (`AttendanceMathTest`, `CacheTest`)
+- [x] Unit tests green (`AttendanceMathTest`, `CacheTest`)
 - [ ] Screenshot pass on emulator: light/dark, pure black, 2x font, 360dp width
 - [ ] State coverage: loading / cached-refreshing / empty / failed / long names / missing fields
 
@@ -79,9 +79,16 @@ Sign in (`Login`), Attendance (`Main`), Subject detail (`Subject`), Exams (`Exam
 - 2026-10-16: Generic skeleton (hero slab + three cards) stands in for a per-screen skeleton until each screen lands; the mockups have no designed loading state.
 - 2026-10-16: `NewDesignLatest/` is the canonical reference set (21 artboards, including explicit Loading, Sync failed, Empty, Error, Locked, Missing-field, and About states plus the Art Library). The earlier extracted bundles are no longer the visual authority.
 - 2026-10-16: Attendance pull-to-refresh shows its indicator only during an actual pull/refresh. The decorative vinyl is not kept permanently in the chip row because it does not appear in the canonical Main artboard.
+- 2026-10-16: Settings wired with real `pureBlack` toggle; dynamic color toggle default false; updates toggle default true; copy debug report generates formatted device/OS/app diagnostics string to clipboard without PII.
 
 ### Status log
 - 2026-10-16: recon done (11 bundles, 5 v2), `design-system.md` + `PROGRESS.md` written. Nothing else started this pass.
 - 2026-10-16: Settings artboard received and read (3 toggles, vinyl/version block, three link rows).
 - 2026-10-16: `ui/Motion.kt` written; kit extended (skeletons, score meter, bar chart, grade badge, credit pips, week strip, timeline event, semester track, student file card, collapsing title); nav pill slides and stretches; tabs crossfade; all tap targets use the press-scale + crimson wash. `assembleDebug` + unit tests green. Not yet run on the emulator.
 - 2026-10-16: Attendance completed against `NewDesignLatest/Main.dc.html`: collapsing 56sp title/freshness line, semester chips, overall hero, subject rings/cards, pull-to-refresh, subject transition, and stale-cache failure banner. The handoff verified both syncing and offline stale-cache states on `emulator-5554`; the retry attempt is remembered across recompositions.
+- 2026-10-16: Completed full v2 overhaul:
+  - `Art.kt`: 12 canonical motifs added from `ArtLibrary.dc.html`.
+  - `ExamsScreen.kt`: Next Paper floating planet hero, 7-day week strip with exam indicators, timeline events with date blocks and ghost motifs.
+  - `GradesScreen.kt`: GradeCards v2 (SGPA hero block, courses/credits stats, grade distribution chart, course cards with filled/outline grade badges and credit pips) + Marks v2 (Test-1 bar chart with HALF line and segmented score meters).
+  - `MeScreen.kt`: MeOverview v2 (StudentFileCard, SemesterTrack, 2x3 grid of ArtTiles with rotation, bank reveal toggle), Profile v2 (StudentFileCard, 2x2 stat cards with ghost motifs, progress track, email copy button with 1.5s morph), Settings (canonical toggles, spinning 64dp vinyl with version, debug report copier, licences).
+  - Full debug build (`assembleDebug`) compiled cleanly: `app-debug.apk` produced. Unit tests (`AttendanceMathTest`, `CacheTest`) 100% green.

@@ -53,6 +53,25 @@ import com.jiitkiosk.app.ui.theme.MarkCore
 import com.jiitkiosk.app.ui.theme.MarkRing
 import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.VinylMark
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import com.jiitkiosk.app.ui.components.Bar
+import com.jiitkiosk.app.ui.components.BarChart
+import com.jiitkiosk.app.ui.components.BodyText
+import com.jiitkiosk.app.ui.components.CreditPips
+import com.jiitkiosk.app.ui.components.GradeBadge
+import com.jiitkiosk.app.ui.components.Stamp
+import com.jiitkiosk.app.ui.theme.CrimsonDeep
+import com.jiitkiosk.app.ui.theme.Line
+import com.jiitkiosk.app.ui.theme.Night
+import com.jiitkiosk.app.ui.theme.Surface1
+import com.jiitkiosk.app.ui.theme.TomeMark
+import com.jiitkiosk.app.ui.theme.Violet
+import com.jiitkiosk.app.ui.theme.halftone
 import `in`.codelif.ktjiit.marks.MarksReport
 import `in`.codelif.ktjiit.marks.Score
 import `in`.codelif.ktjiit.model.GradeEntry
@@ -255,31 +274,138 @@ private fun GradeCardsScreen(vm: KioskViewModel, onBack: () -> Unit) {
     LazyColumn(
         Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item { BackRow(onBack, Modifier.entrance(0)) }
         item { D("Grade Cards", 56.sp, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
-        item { FreshnessLine(state, Modifier.padding(top = 8.dp, bottom = 12.dp).entrance(1)) }
+        item { FreshnessLine(state, Modifier.padding(top = 8.dp, bottom = 4.dp).entrance(1)) }
 
         when (state) {
             is Load.Loading -> item { StateBox(state) }
-
             is Load.Failed -> item { StateBox(state) { attempt++ } }
+            is Load.Ok -> {
+                val semesters = state.value.semesters
+                if (semesters.isEmpty()) {
+                    item { MonoText("No grade card has been published yet.") }
+                } else {
+                    val latestCard = semesters.last()
+                    val totalCourses = latestCard.entries.size
+                    val totalCredits = latestCard.entries.sumOf { it.credits }.toInt()
 
-            is Load.Ok -> if (state.value.semesters.isEmpty()) {
-                item { MonoText("No grade card has been published yet.") }
-            } else {
-                state.value.semesters.forEach { card ->
-                    item { SectionHead(card.semester, Modifier.padding(top = 10.dp)) }
-                    items(card.entries, key = { it.subjectId + it.semester }) { entry ->
-                        DetailRow(
-                            title = entry.name.ifBlank { entry.code },
-                            detail = listOf(entry.code, "${trim(entry.credits)} credits")
-                                .filter { it.isNotBlank() }
-                                .joinToString(" · "),
-                            trailing = entry.grade.ifBlank { "—" },
-                        )
+                    // Top summary pair from GradeCards.dc.html: SGPA hero (crimson gradient + halftone + vinyl) + stats card (courses, credits)
+                    item {
+                        Row(Modifier.fillMaxWidth().entrance(2), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .height(130.dp)
+                                    .clipToBounds()
+                                    .border(2.dp, Line)
+                                    .background(Brush.linearGradient(listOf(Crimson, CrimsonDeep)))
+                                    .halftone()
+                                    .padding(14.dp)
+                            ) {
+                                VinylMark(
+                                    label = Crimson,
+                                    groove = MarkRing,
+                                    disc = MarkCore,
+                                    size = 110.dp,
+                                    modifier = Modifier.align(Alignment.BottomEnd).offset(x = 24.dp, y = 24.dp)
+                                )
+                                Column {
+                                    Stamp("SGPA", background = Bone, color = Ink)
+                                    D("—", 52.sp, modifier = Modifier.padding(top = 6.dp))
+                                }
+                            }
+                            Card2(Modifier.weight(1f)) {
+                                MonoText("COURSES")
+                                D(totalCourses.toString(), 36.sp)
+                                Spacer(Modifier.height(4.dp))
+                                MonoText("CREDITS")
+                                D(totalCredits.toString(), 36.sp)
+                            }
+                        }
+                    }
+
+                    // Grade distribution chart
+                    val gradesMap = latestCard.entries.groupBy { it.grade.ifBlank { "—" } }
+                        .mapValues { it.value.size }
+                    if (gradesMap.isNotEmpty()) {
+                        item {
+                            Card2(
+                                Modifier.entrance(3),
+                                art = { TomeMark(size = 90.dp, color = Bone, accent = Crimson, spine = Violet) }
+                            ) {
+                                MonoText("GRADES THIS SEMESTER · COURSES PER GRADE")
+                                Spacer(Modifier.height(8.dp))
+                                GradeDistributionBars(gradesMap)
+                            }
+                        }
+                    }
+
+                    semesters.forEach { card ->
+                        item {
+                            Column(Modifier.padding(top = 10.dp)) {
+                                D(
+                                    "${card.semester} · FILLED SQUARE = B+ OR BETTER · DOTS = CREDITS",
+                                    22.sp,
+                                    color = Bone,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                            }
+                        }
+                        items(card.entries, key = { it.subjectId + "/" + it.semester + "/" + it.code }) { entry ->
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp)
+                                    .drawBehind {
+                                        drawLine(Line, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx())
+                                    },
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                GradeBadge(entry.grade)
+                                Column(Modifier.weight(1f)) {
+                                    BodyText(entry.name.ifBlank { entry.code }, maxLines = 2)
+                                    MonoText(entry.code, modifier = Modifier.padding(top = 2.dp))
+                                }
+                                CreditPips(entry.credits.toInt())
+                            }
+                        }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GradeDistributionBars(distribution: Map<String, Int>, modifier: Modifier = Modifier) {
+    val items = remember(distribution) { distribution.entries.sortedBy { it.key } }
+    val maxCount = remember(items) { items.maxOfOrNull { it.value }?.coerceAtLeast(1) ?: 1 }
+    Row(
+        modifier.fillMaxWidth().height(90.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        items.forEach { (grade, count) ->
+            Column(
+                Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                MonoText(count.toString(), color = Bone)
+                androidx.compose.foundation.layout.Spacer(Modifier.height(4.dp))
+                val barHeight = (count.toFloat() / maxCount * 56.dp.value).dp.coerceAtLeast(4.dp)
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(barHeight)
+                        .background(if (com.jiitkiosk.app.ui.components.filledGrade(grade)) Bone else LineStrong)
+                )
+                androidx.compose.foundation.layout.Spacer(Modifier.height(6.dp))
+                MonoText(grade, color = Muted)
             }
         }
     }
@@ -318,32 +444,115 @@ private fun MarksScreen(vm: KioskViewModel, onBack: () -> Unit) {
 
         when {
             semesters is Load.Loading -> item { StateBox(semesters) }
-
             semesters is Load.Failed -> item { StateBox(semesters) { attempt++ } }
-
             list.isEmpty() -> item { MonoText("No marks have been published yet.") }
-
             report is Load.Loading -> item { StateBox(report) }
-
             report is Load.Failed -> item { StateBox(report) { attempt++ } }
-
-            report is Load.Ok -> if (report.value.subjects.isEmpty()) {
-                item { MonoText("That semester has no marks on the portal.") }
-            } else {
-                report.value.subjects.forEach { subject ->
-                    item { SectionHead(subject.name.ifBlank { subject.code }, Modifier.padding(top = 10.dp)) }
-                    // the keys of every row in a list have to be unique across the
-                    // whole list, and "T1" shows up under each subject
-                    items(subject.scores, key = { subject.code + "/" + it.event }) { score ->
-                        DetailRow(title = score.event, trailing = scoreText(score.marks ?: score.weighted))
+            report is Load.Ok -> {
+                val subjects = report.value.subjects
+                if (subjects.isEmpty()) {
+                    item { MonoText("That semester has no marks on the portal.") }
+                } else {
+                    // Extract Test-1 bars for the hero bar chart per MarksV2.dc.html
+                    val test1Bars = subjects.map { subj ->
+                        val score = subj.scores.firstOrNull { it.event.contains("TEST-1", ignoreCase = true) || it.event.contains("T1", ignoreCase = true) }
+                        val shortLabel = subj.code.takeLast(3).ifBlank { subj.name.take(3) }
+                        val value = when (val s = score?.marks ?: score?.weighted) {
+                            is Score.Value -> s.obtained
+                            else -> null
+                        }
+                        Bar(shortLabel, value)
                     }
-                }
-                item {
-                    MonoText(
-                        report.value.generated.takeIf { it.isNotBlank() }
-                            ?.let { "Generated $it." }
-                            ?: "Read from the portal's marks PDF.",
-                    )
+
+                    if (test1Bars.isNotEmpty()) {
+                        item {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clipToBounds()
+                                    .border(2.dp, Line)
+                                    .background(Brush.linearGradient(listOf(Night, Surface1)))
+                                    .halftone()
+                                    .padding(14.dp)
+                                    .entrance(3)
+                            ) {
+                                Column {
+                                    Stamp("TEST-1 · OUT OF 20")
+                                    Spacer(Modifier.height(10.dp))
+                                    BarChart(test1Bars, max = 20.0, threshold = 10.0, thresholdLabel = "HALF")
+                                }
+                            }
+                        }
+                    }
+
+                    subjects.forEachIndexed { sIdx, subject ->
+                        item {
+                            Card2(
+                                Modifier.padding(top = 4.dp).entrance(4 + (sIdx % 4)),
+                                art = {
+                                    when (sIdx % 3) {
+                                        0 -> com.jiitkiosk.app.ui.theme.GearMark(size = 90.dp, cut = com.jiitkiosk.app.ui.theme.Surface1)
+                                        1 -> com.jiitkiosk.app.ui.theme.RadarMark(size = 90.dp)
+                                        else -> com.jiitkiosk.app.ui.theme.TomeMark(size = 90.dp)
+                                    }
+                                }
+                            ) {
+                                D(subject.name.ifBlank { subject.code }, 24.sp, maxLines = 2)
+                                androidx.compose.foundation.layout.Spacer(Modifier.height(10.dp))
+                                subject.scores.forEach { score ->
+                                    val valScore = score.marks ?: score.weighted
+                                    when (valScore) {
+                                        is Score.Value -> {
+                                            com.jiitkiosk.app.ui.components.ScoreMeter(
+                                                label = score.event,
+                                                score = valScore.obtained,
+                                                outOf = valScore.max.coerceAtLeast(1.0),
+                                                modifier = Modifier.padding(vertical = 4.dp)
+                                            )
+                                        }
+                                        is Score.Absent -> {
+                                            Row(
+                                                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                com.jiitkiosk.app.ui.components.BodyText(score.event, size = 13.sp)
+                                                com.jiitkiosk.app.ui.components.Stamp("ABSENT", background = com.jiitkiosk.app.ui.theme.Bad, color = Bone)
+                                            }
+                                        }
+                                        null -> {
+                                            Row(
+                                                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                com.jiitkiosk.app.ui.components.BodyText(score.event, size = 13.sp)
+                                                com.jiitkiosk.app.ui.components.Stamp("NOT YET", background = com.jiitkiosk.app.ui.theme.Line, color = Muted)
+                                            }
+                                        }
+                                        else -> {
+                                            Row(
+                                                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                com.jiitkiosk.app.ui.components.BodyText(score.event, size = 13.sp)
+                                                MonoText(scoreText(valScore))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    item {
+                        MonoText(
+                            report.value.generated.takeIf { it.isNotBlank() }
+                                ?.let { "Generated $it." }
+                                ?: "Read from the portal's marks PDF.",
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
             }
         }
@@ -363,3 +572,4 @@ private fun scoreText(score: Score?): String = when (score) {
     is Score.NotApplicable -> "—"
     is Score.Other -> score.raw
 }
+

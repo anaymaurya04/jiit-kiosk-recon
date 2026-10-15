@@ -54,6 +54,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -157,13 +158,54 @@ fun ExamsScreen(vm: KioskViewModel) {
 
                         item { NextPaperHero(current, upcoming = next != null, Modifier.padding(bottom = 4.dp).entrance(2)) }
 
+                        // 7-day strip from today
+                        val today = LocalDate.now()
+                        val weekDays = (0 until 7).map { offset ->
+                            val d = today.plusDays(offset.toLong())
+                            com.jiitkiosk.app.ui.components.DayCell(
+                                weekday = d.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, Locale.ENGLISH).uppercase(),
+                                date = d.dayOfMonth,
+                                today = offset == 0,
+                                hasExam = papers.any { it.slot.day == d }
+                            )
+                        }
+                        item {
+                            Column(Modifier.padding(top = 8.dp).entrance(3)) {
+                                SectionHead("This week", Modifier.padding(bottom = 8.dp))
+                                com.jiitkiosk.app.ui.components.WeekStrip(weekDays)
+                            }
+                        }
+
                         if (rest.isNotEmpty()) {
-                            item { SectionHead("Then", Modifier.padding(top = 6.dp).entrance(3)) }
-                            items(rest, key = { it.slot.code + it.slot.date }) { paper ->
-                                DetailRow(
-                                    title = paper.slot.subjectName,
-                                    detail = paperDetail(paper),
-                                    trailing = paper.slot.let { listOf(it.room, it.seat.ifBlank { null }).filterNotNull().joinToString(" · ") },
+                            item { SectionHead("Then", Modifier.padding(top = 10.dp, bottom = 4.dp).entrance(4)) }
+                            items(rest, key = { it.slot.code + "/" + it.slot.date + "/" + it.slot.start }) { paper ->
+                                val date = paper.slot.day
+                                val dayStr = date?.dayOfMonth?.toString() ?: "—"
+                                val monthStr = date?.month?.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH)?.uppercase() ?: ""
+                                val dayOfWeek = date?.dayOfWeek?.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH)?.uppercase() ?: ""
+                                val timeStr = paper.slot.start?.format(STAMP_TIME) ?: ""
+                                val detailStr = listOf(dayOfWeek, timeStr).filter { it.isNotBlank() }.joinToString(" · ")
+                                val roomSeat = listOf(
+                                    paper.slot.room.ifBlank { "ROOM TBA" },
+                                    paper.slot.seat.takeIf { it.isNotBlank() }?.let { "SEAT $it" }
+                                ).filterNotNull().joinToString(" · ")
+                                com.jiitkiosk.app.ui.components.TimelineEvent(
+                                    day = dayStr,
+                                    month = monthStr,
+                                    title = paper.slot.subjectName.ifBlank { paper.slot.code },
+                                    detail = detailStr,
+                                    tag = paper.event.takeIf { it.isNotBlank() }?.uppercase(),
+                                    room = roomSeat,
+                                    art = {
+                                        com.jiitkiosk.app.ui.theme.SatelliteMark(
+                                            size = 70.dp,
+                                            color = Bone,
+                                            accent = com.jiitkiosk.app.ui.theme.Crimson,
+                                            panel = Violet,
+                                            cut = com.jiitkiosk.app.ui.theme.Surface1
+                                        )
+                                    },
+                                    modifier = Modifier.padding(bottom = 4.dp),
                                 )
                             }
                         }
@@ -193,6 +235,10 @@ fun ExamsScreen(vm: KioskViewModel) {
 
 @Composable
 private fun NextPaperHero(paper: Paper, upcoming: Boolean, modifier: Modifier = Modifier) {
+    val orbit = com.jiitkiosk.app.ui.rememberOrbit(6000)
+    val floatPx = (kotlin.math.sin(orbit.value * 2 * Math.PI).toFloat() * 4f)
+    val tiltDeg = (kotlin.math.sin(orbit.value * 2 * Math.PI).toFloat() * 2f)
+
     HeroPanel(
         height = 250.dp,
         angle = 160f,
@@ -206,7 +252,13 @@ private fun NextPaperHero(paper: Paper, upcoming: Boolean, modifier: Modifier = 
                 speck = Bone,
                 detail = Ink,
                 size = 230.dp,
-                modifier = Modifier.align(Alignment.TopEnd).offset(x = 60.dp, y = (-20).dp),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 60.dp, y = (-20).dp)
+                    .graphicsLayer {
+                        translationY = floatPx
+                        rotationZ = tiltDeg
+                    },
             )
         },
     ) {
