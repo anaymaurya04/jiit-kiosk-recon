@@ -55,7 +55,7 @@ Sign in (`Login`), Attendance (`Main`), Subject detail (`Subject`), Exams (`Exam
 - [ ] Screen wiring: entrances per screen, hero art slide, tag pop, countdown roll, planet float, vinyl idle/sync, pull-to-refresh, bank digit roll, COPY morph, toggle motion — lands with each screen (Phase 5)
 
 ### Phase 5 — screens (build, run, screenshot, compare, commit each)
-- [ ] Sign in
+- [x] Sign in
 - [x] Attendance (home)
 - [x] Subject detail
 - [x] Exams (v2)
