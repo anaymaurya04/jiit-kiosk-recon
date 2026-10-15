@@ -2,18 +2,18 @@ package com.jiitkiosk.app.ui.attendance
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,19 +29,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.domain.AttendanceMath
 import com.jiitkiosk.app.domain.Tally
+import com.jiitkiosk.app.ui.BackLayer
 import com.jiitkiosk.app.ui.KioskViewModel
+import com.jiitkiosk.app.ui.Motion
+import com.jiitkiosk.app.ui.PageFlip
+import com.jiitkiosk.app.ui.artIn
 import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.ChipRow
+import com.jiitkiosk.app.ui.components.CollapsingTitle
 import com.jiitkiosk.app.ui.components.D
 import com.jiitkiosk.app.ui.components.EmptyState
 import com.jiitkiosk.app.ui.components.FreshnessLine
 import com.jiitkiosk.app.ui.components.HeroPanel
 import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
-import com.jiitkiosk.app.ui.components.ScreenTitle
+import com.jiitkiosk.app.ui.components.RefreshBox
 import com.jiitkiosk.app.ui.components.Stamp
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.rememberCached
+import com.jiitkiosk.app.ui.components.scrollDepth
+import com.jiitkiosk.app.ui.entrance
+import com.jiitkiosk.app.ui.parallax
+import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
 import com.jiitkiosk.app.ui.theme.CrimsonDeep
@@ -103,9 +112,13 @@ fun rememberSheet(vm: KioskViewModel, semester: Semester?, attempt: Int): Load<S
 
 @Composable
 fun AttendanceScreen(vm: KioskViewModel) {
+    // A refresh must survive the recomposition it triggers; otherwise its new
+    // cache attempt is immediately lost and the request is not re-issued.
     var attempt by remember { mutableStateOf(0) }
     var semIndex by rememberSaveable { mutableStateOf(0) }
-    var open by remember { mutableStateOf<Pair<Sheet, SubjectAttendance>?>(null) }
+    // the open subject, by id: the sheet behind it is read live, so a refresh
+    // updates the page the user is on instead of freezing what it looked like
+    var openId by rememberSaveable { mutableStateOf<String?>(null) }
 
     val token = vm.session?.token.orEmpty()
     val meta = rememberCached(vm, "att-meta/$token", AttendanceMeta.serializer(), attempt) { it.attendanceMeta() }
@@ -113,83 +126,125 @@ fun AttendanceScreen(vm: KioskViewModel) {
     val semester = semesters.getOrNull(semIndex)
     val sheet = rememberSheet(vm, semester, attempt)
 
-    // the system back button goes up a level before it leaves the app
-    BackHandler(enabled = open != null) { open = null }
+    val sheetOk = sheet as? Load.Ok
+    val stamp = sheetOk ?: (meta as? Load.Ok)
 
-    val openPair = open
-    if (openPair != null) {
-        SubjectScreen(
-            vm = vm,
-            subject = openPair.second,
-            sheet = openPair.first,
-            semester = semester,
-            attempt = attempt,
-            onBack = { open = null },
-        )
-        return
+    // the system back goes up a level before it leaves the app, and it does so
+    // while following the gesture
+    BackLayer(enabled = openId != null, onBack = { openId = null }) {
+        PageFlip(target = openId, forward = openId != null) { id ->
+            val subject = id?.let { sid ->
+                sheetOk?.value?.detail?.subjects?.firstOrNull { it.subjectId == sid }
+            }
+            if (id != null && subject != null && sheetOk != null) {
+                SubjectScreen(
+                    vm = vm,
+                    subject = subject,
+                    sheet = sheetOk.value,
+                    semester = semester,
+                    attempt = attempt,
+                    onBack = { openId = null },
+                )
+            } else {
+                AttendanceList(
+                    stamp = stamp,
+                    meta = meta,
+                    sheet = sheet,
+                    semesters = semesters,
+                    semIndex = semIndex,
+                    onSemester = { semIndex = it },
+                    onRetry = { attempt++ },
+                    onOpen = { openId = it },
+                )
+            }
+        }
     }
+}
 
-    // the newest thing we have, whichever call produced it
-    val stamp = (sheet as? Load.Ok) ?: (meta as? Load.Ok)
+@Composable
+private fun AttendanceList(
+    stamp: Load.Ok<*>?,
+    meta: Load<AttendanceMeta>,
+    sheet: Load<Sheet>,
+    semesters: List<Semester>,
+    semIndex: Int,
+    onSemester: (Int) -> Unit,
+    onRetry: () -> Unit,
+    onOpen: (String) -> Unit,
+) {
+    val list = rememberLazyListState()
+    val metaSlot: (@Composable () -> Unit)? = if (stamp != null) {
+        { FreshnessLine(at = stamp.at, stale = stamp.stale, refreshing = stamp.refreshing) }
+    } else {
+        null
+    }
+    Column(Modifier.fillMaxSize()) {
+        CollapsingTitle(
+            title = "Attendance",
+            offset = { list.scrollDepth() },
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp).entrance(0),
+            meta = metaSlot,
+        )
 
-    LazyColumn(
-        Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            Column(Modifier.padding(bottom = 4.dp)) {
-                ScreenTitle("Attendance")
-                if (stamp != null) {
-                    FreshnessLine(
-                        at = stamp.at,
-                        stale = stamp.stale,
-                        refreshing = stamp.refreshing,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
+        RefreshBox(
+            syncing = sheet is Load.Ok && sheet.refreshing,
+            onRefresh = { onRetry() },
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+        ) {
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                state = list,
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (semesters.size > 1) {
+                    item(key = "chips") {
+                        ChipRow(
+                            semesters.map { it.description.ifBlank { it.code } },
+                            semIndex,
+                            modifier = Modifier.entrance(1),
+                        ) { onSemester(it) }
+                    }
                 }
-            }
-        }
 
-        if (semesters.size > 1) {
-            item { ChipRow(semesters.map { it.description.ifBlank { it.code } }, semIndex) { semIndex = it } }
-        }
+                when {
+                    meta is Load.Loading -> item(key = "meta-load") { StateBox(meta) }
 
-        when {
-            meta is Load.Loading -> item { StateBox(meta) }
+                    meta is Load.Failed -> item(key = "meta-fail") { StateBox(meta, onRetry) }
 
-            meta is Load.Failed -> item { StateBox(meta) { attempt++ } }
+                    meta is Load.Ok && semesters.isEmpty() -> item(key = "no-sem") {
+                        EmptyState("No Registrations", "The portal has no attendance registration on your record yet.") {
+                            HelmMark(arch = LineStrong, accent = LineStrong, detail = LineStrong, size = 120.dp)
+                        }
+                    }
 
-            meta is Load.Ok && semesters.isEmpty() -> item {
-                EmptyState("No Registrations", "The portal has no attendance registration on your record yet.") {
-                    HelmMark(arch = LineStrong, accent = LineStrong, detail = LineStrong, size = 120.dp)
-                }
-            }
+                    sheet is Load.Failed -> item(key = "sheet-fail") { StateBox(sheet, onRetry) }
 
-            sheet is Load.Loading -> item { StateBox(sheet) }
-
-            sheet is Load.Failed -> item { StateBox(sheet) { attempt++ } }
-
-            sheet is Load.Ok -> {
-                val subjects = sheet.value.detail.subjects
-                if (subjects.isEmpty()) {
-                    item {
+                    sheet is Load.Ok && sheet.value.detail.subjects.isEmpty() -> item(key = "no-subjects") {
                         EmptyState("Nothing Marked", "The semester is registered but no class has been marked yet.") {
                             HelmMark(arch = LineStrong, accent = LineStrong, detail = LineStrong, size = 120.dp)
                         }
                     }
-                } else {
-                    item {
+
+                    sheet is Load.Ok -> {
+                        val subjects = sheet.value.detail.subjects
                         val percent = subjects.mapNotNull { it.percent }
                         if (percent.isNotEmpty()) {
-                            Overall(percent.average(), Modifier.padding(bottom = 4.dp))
+                            item(key = "overall") {
+                                Overall(
+                                    average = percent.average(),
+                                    index = 2,
+                                    offset = { list.scrollDepth() },
+                                    modifier = Modifier.padding(bottom = 4.dp),
+                                )
+                            }
+                        }
+                        itemsIndexed(subjects, key = { _, s -> s.subjectId }) { index, subject ->
+                            SubjectCard(subject, sheet.value.tallyOf(subject), index) { onOpen(subject.subjectId) }
                         }
                     }
-                    items(subjects, key = { it.subjectId }) { subject ->
-                        SubjectCard(subject, sheet.value.tallyOf(subject), subjects.indexOf(subject)) {
-                            open = sheet.value to subject
-                        }
-                    }
+
+                    else -> item(key = "sheet-load") { StateBox(sheet) }
                 }
             }
         }
@@ -198,19 +253,23 @@ fun AttendanceScreen(vm: KioskViewModel) {
 
 /** the crimson hero with the term's average across the subjects on the record */
 @Composable
-private fun Overall(average: Double, modifier: Modifier = Modifier) {
+private fun Overall(average: Double, index: Int, offset: () -> Float, modifier: Modifier = Modifier) {
     HeroPanel(
         height = 120.dp,
         angle = 160f,
         stops = arrayOf(0f to Crimson, 0.7f to CrimsonDeep),
-        modifier = modifier,
+        modifier = modifier.entrance(index),
         art = {
             HelmMark(
                 arch = Ink,
                 accent = Crimson,
                 detail = Crimson,
                 size = 150.dp,
-                modifier = Modifier.align(Alignment.BottomEnd).offset(x = 10.dp, y = 30.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 10.dp, y = 30.dp)
+                    .parallax(offset)
+                    .artIn(),
             )
         },
     ) {
@@ -225,13 +284,17 @@ private fun Overall(average: Double, modifier: Modifier = Modifier) {
 private fun SubjectCard(subject: SubjectAttendance, tally: Tally, index: Int, onClick: () -> Unit) {
     val shown = subject.percent ?: tally.percent
     val verdict = verdictOf(shown)
+    // one stagger step for the card and a later one for its ring, so the number
+    // arrives after the card it belongs to is on screen
+    val step = (index + 3).coerceAtMost(Motion.MAX_STAGGER)
     Box(
         Modifier
             .fillMaxWidth()
             .clipToBounds()
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .border(2.dp, Line)
-            .clickable(onClick = onClick),
+            .tap(onClick)
+            .entrance(step),
     ) {
         // the mockups give each card a different faint motif behind the content
         Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp).alpha(0.18f)) { Ghost(index) }
@@ -246,6 +309,7 @@ private fun SubjectCard(subject: SubjectAttendance, tally: Tally, index: Int, on
                 color = verdict.color,
                 size = 64.dp,
                 a11y = "${shown.roundToInt()} percent attendance, ${verdict.stamp}",
+                delayMs = step * Motion.STAGGER + 160,
             )
             Column {
                 BodyText(subject.name, size = 16.sp, maxLines = 2)

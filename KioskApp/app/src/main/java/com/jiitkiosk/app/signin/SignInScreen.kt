@@ -45,12 +45,15 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.jiitkiosk.app.ui.KioskViewModel
+import com.jiitkiosk.app.ui.artIn
 import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.D
 import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.friendly
 import com.jiitkiosk.app.ui.components.rememberLoad
+import com.jiitkiosk.app.ui.entrance
+import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
 import com.jiitkiosk.app.ui.theme.CrimsonDeep
@@ -85,7 +88,7 @@ fun SignInScreen(vm: KioskViewModel) {
             accent = Crimson,
             detail = Crimson,
             size = 420.dp,
-            modifier = Modifier.offset(x = (-20).dp, y = 20.dp),
+            modifier = Modifier.offset(x = (-20).dp, y = 20.dp).artIn(),
         )
 
         Column(
@@ -96,27 +99,27 @@ fun SignInScreen(vm: KioskViewModel) {
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 40.dp),
         ) {
-            D("J\nPortal", 88.sp, maxLines = 2)
+            D("J\nPortal", 88.sp, maxLines = 2, modifier = Modifier.entrance(0))
             BodyText(
                 "Your JIIT portal, as an app. Unofficial.",
-                modifier = Modifier.padding(top = 12.dp, bottom = 20.dp),
+                modifier = Modifier.padding(top = 12.dp, bottom = 20.dp).entrance(1),
             )
 
             when (config) {
-                is Load.Loading -> BoneBar {
+                is Load.Loading -> BoneBar(modifier = Modifier.entrance(2)) {
                     MonoText("REACHING THE PORTAL…", color = Ink, medium = true)
                 }
 
                 is Load.Failed -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     MonoText("PORTAL UNREACHABLE", color = Bone, medium = true)
                     BodyText(friendly(config.error))
-                    BoneBar(onClick = { error = null; attempt++ }, label = "TRY AGAIN")
+                    BoneBar(modifier = Modifier.entrance(2), onClick = { error = null; attempt++ }, label = "TRY AGAIN")
                 }
 
                 is Load.Ok -> {
                     val cfg = config.value
                     if (cfg.googleEnabled) {
-                        BoneBar {
+                        BoneBar(modifier = Modifier.entrance(2)) {
                             GoogleButton(
                                 clientId = cfg.googleClientId,
                                 onCredential = { credential ->
@@ -131,7 +134,7 @@ fun SignInScreen(vm: KioskViewModel) {
                             )
                         }
                     } else {
-                        BoneBar {
+                        BoneBar(modifier = Modifier.entrance(2)) {
                             MonoText("NO GOOGLE SIGN-IN FROM THE PORTAL RIGHT NOW", color = Ink, medium = true)
                         }
                     }
@@ -140,13 +143,13 @@ fun SignInScreen(vm: KioskViewModel) {
 
             error?.let {
                 Spacer(Modifier.height(12.dp))
-                MonoText(it, color = Bone, medium = true)
+                MonoText(it, color = Bone, medium = true, modifier = Modifier.entrance(3))
             }
 
             MonoText(
                 "Session sealed on this phone. No analytics.",
                 color = Bone,
-                modifier = Modifier.padding(top = 12.dp),
+                modifier = Modifier.padding(top = 12.dp).entrance(3),
             )
 
             // the mockup has no fallback link, but google blocking our page is a
@@ -155,7 +158,7 @@ fun SignInScreen(vm: KioskViewModel) {
                 text = "HAVING TROUBLE? SIGN IN ON THE PORTAL PAGE",
                 style = Mono.copy(fontWeight = FontWeight.Medium),
                 color = Bone.copy(alpha = 0.75f),
-                modifier = Modifier.padding(top = 16.dp).clickable { onPortalPage = true },
+                modifier = Modifier.padding(top = 16.dp).tap { onPortalPage = true },
             )
         }
     }
@@ -167,13 +170,18 @@ fun SignInScreen(vm: KioskViewModel) {
 
 /** the design's plain warm-white bar; the real google button sits inside it */
 @Composable
-private fun BoneBar(label: String? = null, onClick: (() -> Unit)? = null, content: @Composable () -> Unit = {}) {
+private fun BoneBar(
+    label: String? = null,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit = {},
+) {
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
             .height(52.dp)
             .background(Bone)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            .then(if (onClick != null) Modifier.tap(onClick) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         if (label != null) {

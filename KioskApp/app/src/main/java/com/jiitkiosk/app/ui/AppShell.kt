@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -52,13 +53,17 @@ fun AppShell(vm: KioskViewModel) {
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            // top-level tabs crossfade; the slide is for pages inside a tab
+            // top-level tabs crossfade; the slide is for pages inside a tab. The
+            // holder is why a tab comes back with its scroll and its open subject.
+            val holder = rememberSaveableStateHolder()
             Crossfade(targetState = tab, animationSpec = tween(Motion.FAST), label = "tab") { shown ->
-                when (shown) {
-                    Tab.Attendance -> AttendanceScreen(vm)
-                    Tab.Exams -> ExamsScreen(vm)
-                    Tab.Grades -> GradesScreen(vm)
-                    Tab.Me -> MeScreen(vm)
+                holder.SaveableStateProvider(shown) {
+                    when (shown) {
+                        Tab.Attendance -> AttendanceScreen(vm)
+                        Tab.Exams -> ExamsScreen(vm)
+                        Tab.Grades -> GradesScreen(vm)
+                        Tab.Me -> MeScreen(vm)
+                    }
                 }
             }
         }

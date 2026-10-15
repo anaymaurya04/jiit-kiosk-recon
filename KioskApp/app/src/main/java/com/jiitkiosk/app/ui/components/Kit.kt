@@ -1,7 +1,9 @@
 package com.jiitkiosk.app.ui.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -28,9 +30,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,6 +72,7 @@ import com.jiitkiosk.app.ui.KioskViewModel
 import com.jiitkiosk.app.ui.LocalReducedMotion
 import com.jiitkiosk.app.ui.Motion
 import com.jiitkiosk.app.ui.entrance
+import com.jiitkiosk.app.ui.rememberSpin
 import com.jiitkiosk.app.ui.shimmer
 import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
@@ -82,11 +88,13 @@ import com.jiitkiosk.app.ui.theme.IconNext
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.LineStrong
+import com.jiitkiosk.app.ui.theme.MarkRing
 import com.jiitkiosk.app.ui.theme.Mono
 import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.Sans
 import com.jiitkiosk.app.ui.theme.Steel
 import com.jiitkiosk.app.ui.theme.Surface1
+import com.jiitkiosk.app.ui.theme.VinylMark
 import com.jiitkiosk.app.ui.theme.cssGradient
 import com.jiitkiosk.app.ui.theme.halftone
 import `in`.codelif.ktjiit.http.PortalException
@@ -619,7 +627,52 @@ fun FreshnessLine(
         else -> "SYNCED ${ago(at)}"
     }
     val tail = extra?.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()
-    MonoText(text = head + tail, color = if (stale) Bad else Muted, medium = stale, modifier = modifier)
+    Crossfade(targetState = head + tail, animationSpec = tween(Motion.FAST), label = "freshness") { text ->
+        MonoText(text = text, color = if (stale) Bad else Muted, medium = stale, modifier = modifier)
+    }
+}
+
+/**
+ * Pull to refresh: the record is dragged down by the finger and spins up while
+ * the sync runs. Only a pull puts it on screen — a background sync never does —
+ * and it goes back up when the sync that pull started has ended.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RefreshBox(
+    syncing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val pull = rememberPullToRefreshState()
+    var pulled by remember { mutableStateOf(false) }
+    LaunchedEffect(pulled, syncing) {
+        if (pulled && !syncing) pulled = false
+    }
+    val spin = rememberSpin(active = pulled, idle = false)
+    PullToRefreshBox(
+        isRefreshing = pulled,
+        onRefresh = { pulled = true; onRefresh() },
+        modifier = modifier,
+        state = pull,
+        indicator = {
+            // distanceFraction is the finger's pull: 0 when hidden, 1 held at the
+            // threshold while the pull's sync runs.
+            val p = pull.distanceFraction
+            Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.graphicsLayer {
+                        alpha = p
+                        translationY = (p - 1f) * 56.dp.toPx()
+                        rotationZ = spin.value
+                    },
+                ) {
+                    VinylMark(label = Crimson, groove = MarkRing, disc = Ink, size = 32.dp)
+                }
+            }
+        },
+    ) { content() }
 }
 
 /** the same line for the screens that only have the loaded state to hand */
@@ -647,16 +700,22 @@ fun StatBox(label: String, value: String, modifier: Modifier = Modifier) {
  *  semantics, so the target is never smaller than the design's 48dp row. */
 @Composable
 fun Toggle(checked: Boolean, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .size(44.dp, 26.dp)
-            .background(if (checked) Crimson else Line),
-    ) {
+    val track by animateColorAsState(
+        targetValue = if (checked) Crimson else Line,
+        animationSpec = tween(Motion.FAST),
+        label = "track",
+    )
+    val thumb by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = Motion.snappy,
+        label = "thumb",
+    )
+    Box(modifier.size(44.dp, 26.dp).background(track)) {
         Box(
             Modifier
-                .align(if (checked) Alignment.CenterEnd else Alignment.CenterStart)
                 .padding(3.dp)
                 .size(20.dp)
+                .graphicsLayer { translationX = 18.dp.toPx() * thumb }
                 .background(Bone),
         )
     }
@@ -751,28 +810,28 @@ fun LazyListState.scrollDepth(): Float =
 
 /**
  * The 56sp display title pinned above a list: it shrinks to 22sp as the list
- * scrolls ([offset] is the scroll depth in px) and its mono line fades and
- * collapses away. Only this composable re-reads the scroll.
+ * scrolls ([offset] is the scroll depth in px) and its slot — the freshness line —
+ * fades and collapses away. Only this composable re-reads the scroll.
  */
 @Composable
 fun CollapsingTitle(
     title: String,
-    meta: String? = null,
     offset: () -> Float,
     modifier: Modifier = Modifier,
     collapseAt: Float = 150f,
+    meta: (@Composable () -> Unit)? = null,
 ) {
     val p = (offset() / collapseAt).coerceIn(0f, 1f)
     Column(modifier.fillMaxWidth()) {
         D(title, (56f + (22f - 56f) * p).sp, maxLines = 1)
-        if (!meta.isNullOrBlank()) {
-            MonoText(
-                meta,
-                modifier = Modifier
+        if (meta != null) {
+            Box(
+                Modifier
+                    .padding(top = 8.dp * (1f - p))
                     .height(16.dp * (1f - p))
                     .graphicsLayer { alpha = 1f - p }
-                    .padding(top = 8.dp * (1f - p)),
-            )
+                    .clipToBounds(),
+            ) { meta() }
         }
     }
 }

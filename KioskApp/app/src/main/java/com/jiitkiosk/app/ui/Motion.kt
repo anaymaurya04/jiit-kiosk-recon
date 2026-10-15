@@ -136,6 +136,34 @@ fun Modifier.entrance(index: Int = 0, rise: Dp = 16.dp): Modifier {
 }
 
 /**
+ * Hero art entering: slides in 24dp from the right and settles from 1.04 to its
+ * true size. Plays once when the screen is entered, like [entrance].
+ */
+@Composable
+fun Modifier.artIn(delayMs: Int = 0): Modifier {
+    val reduced = LocalReducedMotion.current
+    var played by rememberSaveable { mutableStateOf(false) }
+    val p = remember { Animatable(if (played) 1f else 0f) }
+    LaunchedEffect(Unit) {
+        if (played) return@LaunchedEffect
+        played = true
+        if (reduced) {
+            p.snapTo(1f)
+        } else {
+            p.animateTo(1f, tween(Motion.SLOW, delayMs, Motion.emphasizedDecelerate))
+        }
+    }
+    val shift = with(LocalDensity.current) { 24.dp.toPx() }
+    return graphicsLayer {
+        val v = p.value
+        translationX = (1f - v) * shift
+        val s = 1f + 0.04f * (1f - v)
+        scaleX = s
+        scaleY = s
+    }
+}
+
+/**
  * The design's tap: the element scales to 0.97 and flashes a sharp-cornered
  * crimson wash, no rounded ripple anywhere. Layout and touch bounds never change.
  */
@@ -175,14 +203,21 @@ fun rememberOrbit(periodMs: Int = 6000): State<Float> {
 
 /**
  * Degrees for the records that spin: one turn per 20s when idle, one turn per
- * 1.2s while [active] (a sync is running), easing between the two.
+ * 1.2s while [active] (a sync is running). With [idle] off nothing runs until
+ * something is actually syncing.
  */
 @Composable
-fun rememberSpin(active: Boolean, idleMs: Int = 20_000, activeMs: Int = 1_200): State<Float> {
+fun rememberSpin(
+    active: Boolean,
+    idle: Boolean = true,
+    idleMs: Int = 20_000,
+    activeMs: Int = 1_200,
+): State<Float> {
     val reduced = LocalReducedMotion.current
     val angle = remember { Animatable(0f) }
     if (reduced) return angle.asState()
-    LaunchedEffect(active) {
+    LaunchedEffect(active, idle) {
+        if (!active && !idle) return@LaunchedEffect
         val period = if (active) activeMs else idleMs
         while (true) {
             angle.animateTo(angle.value + 360f, tween(period, easing = LinearEasing))
@@ -226,17 +261,23 @@ fun Modifier.parallax(offset: () -> Float, factor: Float = 0.5f): Modifier = thi
 
 /**
  * Page swaps inside a tab. Forward: the new page fades in from 24dp right while
- * the old one fades out 8dp to the left. Back is the mirror.
+ * the old one fades out 8dp to the left. Back is the mirror. [target] is the
+ * state being shown — null for a tab's own list — and [forward] says whether we
+ * are going deeper, so a data refresh of the same target never replays a flip.
  */
 @Composable
-fun PageFlip(depth: Int, modifier: Modifier = Modifier, content: @Composable (Int) -> Unit) {
+fun <T> PageFlip(
+    target: T,
+    forward: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable (T) -> Unit,
+) {
     val shift = with(LocalDensity.current) { 24.dp.roundToPx() }
     val edge = with(LocalDensity.current) { 8.dp.roundToPx() }
     AnimatedContent(
-        targetState = depth,
+        targetState = target,
         modifier = modifier,
         transitionSpec = {
-            val forward = targetState > initialState
             val enter = slideInHorizontally(tween(Motion.BASE, easing = Motion.emphasizedDecelerate)) {
                 if (forward) shift else -shift
             } + fadeIn(tween(Motion.BASE))
@@ -246,7 +287,7 @@ fun PageFlip(depth: Int, modifier: Modifier = Modifier, content: @Composable (In
             enter togetherWith exit
         },
         label = "page",
-    ) { depth -> content(depth) }
+    ) { t -> content(t) }
 }
 
 /**

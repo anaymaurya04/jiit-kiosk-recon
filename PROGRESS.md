@@ -1,7 +1,7 @@
 # PROGRESS — JPortal ("Nocturnal Dossier") rebuild
 
 Repo: `jiit-kiosk-recon`. App: `KioskApp/` (Kotlin + Jetpack Compose, 4-tab shell).
-Reference: `design-system.md` (style bible) + `New Design/*.zip` artboards (pixel reference). If they disagree, artboards win.
+Reference: `design-system.md` (style bible) + `NewDesignLatest/*.dc.html` artboards (pixel reference). If they disagree, artboards win. The earlier `New Design/*.zip` bundles are retained as history; `NewDesignLatest/` is canonical.
 
 ## Plan (screens to build, files to touch, risks)
 
@@ -56,7 +56,7 @@ Sign in (`Login`), Attendance (`Main`), Subject detail (`Subject`), Exams (`Exam
 
 ### Phase 5 — screens (build, run, screenshot, compare, commit each)
 - [ ] Sign in
-- [ ] Attendance (home)
+- [x] Attendance (home)
 - [ ] Subject detail
 - [ ] Exams (v2)
 - [ ] Grades overview
@@ -77,8 +77,11 @@ Sign in (`Login`), Attendance (`Main`), Subject detail (`Subject`), Exams (`Exam
 - 2026-10-16: No screenshot-test framework present → emulator screenshots stand in.
 - 2026-10-16: Ring number is drawn on the canvas with the sweep (one redraw, no per-frame recomposition) rather than a `Text` that recomposes per frame.
 - 2026-10-16: Generic skeleton (hero slab + three cards) stands in for a per-screen skeleton until each screen lands; the mockups have no designed loading state.
+- 2026-10-16: `NewDesignLatest/` is the canonical reference set (21 artboards, including explicit Loading, Sync failed, Empty, Error, Locked, Missing-field, and About states plus the Art Library). The earlier extracted bundles are no longer the visual authority.
+- 2026-10-16: Attendance pull-to-refresh shows its indicator only during an actual pull/refresh. The decorative vinyl is not kept permanently in the chip row because it does not appear in the canonical Main artboard.
 
 ### Status log
 - 2026-10-16: recon done (11 bundles, 5 v2), `design-system.md` + `PROGRESS.md` written. Nothing else started this pass.
 - 2026-10-16: Settings artboard received and read (3 toggles, vinyl/version block, three link rows).
 - 2026-10-16: `ui/Motion.kt` written; kit extended (skeletons, score meter, bar chart, grade badge, credit pips, week strip, timeline event, semester track, student file card, collapsing title); nav pill slides and stretches; tabs crossfade; all tap targets use the press-scale + crimson wash. `assembleDebug` + unit tests green. Not yet run on the emulator.
+- 2026-10-16: Attendance completed against `NewDesignLatest/Main.dc.html`: collapsing 56sp title/freshness line, semester chips, overall hero, subject rings/cards, pull-to-refresh, subject transition, and stale-cache failure banner. The handoff verified both syncing and offline stale-cache states on `emulator-5554`; the retry attempt is remembered across recompositions.
