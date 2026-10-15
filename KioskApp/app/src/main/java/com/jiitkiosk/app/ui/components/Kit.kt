@@ -691,7 +691,12 @@ fun StatBox(label: String, value: String, modifier: Modifier = Modifier) {
     ) {
         MonoText(label.uppercase())
         Spacer(Modifier.height(6.dp))
-        D(value, 32.sp, maxLines = 1)
+        // Numeric values use the artboard's 32sp display type. A missing-data
+        // label has to remain fully readable inside a third-width card, so it
+        // intentionally switches to the compact metadata treatment instead of
+        // being ellipsized into an ambiguous value.
+        if (value.length > 4) MonoText(value, color = Bone, medium = true)
+        else D(value, 32.sp, maxLines = 1)
     }
 }
 

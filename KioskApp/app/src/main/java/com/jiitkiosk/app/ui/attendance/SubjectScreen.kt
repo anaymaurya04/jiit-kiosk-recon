@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import com.jiitkiosk.app.ui.components.FreshnessLine
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,11 +22,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.ui.KioskViewModel
+import com.jiitkiosk.app.ui.Motion
 import com.jiitkiosk.app.ui.components.BackRow
 import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.Card2
@@ -37,9 +42,12 @@ import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.friendly
 import com.jiitkiosk.app.ui.components.rememberCached
 import com.jiitkiosk.app.ui.components.softCall
+import com.jiitkiosk.app.ui.components.scrollDepth
+import com.jiitkiosk.app.ui.entrance
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Good
+import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.Ring
 import com.jiitkiosk.app.ui.theme.verdictOf
@@ -94,26 +102,32 @@ fun SubjectScreen(
     val shown = subject.percent ?: tally.percent
     val verdict = verdictOf(shown)
     val classes = sheet.daily[subject.subjectId]?.classes.orEmpty()
+    val list = rememberLazyListState()
+    val titleCollapse = (list.scrollDepth() / 150f).coerceIn(0f, 1f)
 
-    LazyColumn(
-        Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
-    ) {
-        item { BackRow(onBack) }
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            Modifier.fillMaxWidth(),
+            state = list,
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
+        ) {
+        item { BackRow(onBack, Modifier.entrance(0)) }
 
         item {
-            D(subject.name, 56.sp, maxLines = 3, modifier = Modifier.padding(top = 4.dp))
-            MonoText(
-                listOf("SUBJECT DETAIL", subject.code).filter { it.isNotBlank() }.joinToString(" · "),
-                modifier = Modifier.padding(top = 8.dp),
-            )
+            Column(Modifier.entrance(1)) {
+                D(subject.name, 56.sp, maxLines = 3, modifier = Modifier.padding(top = 4.dp))
+                MonoText(
+                    listOf("SUBJECT DETAIL", subject.code).filter { it.isNotBlank() }.joinToString(" · "),
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
         }
 
-        item { FreshnessLine(facts, Modifier.padding(top = 12.dp, bottom = 4.dp)) }
+        item { FreshnessLine(facts, Modifier.padding(top = 12.dp, bottom = 4.dp).entrance(1)) }
 
         item {
             Row(
-                Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                Modifier.fillMaxWidth().padding(bottom = 16.dp).entrance(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -122,6 +136,7 @@ fun SubjectScreen(
                     color = verdict.color,
                     size = 96.dp,
                     a11y = "${shown.roundToInt()} percent attendance, ${verdict.stamp}",
+                    delayMs = Motion.STAGGER * 2,
                 )
                 Column {
                     Stamp(verdict.stamp, background = verdict.color)
@@ -137,7 +152,7 @@ fun SubjectScreen(
 
         item {
             Row(
-                Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                Modifier.fillMaxWidth().padding(bottom = 16.dp).entrance(3),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 StatBox("Lecture", percent(subject.lecturePercent), Modifier.weight(1f))
@@ -147,36 +162,59 @@ fun SubjectScreen(
         }
 
         if (classes.isNotEmpty()) {
-            item { Calendar(classes) }
+            item { Calendar(classes, Modifier.entrance(4)) }
         }
 
         item {
-            val row = (facts as? Load.Ok)?.value?.registered?.rows?.firstOrNull { it.code == subject.code }
-            val marks = (facts as? Load.Ok)?.value?.marks?.subjects?.firstOrNull { it.code == subject.code }
-            Card2(Modifier.padding(top = 4.dp)) {
-                KeyRow("Faculty", row?.facultyName.orEmpty())
-                KeyRow("Credits", row?.credits?.let { trimNumber(it) }.orEmpty())
-                KeyRow("Marks", marksTotal(marks?.scores?.map { it.marks ?: it.weighted }.orEmpty()))
+            val loaded = (facts as? Load.Ok)?.value
+            val row = loaded?.registered?.rows?.firstOrNull { it.code == subject.code }
+            val marks = loaded?.marks?.subjects?.firstOrNull { it.code == subject.code }
+            val unresolved = if (facts is Load.Failed) "NOT AVAILABLE" else "PENDING"
+            Card2(Modifier.padding(top = 4.dp).entrance(5)) {
+                KeyRow("Faculty", row?.facultyName?.ifBlank { unresolved } ?: unresolved)
+                KeyRow("Credits", row?.credits?.let { trimNumber(it) } ?: unresolved)
+                KeyRow(
+                    "Marks",
+                    marksTotal(marks?.scores?.map { it.marks ?: it.weighted }.orEmpty()).ifBlank { "NOT YET" },
+                )
             }
             when (facts) {
                 is Load.Loading, is Load.Ok -> Unit
                 is Load.Failed -> MonoText(
                     "FACULTY AND MARKS: ${friendly(facts.error)}",
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = 8.dp).entrance(6),
                 )
+            }
+        }
+        }
+
+        // The full display title belongs to the artboard at rest. Once it has
+        // scrolled away, this compact bar keeps the current subject identifiable
+        // instead of allowing its large text to disappear under the status bar.
+        if (titleCollapse > 0f) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+                    .background(Ink)
+                    .statusBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
+                    .graphicsLayer { alpha = titleCollapse },
+            ) {
+                D(subject.name, 22.sp, maxLines = 1)
             }
         }
     }
 }
 
 @Composable
-private fun Calendar(classes: List<ClassRecord>) {
+private fun Calendar(classes: List<ClassRecord>, modifier: Modifier = Modifier) {
     val days = remember(classes) { calendarDays(classes) }
     val byDate = remember(classes) { classes.filter { it.date != null }.groupBy { it.date!! } }
     val present = byDate.count { (_, c) -> c.all { it.isPresent } }
     val absent = byDate.size - present
 
-    Column {
+    Column(modifier) {
         MonoText("CALENDAR · GREEN PRESENT / RED ABSENT / GREY NO CLASS")
         Column(
             Modifier
@@ -217,7 +255,7 @@ private fun calendarDays(classes: List<ClassRecord>): List<LocalDate> {
     return generateSequence(start) { it.plusDays(1) }.takeWhile { !it.isAfter(last) }.toList()
 }
 
-private fun percent(value: Double?): String = value?.let { "${it.roundToInt()}%" } ?: "—"
+private fun percent(value: Double?): String = value?.let { "${it.roundToInt()}%" } ?: "PENDING"
 
 /** the portal hands back 3.0 where it means 3 */
 private fun trimNumber(value: Double): String =
