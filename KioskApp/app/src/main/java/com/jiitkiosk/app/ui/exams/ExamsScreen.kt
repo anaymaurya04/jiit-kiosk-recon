@@ -36,12 +36,14 @@ import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.ScreenTitle
 import com.jiitkiosk.app.ui.components.NavRow
 import com.jiitkiosk.app.ui.components.SectionHead
+import com.jiitkiosk.app.ui.calendar.CalendarScreen
 import com.jiitkiosk.app.ui.grades.GradesScreen
 import com.jiitkiosk.app.ui.components.Stamp
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.rememberCached
 import com.jiitkiosk.app.ui.components.scrollDepth
 import com.jiitkiosk.app.ui.entrance
+import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.LineStrong
@@ -106,8 +108,13 @@ fun ExamsScreen(vm: KioskViewModel) {
     val stamp = (sheet as? Load.Ok) ?: (periods as? Load.Ok)
 
     var openGrades by remember { mutableStateOf(false) }
+    var openCalendar by remember { mutableStateOf(false) }
     if (openGrades) {
         GradesScreen(vm, onExit = { openGrades = false })
+        return
+    }
+    if (openCalendar) {
+        CalendarScreen(vm, onExit = { openCalendar = false })
         return
     }
 
@@ -174,9 +181,15 @@ fun ExamsScreen(vm: KioskViewModel) {
                             )
                         }
                         item {
-                            Column(Modifier.padding(top = 8.dp).entrance(3)) {
+                            Column(
+                                Modifier
+                                    .padding(top = 8.dp)
+                                    .tap { openCalendar = true }
+                                    .entrance(3),
+                            ) {
                                 SectionHead("This week", Modifier.padding(bottom = 8.dp))
                                 com.jiitkiosk.app.ui.components.WeekStrip(weekDays)
+                                MonoText("TAP FOR THE SEMESTER CALENDAR", Modifier.padding(top = 6.dp))
                             }
                         }
 

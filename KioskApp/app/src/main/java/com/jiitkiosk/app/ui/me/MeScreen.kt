@@ -53,6 +53,7 @@ import com.jiitkiosk.app.ui.components.NavRow
 import com.jiitkiosk.app.ui.components.PrimaryButton
 import com.jiitkiosk.app.ui.components.SectionHead
 import com.jiitkiosk.app.ui.classroom.rememberClassroomConnect
+import com.jiitkiosk.app.ui.calendar.CalendarScreen
 import com.jiitkiosk.app.ui.grades.GradesScreen
 import com.jiitkiosk.app.ui.reminders.RemindersScreen
 import com.jiitkiosk.app.reminders.ReminderPrefs
@@ -152,7 +153,7 @@ private fun rememberMe(vm: KioskViewModel, attempt: Int): Load<MeData> {
     }
 }
 
-private enum class MePage { Overview, Profile, Fees, Hostel, Grades, Settings, Feedback, Reminders }
+private enum class MePage { Overview, Profile, Fees, Hostel, Grades, Calendar, Settings, Feedback, Reminders }
 
 @Composable
 fun MeScreen(vm: KioskViewModel) {
@@ -170,6 +171,7 @@ fun MeScreen(vm: KioskViewModel) {
         MePage.Fees -> FeesScreen(vm, attempt, retry) { page = MePage.Overview }
         MePage.Hostel -> HostelScreen(vm, attempt, retry) { page = MePage.Overview }
         MePage.Grades -> GradesScreen(vm, onExit = { page = MePage.Overview })
+        MePage.Calendar -> CalendarScreen(vm) { page = MePage.Overview }
         MePage.Settings -> SettingsScreen(
             vm,
             onBack = { page = MePage.Overview },
@@ -348,7 +350,7 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
                         }
                     }
 
-                    // Row 4: Grades (Calendar will sit beside it)
+                    // Row 4: Grades and Calendar
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -363,6 +365,18 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
                         ) {
                             Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
                                 TomeMark(size = 100.dp)
+                            }
+                        }
+                        ArtTile(
+                            name = "Calendar",
+                            sub = "SEMESTER DATES",
+                            background = Color(0xFF2B2060),
+                            rotate = 1f,
+                            modifier = Modifier.weight(1f).height(130.dp),
+                            onClick = { open(MePage.Calendar) },
+                        ) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
+                                HourglassMark(size = 100.dp)
                             }
                         }
                     }
