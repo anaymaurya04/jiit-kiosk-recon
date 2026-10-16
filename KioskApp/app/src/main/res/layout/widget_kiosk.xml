@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- RemoteViews-safe views only; colours are the design system's literal tokens -->
+<!-- RemoteViews-safe views only; colours are the design's literal tokens (design/Widget.html) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center_vertical"
     android:background="@drawable/widget_bg"
-    android:padding="12dp">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,33 +21,78 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="0.8"
             android:orientation="vertical">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ATTENDANCE"
-                android:textColor="#A09DA6"
-                android:fontFamily="@font/ibm_plex_mono_medium"
-                android:textSize="10sp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/widget_percent"
+                <ImageView
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:src="@drawable/widget_diamond"
+                    android:rotation="45" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="7dp"
+                    android:text="ATTENDANCE"
+                    android:textColor="#A09DA6"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:letterSpacing="0.075"
+                    android:textSize="9sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="—"
-                android:textColor="#F0EEE9"
-                android:fontFamily="@font/barlow_condensed_bold"
-                android:textSize="34sp" />
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/widget_percent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="#F2F0EB"
+                    android:fontFamily="@font/barlow_condensed_bold"
+                    android:textSize="34sp" />
+
+                <TextView
+                    android:id="@+id/widget_pct_sign"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="2dp"
+                    android:text="%"
+                    android:textColor="#D64B60"
+                    android:fontFamily="@font/barlow_condensed_bold"
+                    android:textSize="18sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/widget_meter"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:layout_marginTop="8dp"
+                android:max="100"
+                android:progress="0"
+                android:progressDrawable="@drawable/widget_meter"
+                android:minHeight="3dp"
+                android:maxHeight="3dp" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1.6"
-            android:orientation="vertical"
-            android:layout_marginStart="10dp">
+            android:layout_weight="1.45"
+            android:layout_marginStart="16dp"
+            android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -51,37 +100,76 @@
                 android:text="NEXT DEADLINE"
                 android:textColor="#A09DA6"
                 android:fontFamily="@font/ibm_plex_mono_medium"
-                android:textSize="10sp" />
+                android:letterSpacing="0.075"
+                android:textSize="9sp" />
 
             <TextView
                 android:id="@+id/widget_next"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:text="—"
-                android:textColor="#F0EEE9"
-                android:fontFamily="@font/ibm_plex_sans_regular"
+                android:textColor="#F2F0EB"
+                android:fontFamily="@font/ibm_plex_sans_medium"
                 android:textSize="13sp"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_marginTop="3dp" />
+                android:ellipsize="end" />
 
             <TextView
-                android:id="@+id/widget_when"
+                android:id="@+id/widget_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#C23B4E"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/widget_pill"
+                android:drawableStart="@drawable/widget_dot_red"
+                android:drawablePadding="6dp"
+                android:paddingStart="7dp"
+                android:paddingEnd="7dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:textColor="#F07888"
                 android:fontFamily="@font/ibm_plex_mono_medium"
-                android:textSize="11sp"
-                android:layout_marginTop="2dp" />
+                android:letterSpacing="0.035"
+                android:textSize="10sp"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/widget_fresh"
-        android:layout_width="wrap_content"
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="#353538" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#A09DA6"
-        android:fontFamily="@font/ibm_plex_mono_regular"
-        android:textSize="9sp"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="9dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_fresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/widget_dot_gray"
+            android:drawablePadding="6dp"
+            android:textColor="#A09DA6"
+            android:fontFamily="@font/ibm_plex_mono_regular"
+            android:letterSpacing="0.04"
+            android:textSize="9sp" />
+
+        <TextView
+            android:id="@+id/widget_semester"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="#85828C"
+            android:fontFamily="@font/ibm_plex_mono_regular"
+            android:letterSpacing="0.04"
+            android:textSize="9sp" />
+    </LinearLayout>
 </LinearLayout>

@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.view.View
 import android.widget.RemoteViews
 import com.jiitkiosk.app.MainActivity
 import com.jiitkiosk.app.R
@@ -58,16 +59,21 @@ class KioskWidget : AppWidgetProvider() {
             val percent = sheet?.value?.detail?.subjects?.mapNotNull { it.percent }?.let { percentOf(it) }
             val next = work?.value?.work?.let { nextOf(it, now) }
 
-            views.setTextViewText(R.id.widget_percent, percent?.let { "$it%" } ?: "—")
+            views.setTextViewText(R.id.widget_percent, percent?.toString() ?: "—")
+            views.setViewVisibility(R.id.widget_pct_sign, if (percent != null) View.VISIBLE else View.GONE)
+            views.setProgressBar(R.id.widget_meter, 100, percent ?: 0, false)
             views.setTextViewText(
                 R.id.widget_next,
                 when {
-                    next != null -> "${next.courseName.uppercase()} · ${next.title}"
+                    next != null -> next.courseName
                     work != null -> "NOTHING DUE"
                     else -> "—"
                 },
             )
-            views.setTextViewText(R.id.widget_when, next?.dueAt?.let { countdownText(it - now) }.orEmpty())
+            val pill = next?.dueAt?.let { "${countdownText(it - now)} remaining" }.orEmpty()
+            views.setTextViewText(R.id.widget_pill, pill)
+            views.setViewVisibility(R.id.widget_pill, if (pill.isEmpty()) View.GONE else View.VISIBLE)
+            views.setTextViewText(R.id.widget_semester, semesters.firstOrNull()?.description?.uppercase().orEmpty())
 
             // the older of the two sources is the honest age of what is on screen
             val at = listOfNotNull(sheet?.at, work?.at).minOrNull()
