@@ -523,6 +523,36 @@ fun <T> rememberCached(
     return state
 }
 
+/** [rememberCached] for the sources that are not the portal (Classroom today) */
+@Composable
+fun <T> rememberKept(
+    vm: KioskViewModel,
+    key: String,
+    ser: KSerializer<T>,
+    attempt: Int = 0,
+    enabled: Boolean = true,
+    block: suspend () -> T,
+): Load<T> {
+    val seed = remember(attempt, key, enabled) { if (enabled) vm.lastGood(key, ser) else null }
+    var state by remember(attempt, key, enabled) {
+        mutableStateOf<Load<T>>(
+            seed?.let { Load.Ok(it.value, it.at, stale = false, refreshing = true) } ?: Load.Loading,
+        )
+    }
+    LaunchedEffect(attempt, key, enabled) {
+        if (!enabled) return@LaunchedEffect
+        state = try {
+            val s = vm.keep(key, ser, block)
+            Load.Ok(s.value, s.at, s.stale)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Load.Failed(e)
+        }
+    }
+    return state
+}
+
 /** for the calls that are allowed to come back empty: hostel, bank, fees */
 suspend fun <T> softCall(fallback: T, block: suspend () -> T): T =
     try {

@@ -52,6 +52,7 @@ import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.NavRow
 import com.jiitkiosk.app.ui.components.PrimaryButton
 import com.jiitkiosk.app.ui.components.SectionHead
+import com.jiitkiosk.app.ui.classroom.rememberClassroomConnect
 import com.jiitkiosk.app.ui.grades.GradesScreen
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.Toggle
@@ -809,9 +810,25 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         }
 
         item {
+            val classroom = rememberClassroomConnect(vm)
             Column(Modifier.padding(top = 14.dp).entrance(4)) {
                 SectionHead("Accounts & integrations", Modifier.padding(bottom = 4.dp))
-                RowLine(label = "Classroom", trailing = { MonoText("NOT CONNECTED") })
+                RowLine(
+                    label = "Classroom",
+                    onClick = if (classroom.connected) null else classroom.connect,
+                    trailing = {
+                        MonoText(
+                            when {
+                                classroom.connected -> "CONNECTED"
+                                classroom.connecting -> "CONNECTING…"
+                                else -> "CONNECT"
+                            },
+                        )
+                    },
+                )
+                classroom.error?.let {
+                    BodyText(it, color = Bad, modifier = Modifier.padding(vertical = 6.dp))
+                }
                 RowLine(label = "Reminders", trailing = { MonoText("OFF") })
                 RowLine(label = "LeetCode", trailing = { MonoText("NOT SET") })
                 RowLine(label = "GitHub", trailing = { MonoText("NOT SET") })
@@ -893,7 +910,7 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
             } else {
                 Column(Modifier.entrance(9), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     MonoText("SIGN OUT?")
-                    BodyText("Cached portal data stays on this phone unless you clear it as well.")
+                    BodyText("Cached portal data stays on this phone unless you clear it as well. Clearing also unlinks Google Classroom.")
                     PrimaryButton("Sign out", onClick = { vm.signOut() })
                     RowLine(label = "Sign out and clear cached data", onClick = { vm.signOut(clearCache = true) })
                     RowLine(label = "Cancel", onClick = { askingSignOut = false })

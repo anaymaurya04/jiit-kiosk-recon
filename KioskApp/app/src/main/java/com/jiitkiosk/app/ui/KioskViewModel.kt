@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import com.jiitkiosk.app.KioskApplication
+import com.jiitkiosk.app.data.HttpError
 import com.jiitkiosk.app.data.Snapshot
 import `in`.codelif.ktjiit.api.Portal
 import `in`.codelif.ktjiit.auth.PortalConfig
@@ -104,6 +105,31 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
             throw e
         } catch (e: PortalException.SessionExpired) {
             throw e
+        } catch (e: Throwable) {
+            graph.cache.read(key, ser) ?: throw e
+        }
+    }
+
+    // ---- Classroom (and later the Code tab's sources) ----
+
+    val classroom get() = graph.classroom
+
+    /**
+     * [cached] for calls that never touch the portal. Same disk behavior, with
+     * one difference: an auth failure is rethrown instead of being papered over
+     * by the cached copy, because a stale list behind an expired token reads as
+     * "everything is fine" right up until it isn't.
+     */
+    suspend fun <T> keep(key: String, ser: KSerializer<T>, block: suspend () -> T): Snapshot<T> {
+        return try {
+            val fresh = block()
+            graph.cache.write(key, ser, fresh)
+            Snapshot(fresh, System.currentTimeMillis(), false)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: HttpError) {
+            if (e.code == 401 || e.code == 403) throw e
+            graph.cache.read(key, ser) ?: throw e
         } catch (e: Throwable) {
             graph.cache.read(key, ser) ?: throw e
         }

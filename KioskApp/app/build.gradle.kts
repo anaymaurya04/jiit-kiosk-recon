@@ -57,6 +57,10 @@ dependencies {
     // document-start scripts) and GSI's own page.
     implementation("androidx.webkit:webkit:1.17.0")
 
+    // Classroom connect rides Google Identity; the reminder sync rides WorkManager
+    implementation("com.google.android.gms:play-services-auth:21.4.0")
+    implementation("androidx.work:work-runtime-ktx:2.10.2")
+
     // the vendored portal client (ktjiit) talks kotlinx-serialization + coroutines only
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")

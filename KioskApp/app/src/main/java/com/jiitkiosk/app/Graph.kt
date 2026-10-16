@@ -2,6 +2,7 @@ package com.jiitkiosk.app
 
 import android.app.Application
 import android.content.Context
+import com.jiitkiosk.app.classroom.ClassroomStore
 import com.jiitkiosk.app.data.Cache
 import `in`.codelif.ktjiit.api.Portal
 import `in`.codelif.ktjiit.auth.Auth
@@ -30,6 +31,7 @@ class Graph(context: Context) {
     val transport = Transport()
     val auth = Auth(transport)
     val cache = Cache(context.filesDir)
+    val classroom = ClassroomStore(context)
 
     private val prefs = context.getSharedPreferences("kiosk", Context.MODE_PRIVATE)
 
@@ -47,10 +49,14 @@ class Graph(context: Context) {
     /**
      * Ends the session. Cached portal data stays unless [clearCache] — it is the
      * user's own copy on their own phone, and signing back in does not need it gone.
-     * shortcut: Classroom authorization and reminder alarms join this once those modules exist (§2)
+     * Clearing is the handed-the-phone-away path, so the Classroom authorization
+     * goes with it.
      */
     fun forget(clearCache: Boolean = false) {
         store.clear()
-        if (clearCache) cache.clear()
+        if (clearCache) {
+            cache.clear()
+            classroom.clear()
+        }
     }
 }
