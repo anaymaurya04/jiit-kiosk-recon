@@ -173,16 +173,22 @@ private fun LeetBoard(vm: KioskViewModel, prefs: CodePrefs, source: Int, onSourc
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     SolvedRing(easy = stats.easy, medium = stats.medium, hard = stats.hard, total = stats.total, size = 124.dp)
                     Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            MonoText("EASY", color = Bone, modifier = Modifier.width(72.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            MonoText("EASY", color = Bone)
                             MonoText("${stats.easy}", medium = true)
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
-                            MonoText("MEDIUM", color = Violet, modifier = Modifier.width(72.dp))
+                        Row(
+                            Modifier.fillMaxWidth().padding(top = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            MonoText("MEDIUM", color = Violet)
                             MonoText("${stats.medium}", medium = true)
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
-                            MonoText("HARD", color = Crimson, modifier = Modifier.width(72.dp))
+                        Row(
+                            Modifier.fillMaxWidth().padding(top = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            MonoText("HARD", color = Crimson)
                             MonoText("${stats.hard}", medium = true)
                         }
                         StreakChip(stats.streak, Modifier.padding(top = 12.dp))

@@ -138,12 +138,15 @@ fun MonoText(
     color: Color = Muted,
     medium: Boolean = false,
     align: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     Text(
         text = text,
         style = Mono.copy(fontWeight = if (medium) FontWeight.Medium else FontWeight.Normal),
         color = color,
         textAlign = align,
+        maxLines = maxLines,
+        overflow = TextOverflow.Ellipsis,
         modifier = modifier,
     )
 }
@@ -660,7 +663,7 @@ fun FreshnessLine(
     }
     val tail = extra?.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()
     Crossfade(targetState = head + tail, animationSpec = tween(Motion.FAST), label = "freshness") { text ->
-        MonoText(text = text, color = if (stale) Bad else Muted, medium = stale, modifier = modifier)
+        MonoText(text = text, color = if (stale) Bad else Muted, medium = stale, modifier = modifier, maxLines = 1)
     }
 }
 
@@ -859,13 +862,15 @@ fun CollapsingTitle(
     meta: (@Composable () -> Unit)? = null,
 ) {
     val p = (offset() / collapseAt).coerceIn(0f, 1f)
+    // the meta slot must fit the real line height at any font scale; fixed 16dp clipped it at 2x
+    val scale = LocalDensity.current.fontScale
     Column(modifier.fillMaxWidth()) {
         D(title, (56f + (22f - 56f) * p).sp, maxLines = 1)
         if (meta != null) {
             Box(
                 Modifier
                     .padding(top = 8.dp * (1f - p))
-                    .height(16.dp * (1f - p))
+                    .height(16.dp * (1f - p) * scale)
                     .graphicsLayer { alpha = 1f - p }
                     .clipToBounds(),
             ) { meta() }
