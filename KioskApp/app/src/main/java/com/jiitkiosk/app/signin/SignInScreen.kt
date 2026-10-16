@@ -105,6 +105,10 @@ fun SignInScreen(vm: KioskViewModel) {
                 modifier = Modifier.padding(top = 12.dp, bottom = 20.dp).entrance(1),
             )
 
+            vm.signedOut?.let {
+                MonoText(it, color = Bone, medium = true, modifier = Modifier.padding(bottom = 16.dp).entrance(2))
+            }
+
             when (config) {
                 is Load.Loading -> BoneBar(modifier = Modifier.entrance(2)) {
                     MonoText("REACHING THE PORTAL…", color = Ink, medium = true)

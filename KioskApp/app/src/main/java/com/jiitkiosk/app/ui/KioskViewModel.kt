@@ -22,14 +22,28 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
     var session by mutableStateOf(graph.session())
         private set
 
+    /** why the portal ended the session; shown once on the sign-in screen */
+    var signedOut by mutableStateOf<String?>(null)
+        private set
+
     fun remember(session: Session) {
         graph.remember(session)
         this.session = session
+        signedOut = null
     }
 
-    fun signOut() {
-        graph.forget()
+    /** the user's own choice: no explanation needed */
+    fun signOut(clearCache: Boolean = false) {
+        graph.forget(clearCache)
         session = null
+        signedOut = null
+    }
+
+    /** the portal said no: the cache stays, but the login says honestly why it showed up */
+    private fun sessionEnded() {
+        graph.forget(clearCache = false)
+        session = null
+        signedOut = "Session expired, sign in again."
     }
 
     /** pure-black mode, remembered between launches */
@@ -62,7 +76,7 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
             block(graph.portal(current))
         } catch (e: PortalException.SessionExpired) {
             if (!graph.auth.refresh(current)) {
-                signOut()
+                sessionEnded()
                 throw e
             }
             // refresh extends the same token, so the session object is unchanged

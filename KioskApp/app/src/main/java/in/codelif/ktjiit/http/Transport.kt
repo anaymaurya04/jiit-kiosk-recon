@@ -18,7 +18,7 @@ import java.net.SocketTimeoutException
 import java.net.URI
 import java.util.zip.GZIPInputStream
 
-public class Transport(
+public open class Transport(
     public val baseUrl: String = DEFAULT_BASE_URL,
     public val clock: PortalClock = PortalClock(),
     private val userAgent: String? = null,
@@ -35,7 +35,7 @@ public class Transport(
      * pass [retry] false for anything that writes.
      */
     // the body is built per attempt, a retry needs it keyed to the corrected clock
-    public suspend fun post(path: String, token: String?, payload: JsonObject?, encrypt: Boolean, retry: Boolean = true): JsonElement =
+    public open suspend fun post(path: String, token: String?, payload: JsonObject?, encrypt: Boolean, retry: Boolean = true): JsonElement =
         retryTransient(retry) {
             retryOnFreshSkew {
                 val body = payload?.toString()?.let { if (encrypt) PortalCipher.encrypt(it, clock.now()) else it }

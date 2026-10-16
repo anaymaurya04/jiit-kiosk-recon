@@ -44,8 +44,13 @@ class Graph(context: Context) {
 
     fun remember(session: Session) = store.save(session)
 
-    fun forget() {
+    /**
+     * Ends the session. Cached portal data stays unless [clearCache] — it is the
+     * user's own copy on their own phone, and signing back in does not need it gone.
+     * shortcut: Classroom authorization and reminder alarms join this once those modules exist (§2)
+     */
+    fun forget(clearCache: Boolean = false) {
         store.clear()
-        cache.clear()
+        if (clearCache) cache.clear()
     }
 }

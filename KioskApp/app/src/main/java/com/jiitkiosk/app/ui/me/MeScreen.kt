@@ -739,6 +739,7 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var copiedReport by remember { mutableStateOf(false) }
     var showPolicy by remember { mutableStateOf(false) }
+    var askingSignOut by remember { mutableStateOf(false) }
 
     val version = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
@@ -835,9 +836,10 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
                 ) { showPolicy = !showPolicy }
                 if (showPolicy) {
                     MonoText(
-                        "This app talks only to webportal.jiit.ac.in. The session token stays in this " +
-                            "phone's private storage and cached portal data in the app's own files. " +
-                            "No analytics, no third-party servers. Signing out deletes both.",
+                        "This app talks only to webportal.jiit.ac.in. The session token is sealed " +
+                            "with this phone's keystore and cached portal data sits in the app's own files. " +
+                            "No analytics, no third-party servers. Signing out removes the session; " +
+                            "the sign-out sheet can clear the cached data too.",
                         modifier = Modifier.padding(top = 6.dp),
                     )
                 }
@@ -854,7 +856,17 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
 
         item {
             Spacer(Modifier.height(16.dp))
-            PrimaryButton("Sign out", onClick = { vm.signOut() }, modifier = Modifier.entrance(9))
+            if (!askingSignOut) {
+                PrimaryButton("Sign out", onClick = { askingSignOut = true }, modifier = Modifier.entrance(9))
+            } else {
+                Column(Modifier.entrance(9), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MonoText("SIGN OUT?")
+                    BodyText("Cached portal data stays on this phone unless you clear it as well.")
+                    PrimaryButton("Sign out", onClick = { vm.signOut() })
+                    RowLine(label = "Sign out and clear cached data", onClick = { vm.signOut(clearCache = true) })
+                    RowLine(label = "Cancel", onClick = { askingSignOut = false })
+                }
+            }
         }
     }
 }
