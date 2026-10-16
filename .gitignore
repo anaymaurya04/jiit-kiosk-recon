@@ -1,0 +1,21 @@
+# --- machine-local and build output (never commit) ---
+local.properties
+.gradle/
+.kotlin/
+build/
+captures/
+.idea/
+*.iml
+*.hprof
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# --- design references and planning docs: local workspace only ---
+/design/
+/docs/
+/jiit-core/target/
+
+# verification screenshots land at the app root between passes
+KioskApp/*.png
