@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import com.google.android.gms.auth.api.identity.AuthorizationClient
 import com.google.android.gms.common.api.ApiException
 import com.jiitkiosk.app.classroom.ClassroomAuth
 import com.jiitkiosk.app.classroom.findActivity
@@ -43,7 +42,6 @@ fun rememberClassroomConnect(vm: KioskViewModel): ClassroomConnect {
     var connecting by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var version by remember { mutableIntStateOf(0) }
-    var asked by remember { mutableStateOf<AuthorizationClient?>(null) }
 
     fun accept(token: String?) {
         connecting = false
@@ -57,7 +55,9 @@ fun rememberClassroomConnect(vm: KioskViewModel): ClassroomConnect {
     }
 
     val resolve = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        val client = asked
+        // re-derived here, not remembered: if the process died under Google's sheet,
+        // the consent that did happen must not be misreported as "not granted"
+        val client = context.findActivity()?.let { ClassroomAuth.client(it) }
         val data = result.data
         if (result.resultCode == Activity.RESULT_OK && client != null && data != null) {
             runCatching { client.getAuthorizationResultFromIntent(data) }
@@ -79,7 +79,6 @@ fun rememberClassroomConnect(vm: KioskViewModel): ClassroomConnect {
             return
         }
         val client = ClassroomAuth.client(activity)
-        asked = client
         connecting = true
         error = null
         client.authorize(ClassroomAuth.request())
