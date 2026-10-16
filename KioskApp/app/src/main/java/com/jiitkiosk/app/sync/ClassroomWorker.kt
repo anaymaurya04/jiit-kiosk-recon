@@ -14,6 +14,7 @@ import com.jiitkiosk.app.classroom.ClassroomStore
 import com.jiitkiosk.app.data.Cache
 import com.jiitkiosk.app.data.HttpError
 import com.jiitkiosk.app.reminders.ReminderSync
+import com.jiitkiosk.app.widget.KioskWidget
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,6 +36,7 @@ class ClassroomWorker(context: Context, params: WorkerParameters) : CoroutineWor
             Cache(applicationContext.filesDir)
                 .write(ClassroomData.CACHE_KEY, ClassroomData.serializer(), data)
             ReminderSync.refresh(applicationContext, data)
+            KioskWidget.refresh(applicationContext)
             Result.success()
         } catch (e: CancellationException) {
             throw e

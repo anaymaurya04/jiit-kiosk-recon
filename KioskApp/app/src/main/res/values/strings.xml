@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">JIIT Kiosk</string>
+    <string name="widget_description">Attendance percentage and the next Classroom deadline</string>
 </resources>
