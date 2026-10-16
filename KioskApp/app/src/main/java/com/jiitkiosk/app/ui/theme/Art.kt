@@ -246,6 +246,26 @@ fun TowerMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, acce
     }
 }
 
+/** Longsword: primary action, submit, beat a deadline */
+@Composable
+fun LongswordMark(
+    size: Dp,
+    modifier: Modifier = Modifier,
+    color: Color = Bone,
+    accent: Color = Crimson,
+    grip: Color = MarkRing,
+) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(pathOf("M50 4 L58 20 V62 H42 V20 Z"), color)
+            drawRect(AccentDeep, Offset(49f, 18f), Size(2f, 40f))
+            drawRect(accent, Offset(22f, 62f), Size(56f, 8f))
+            drawRect(grip, Offset(45f, 70f), Size(10f, 18f))
+            drawCircle(accent, 6f, Offset(50f, 92f))
+        }
+    }
+}
+
 /** Heater shield: privacy, bank, protected data */
 @Composable
 fun ShieldMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Color.Transparent) {

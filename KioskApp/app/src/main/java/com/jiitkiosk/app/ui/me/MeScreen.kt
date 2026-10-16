@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,12 +34,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.ui.KioskViewModel
+import com.jiitkiosk.app.code.CodePrefs
 import com.jiitkiosk.app.ui.components.BackRow
 import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.Card2
@@ -856,7 +859,64 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit, onReminders: 
                     // recomposed fresh after the Reminders page returns, so this is never stale
                     trailing = { MonoText(if (remember { ReminderPrefs(context).values().enabled }) "ON" else "OFF") },
                 )
-                RowLine(label = "LeetCode", trailing = { MonoText("NOT SET") })
+                val codePrefs = remember { CodePrefs(context) }
+                var leet by remember { mutableStateOf(codePrefs.leetcode()) }
+                var editingLeet by remember { mutableStateOf(false) }
+                var leetDraft by remember { mutableStateOf("") }
+                RowLine(
+                    label = "LeetCode",
+                    onClick = {
+                        leetDraft = leet.orEmpty()
+                        editingLeet = true
+                    },
+                    trailing = { MonoText(leet?.let { "@$it" } ?: "SET HANDLE") },
+                )
+                if (editingLeet) {
+                    Column(Modifier.padding(vertical = 8.dp)) {
+                        BasicTextField(
+                            value = leetDraft,
+                            onValueChange = { leetDraft = it },
+                            singleLine = true,
+                            textStyle = Mono.copy(color = Bone, fontSize = 15.sp),
+                            cursorBrush = SolidColor(Crimson),
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            decorationBox = { inner ->
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .border(2.dp, Line)
+                                        .padding(horizontal = 12.dp),
+                                    contentAlignment = Alignment.CenterStart,
+                                ) {
+                                    if (leetDraft.isEmpty()) MonoText("USERNAME, NO @")
+                                    inner()
+                                }
+                            },
+                        )
+                        Row(
+                            Modifier.padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            PrimaryButton(
+                                "Save",
+                                onClick = {
+                                    codePrefs.setLeetcode(leetDraft)
+                                    leet = codePrefs.leetcode()
+                                    editingLeet = false
+                                },
+                                modifier = Modifier.weight(1f),
+                            )
+                            Box(
+                                Modifier
+                                    .clickable { editingLeet = false }
+                                    .padding(horizontal = 8.dp, vertical = 14.dp),
+                            ) {
+                                MonoText("CANCEL")
+                            }
+                        }
+                    }
+                }
                 RowLine(label = "GitHub", trailing = { MonoText("NOT SET") })
             }
         }
