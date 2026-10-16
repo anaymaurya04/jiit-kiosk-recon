@@ -21,6 +21,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            // shortcut: the debug key signs release builds so they stay installable over
+            // the dev build; swap for a real keystore before any Play distribution
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
