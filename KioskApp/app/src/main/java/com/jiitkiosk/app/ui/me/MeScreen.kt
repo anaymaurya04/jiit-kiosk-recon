@@ -88,9 +88,11 @@ import `in`.codelif.ktjiit.model.GeneralInfo
 import `in`.codelif.ktjiit.model.HostelInfo
 import `in`.codelif.ktjiit.model.PersonalInfo
 import `in`.codelif.ktjiit.model.Rating
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonObject
@@ -105,6 +107,8 @@ import com.jiitkiosk.app.ui.components.SemesterTrack
 import com.jiitkiosk.app.ui.components.StudentFileCard
 import com.jiitkiosk.app.ui.components.ago
 import com.jiitkiosk.app.ui.rememberSpin
+import com.jiitkiosk.app.updates.UpdateCheck
+import com.jiitkiosk.app.updates.Updates
 import com.jiitkiosk.app.ui.theme.CometMark
 import com.jiitkiosk.app.ui.theme.DossierMark
 import com.jiitkiosk.app.ui.theme.GearMark
@@ -815,23 +819,53 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit, onReminders: 
         }
 
         item {
+            // the releases feed is the update feed: tap checks it, and once a newer
+            // release is known the tap opens its page instead
+            var check by remember { mutableStateOf<UpdateCheck?>(null) }
+            var checking by remember { mutableStateOf(false) }
+            fun runCheck() {
+                checking = true
+                scope.launch {
+                    check = withContext(Dispatchers.IO) { Updates.check(context, version) }
+                    checking = false
+                }
+            }
             RowLine(
                 label = "Check GitHub for updates",
-                // the app has no update feed; the releases page is the real answer
                 modifier = Modifier
                     .clickable {
-                        runCatching {
-                            context.startActivity(
-                                android.content.Intent(
-                                    android.content.Intent.ACTION_VIEW,
-                                    android.net.Uri.parse("https://github.com/anaymaurya04/jiit-kiosk-recon/releases"),
-                                ),
-                            )
+                        val state = check
+                        if (checking) return@clickable
+                        if (state is UpdateCheck.Newer) {
+                            runCatching {
+                                context.startActivity(
+                                    android.content.Intent(
+                                        android.content.Intent.ACTION_VIEW,
+                                        android.net.Uri.parse(state.url),
+                                    ),
+                                )
+                            }
+                        } else {
+                            runCheck()
                         }
                     }
                     .entrance(3),
-                trailing = { MonoText("GITHUB") },
+                trailing = {
+                    val state = check
+                    MonoText(
+                        when {
+                            checking -> "CHECKING…"
+                            state is UpdateCheck.Newer -> "${state.tag.uppercase()} AVAILABLE"
+                            state is UpdateCheck.UpToDate -> "UP TO DATE · $version"
+                            state is UpdateCheck.Problem -> "COULDN'T CHECK"
+                            else -> "GITHUB"
+                        },
+                    )
+                },
             )
+            (check as? UpdateCheck.Problem)?.let {
+                MonoText(it.message, modifier = Modifier.padding(vertical = 6.dp))
+            }
         }
 
         item {
