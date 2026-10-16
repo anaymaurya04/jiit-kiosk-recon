@@ -16,8 +16,18 @@ import com.jiitkiosk.app.ui.AppShell
 import com.jiitkiosk.app.ui.KioskViewModel
 import com.jiitkiosk.app.ui.theme.KioskTheme
 import com.jiitkiosk.app.ui.theme.LocalPureBlack
+import com.jiitkiosk.app.widget.KioskWidget
 
 class MainActivity : ComponentActivity() {
+
+    /**
+     * Opening the app is the user asking for what is on the home screen to be
+     * current. The app may resume on any tab, so this cannot live in one of them.
+     */
+    override fun onResume() {
+        super.onResume()
+        KioskWidget.refresh(this)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
