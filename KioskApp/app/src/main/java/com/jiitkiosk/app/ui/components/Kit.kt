@@ -81,8 +81,9 @@ import com.jiitkiosk.app.ui.theme.Crimson
 import com.jiitkiosk.app.ui.theme.Display
 import com.jiitkiosk.app.ui.theme.IconAttendance
 import com.jiitkiosk.app.ui.theme.IconBack
+import com.jiitkiosk.app.ui.theme.IconClass
+import com.jiitkiosk.app.ui.theme.IconCode
 import com.jiitkiosk.app.ui.theme.IconExams
-import com.jiitkiosk.app.ui.theme.IconGrades
 import com.jiitkiosk.app.ui.theme.IconMe
 import com.jiitkiosk.app.ui.theme.IconNext
 import com.jiitkiosk.app.ui.theme.Ink
@@ -382,15 +383,16 @@ fun HeroPanel(
 // ------------------------------------------------------------------ nav
 
 enum class Tab(val label: String, val icon: ImageVector) {
-    Attendance("Attendance", IconAttendance),
+    Attendance("Attend", IconAttendance),
     Exams("Exams", IconExams),
-    Grades("Grades", IconGrades),
+    Class("Class", IconClass),
+    Code("Code", IconCode),
     Me("Me", IconMe),
 }
 
 /**
  * The bottom bar. The crimson pill is one shared element: it slides between the
- * four tabs on a soft spring and stretches slightly while it travels, and the
+ * five tabs on a soft spring and stretches slightly while it travels, and the
  * icons and labels crossfade as it arrives.
  */
 @Composable

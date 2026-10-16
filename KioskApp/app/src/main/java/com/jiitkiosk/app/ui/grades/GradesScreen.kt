@@ -108,20 +108,22 @@ private fun rememberGrades(vm: KioskViewModel, attempt: Int): Load<GradeSheet> {
 private enum class GradesPage { Overview, GradeCards, Marks }
 
 @Composable
-fun GradesScreen(vm: KioskViewModel) {
+fun GradesScreen(vm: KioskViewModel, onExit: (() -> Unit)? = null) {
     var page by rememberSaveable { mutableStateOf(GradesPage.Overview) }
 
-    // the system back button goes up a level before it leaves the app
-    BackHandler(enabled = page != GradesPage.Overview) { page = GradesPage.Overview }
+    // the system back button goes up a level, then out of the tab that opened us
+    BackHandler(enabled = page != GradesPage.Overview || onExit != null) {
+        if (page != GradesPage.Overview) page = GradesPage.Overview else onExit?.invoke()
+    }
     when (page) {
-        GradesPage.Overview -> GradesOverview(vm) { page = it }
+        GradesPage.Overview -> GradesOverview(vm, onExit) { page = it }
         GradesPage.GradeCards -> GradeCardsScreen(vm) { page = GradesPage.Overview }
         GradesPage.Marks -> MarksScreen(vm) { page = GradesPage.Overview }
     }
 }
 
 @Composable
-private fun GradesOverview(vm: KioskViewModel, open: (GradesPage) -> Unit) {
+private fun GradesOverview(vm: KioskViewModel, onExit: (() -> Unit)?, open: (GradesPage) -> Unit) {
     var attempt by remember { mutableStateOf(0) }
     val state = rememberGrades(vm, attempt)
     val list = rememberLazyListState()
@@ -133,6 +135,7 @@ private fun GradesOverview(vm: KioskViewModel, open: (GradesPage) -> Unit) {
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (onExit != null) item { BackRow(onExit, Modifier.entrance(0)) }
             item {
                 Column(Modifier.padding(bottom = 4.dp).entrance(0)) {
                     ScreenTitle("Grades")

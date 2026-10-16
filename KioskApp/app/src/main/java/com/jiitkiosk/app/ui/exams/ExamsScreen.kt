@@ -34,7 +34,9 @@ import com.jiitkiosk.app.ui.components.HeroPanel
 import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.ScreenTitle
+import com.jiitkiosk.app.ui.components.NavRow
 import com.jiitkiosk.app.ui.components.SectionHead
+import com.jiitkiosk.app.ui.grades.GradesScreen
 import com.jiitkiosk.app.ui.components.Stamp
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.rememberCached
@@ -102,6 +104,12 @@ fun ExamsScreen(vm: KioskViewModel) {
     }
 
     val stamp = (sheet as? Load.Ok) ?: (periods as? Load.Ok)
+
+    var openGrades by remember { mutableStateOf(false) }
+    if (openGrades) {
+        GradesScreen(vm, onExit = { openGrades = false })
+        return
+    }
 
     Box(Modifier.fillMaxWidth()) {
         LazyColumn(
@@ -206,6 +214,13 @@ fun ExamsScreen(vm: KioskViewModel) {
                             }
                         }
                     }
+                }
+            }
+
+            item {
+                Column(Modifier.padding(top = 4.dp).entrance(5)) {
+                    SectionHead("Results", Modifier.padding(bottom = 6.dp))
+                    NavRow(label = "Grade cards", detail = "SGPA · COURSES") { openGrades = true }
                 }
             }
 

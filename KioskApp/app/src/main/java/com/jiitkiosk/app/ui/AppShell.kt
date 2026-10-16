@@ -24,10 +24,11 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import com.jiitkiosk.app.ui.attendance.AttendanceScreen
+import com.jiitkiosk.app.ui.classroom.ClassroomScreen
+import com.jiitkiosk.app.ui.code.CodeScreen
 import com.jiitkiosk.app.ui.components.BottomNav
 import com.jiitkiosk.app.ui.components.Tab
 import com.jiitkiosk.app.ui.exams.ExamsScreen
-import com.jiitkiosk.app.ui.grades.GradesScreen
 import com.jiitkiosk.app.ui.me.MeScreen
 import com.jiitkiosk.app.ui.theme.Line
 
@@ -61,7 +62,8 @@ fun AppShell(vm: KioskViewModel) {
                     when (shown) {
                         Tab.Attendance -> AttendanceScreen(vm)
                         Tab.Exams -> ExamsScreen(vm)
-                        Tab.Grades -> GradesScreen(vm)
+                        Tab.Class -> ClassroomScreen(vm)
+                        Tab.Code -> CodeScreen(vm)
                         Tab.Me -> MeScreen(vm)
                     }
                 }

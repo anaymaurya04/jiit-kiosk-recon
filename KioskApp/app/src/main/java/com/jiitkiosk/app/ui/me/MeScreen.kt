@@ -52,6 +52,7 @@ import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.NavRow
 import com.jiitkiosk.app.ui.components.PrimaryButton
 import com.jiitkiosk.app.ui.components.SectionHead
+import com.jiitkiosk.app.ui.grades.GradesScreen
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.Toggle
 import com.jiitkiosk.app.ui.components.attempt
@@ -105,6 +106,7 @@ import com.jiitkiosk.app.ui.theme.MarkCore
 import com.jiitkiosk.app.ui.theme.MicMark
 import com.jiitkiosk.app.ui.theme.RavenMark
 import com.jiitkiosk.app.ui.theme.ShieldMark
+import com.jiitkiosk.app.ui.theme.TomeMark
 import com.jiitkiosk.app.ui.theme.TowerMark
 import com.jiitkiosk.app.ui.theme.VinylMark
 import kotlinx.coroutines.delay
@@ -147,7 +149,7 @@ private fun rememberMe(vm: KioskViewModel, attempt: Int): Load<MeData> {
     }
 }
 
-private enum class MePage { Overview, Profile, Fees, Hostel, Settings, Feedback }
+private enum class MePage { Overview, Profile, Fees, Hostel, Grades, Settings, Feedback }
 
 @Composable
 fun MeScreen(vm: KioskViewModel) {
@@ -164,6 +166,7 @@ fun MeScreen(vm: KioskViewModel) {
         MePage.Profile -> ProfileScreen(vm, attempt, retry) { page = MePage.Overview }
         MePage.Fees -> FeesScreen(vm, attempt, retry) { page = MePage.Overview }
         MePage.Hostel -> HostelScreen(vm, attempt, retry) { page = MePage.Overview }
+        MePage.Grades -> GradesScreen(vm, onExit = { page = MePage.Overview })
         MePage.Settings -> SettingsScreen(vm) { page = MePage.Overview }
         MePage.Feedback -> FeedbackScreen(vm) { page = MePage.Overview }
     }
@@ -333,6 +336,25 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
                         ) {
                             Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
                                 GearMark(size = 100.dp)
+                            }
+                        }
+                    }
+
+                    // Row 4: Grades (Calendar will sit beside it)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        ArtTile(
+                            name = "Grades",
+                            sub = "RESULT CARDS",
+                            background = Color(0xFF14202E),
+                            rotate = -1f,
+                            modifier = Modifier.weight(1f).height(130.dp),
+                            onClick = { open(MePage.Grades) },
+                        ) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
+                                TomeMark(size = 100.dp)
                             }
                         }
                     }
@@ -784,6 +806,16 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
                     .entrance(3),
                 trailing = { MonoText("GITHUB") },
             )
+        }
+
+        item {
+            Column(Modifier.padding(top = 14.dp).entrance(4)) {
+                SectionHead("Accounts & integrations", Modifier.padding(bottom = 4.dp))
+                RowLine(label = "Classroom", trailing = { MonoText("NOT CONNECTED") })
+                RowLine(label = "Reminders", trailing = { MonoText("OFF") })
+                RowLine(label = "LeetCode", trailing = { MonoText("NOT SET") })
+                RowLine(label = "GitHub", trailing = { MonoText("NOT SET") })
+            }
         }
 
         // Spinning vinyl JPortal block

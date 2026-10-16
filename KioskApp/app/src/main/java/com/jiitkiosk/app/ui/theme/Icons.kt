@@ -61,6 +61,21 @@ val IconGrades = strokeIcon(
     "M22 20H2",
 )
 
+/** a chalkboard on a stand */
+val IconClass = strokeIcon(
+    "Class", 24.dp,
+    "M4 5h16v11H4z",
+    "M12 16v4",
+    "M9 20h6",
+)
+
+/** the two chevrons of a code tag */
+val IconCode = strokeIcon(
+    "Code", 24.dp,
+    "M9 8l-4 4 4 4",
+    "M15 8l4 4-4 4",
+)
+
 /** <circle cx=12 cy=8 r=4/> + <path d="M4 21c1-5 15-5 16 0"/> */
 val IconMe = strokeIcon(
     "Me", 24.dp,
