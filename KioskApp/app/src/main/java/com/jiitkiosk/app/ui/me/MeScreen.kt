@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -24,6 +23,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -176,10 +176,18 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
     val data = (state as? Load.Ok)?.value
     val general = data?.info?.general
     val list = rememberLazyListState()
-    val titleCollapse = (list.scrollDepth() / 100f).coerceIn(0f, 1f)
+    val program = rememberProgram(vm, attempt)
 
-    val currentSem = general?.semester?.takeIf { it > 0 } ?: 1
-    val totalSem = programSemesters(general)
+    val currentSem = general?.semester?.takeIf { it > 0 }
+    val totalSem = program
+
+    // spec: the account number re-masks itself half a minute after a reveal
+    LaunchedEffect(revealed) {
+        if (revealed) {
+            delay(30_000)
+            revealed = false
+        }
+    }
 
     val feeDue = data?.fees?.heads.orEmpty().sumOf { it.due }
     val feeSub = if (data?.fees == null) "LEDGER" else if (feeDue > 0) "DUE: ${money(feeDue)}" else "ALL CLEAR"
@@ -212,10 +220,18 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
 
             item {
                 Column(Modifier.padding(top = 14.dp).entrance(1)) {
-                    val age = if (state is Load.Ok) ago(state.at) else "JUST NOW"
-                    MonoText("SEMESTER $currentSem OF $totalSem · SYNCED $age", color = Muted)
-                    Spacer(Modifier.height(6.dp))
-                    SemesterTrack(current = currentSem, total = totalSem)
+                    if (currentSem != null) {
+                        MonoText(
+                            if (totalSem != null) "SEMESTER $currentSem OF $totalSem" else "SEMESTER $currentSem",
+                            color = Muted,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                    }
+                    FreshnessLine(state)
+                    if (currentSem != null && totalSem != null) {
+                        Spacer(Modifier.height(6.dp))
+                        SemesterTrack(current = currentSem, total = totalSem)
+                    }
                 }
             }
 
@@ -341,38 +357,34 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
             }
         }
 
-        // compact name once the avatar header has scrolled away
-        if (titleCollapse > 0f) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart)
-                    .background(Ink)
-                    .statusBarsPadding()
-                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
-                    .graphicsLayer { alpha = titleCollapse },
-            ) {
-                D(
-                    general?.name?.takeIf { it.isNotBlank() } ?: vm.session?.username.orEmpty(),
-                    22.sp,
-                    maxLines = 1,
-                )
-            }
+        // compact name once the avatar header has scrolled away; the scroll is
+        // read in the draw phase so scrolling never recomposes the screen
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopStart)
+                .background(Ink)
+                .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
+                .graphicsLayer { alpha = (list.scrollDepth() / 100f).coerceIn(0f, 1f) },
+        ) {
+            D(
+                general?.name?.takeIf { it.isNotBlank() } ?: vm.session?.username.orEmpty(),
+                22.sp,
+                maxLines = 1,
+            )
         }
     }
 }
 
-private fun programSemesters(general: GeneralInfo?): Int {
-    val sem = general?.semester ?: 1
-    val prog = general?.program.orEmpty().uppercase()
-    val default = when {
-        prog.contains("TECH") || prog.contains("B.E") -> 8
-        prog.contains("INT") || prog.contains("DUAL") -> 10
-        prog.contains("M.") || prog.contains("MCA") || prog.contains("MBA") -> 4
-        prog.contains("PHD") -> 6
-        else -> 8
-    }
-    return maxOf(sem, default)
+/** the portal's own programme length (stymax); null until it answers */
+@Composable
+private fun rememberProgram(vm: KioskViewModel, attempt: Int): Int? {
+    val token = vm.session?.token.orEmpty()
+    val state = rememberCached(
+        vm, "program/$token",
+        `in`.codelif.ktjiit.model.StudentProgram.serializer(), attempt,
+    ) { it.program() }
+    return (state as? Load.Ok)?.value?.maxSemesters?.takeIf { it > 0 }
 }
 
 @Composable
@@ -383,8 +395,8 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
     var copied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    val currentSem = general?.semester?.takeIf { it > 0 } ?: 1
-    val totalSem = programSemesters(general)
+    val currentSem = general?.semester?.takeIf { it > 0 }
+    val totalSem = rememberProgram(vm, attempt)
 
     LazyColumn(
         Modifier.fillMaxWidth(),
@@ -466,8 +478,14 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                         ) {
                             MonoText("SEMESTER", color = Muted)
                             Row(verticalAlignment = Alignment.Bottom) {
-                                D("$currentSem", 40.sp, modifier = Modifier.padding(top = 4.dp), maxLines = 1)
-                                MonoText(" OF $totalSem", color = Muted, modifier = Modifier.padding(bottom = 6.dp, start = 4.dp))
+                                if (currentSem != null) {
+                                    D("$currentSem", 40.sp, modifier = Modifier.padding(top = 4.dp), maxLines = 1)
+                                    if (totalSem != null) {
+                                        MonoText(" OF $totalSem", color = Muted, modifier = Modifier.padding(bottom = 6.dp, start = 4.dp))
+                                    }
+                                } else {
+                                    MonoText("PENDING", color = Bone, modifier = Modifier.padding(top = 8.dp))
+                                }
                             }
                         }
                         Card2(
@@ -485,11 +503,13 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                 }
             }
 
-            item {
-                Column(Modifier.padding(top = 14.dp).entrance(5)) {
-                    MonoText("PROGRESS", color = Muted)
-                    Spacer(Modifier.height(6.dp))
-                    SemesterTrack(current = currentSem, total = totalSem)
+            if (currentSem != null && totalSem != null) {
+                item {
+                    Column(Modifier.padding(top = 14.dp).entrance(5)) {
+                        MonoText("PROGRESS", color = Muted)
+                        Spacer(Modifier.height(6.dp))
+                        SemesterTrack(current = currentSem, total = totalSem)
+                    }
                 }
             }
 
@@ -718,8 +738,7 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
     var copiedReport by remember { mutableStateOf(false) }
-    var dynamicColor by remember { mutableStateOf(false) }
-    var checkUpdates by remember { mutableStateOf(true) }
+    var showPolicy by remember { mutableStateOf(false) }
 
     val version = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
@@ -738,20 +757,10 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         // Toggles
         item {
             RowLine(
-                label = "Dynamic color",
-                modifier = Modifier
-                    .toggleable(value = dynamicColor, role = Role.Switch) { dynamicColor = it }
-                    .entrance(2),
-                trailing = { Toggle(dynamicColor) },
-            )
-        }
-
-        item {
-            RowLine(
                 label = "Pure black mode",
                 modifier = Modifier
                     .toggleable(value = vm.pureBlack, role = Role.Switch) { vm.applyPureBlack(it) }
-                    .entrance(3),
+                    .entrance(2),
                 trailing = { Toggle(vm.pureBlack) },
             )
         }
@@ -759,10 +768,20 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         item {
             RowLine(
                 label = "Check GitHub for updates",
+                // the app has no update feed; the releases page is the real answer
                 modifier = Modifier
-                    .toggleable(value = checkUpdates, role = Role.Switch) { checkUpdates = it }
-                    .entrance(4),
-                trailing = { Toggle(checkUpdates) },
+                    .clickable {
+                        runCatching {
+                            context.startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse("https://github.com/anaymaurya04/jiit-kiosk-recon/releases"),
+                                ),
+                            )
+                        }
+                    }
+                    .entrance(3),
+                trailing = { MonoText("GITHUB") },
             )
         }
 
@@ -809,11 +828,20 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
         }
 
         item {
-            NavRow(
-                label = "Privacy policy",
-                detail = "",
-                modifier = Modifier.entrance(7),
-            ) { }
+            Column(Modifier.entrance(7)) {
+                NavRow(
+                    label = "Privacy policy",
+                    detail = if (showPolicy) "HIDE" else "SHOW",
+                ) { showPolicy = !showPolicy }
+                if (showPolicy) {
+                    MonoText(
+                        "This app talks only to webportal.jiit.ac.in. The session token stays in this " +
+                            "phone's private storage and cached portal data in the app's own files. " +
+                            "No analytics, no third-party servers. Signing out deletes both.",
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
         }
 
         item {
@@ -904,7 +932,14 @@ private fun FeedbackRows(vm: KioskViewModel, event: FeedbackEvent, onBack: () ->
         item { BackRow(onBack, Modifier.entrance(0)) }
         item { D(event.description.ifBlank { "Feedback" }, 40.sp, maxLines = 3, modifier = Modifier.padding(top = 4.dp).entrance(1)) }
         item { FreshnessLine(state, Modifier.padding(top = 8.dp).entrance(1)) }
-        item { MonoText("1 UNSATISFIED · 3 GOOD · 5 EXCELLENT", modifier = Modifier.entrance(2)) }
+        // the mockup carried a sample tally; what the numbers on the buttons
+        // actually mean is the honest thing to print here
+        item {
+            MonoText(
+                Rating.entries.joinToString(" · ") { ratingLabel(it) },
+                modifier = Modifier.entrance(2),
+            )
+        }
 
         when {
             state is Load.Loading -> item { StateBox(state) }

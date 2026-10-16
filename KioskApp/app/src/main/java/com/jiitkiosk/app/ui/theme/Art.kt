@@ -91,7 +91,11 @@ private const val ORBIT_WAVE_2 = "M27 56 Q50 48 73 58"
 private const val ID_BODY = "M20 92 V46 Q20 10 50 10 Q80 10 80 46 V92 Z"
 private const val ID_BAND = "M27 38 H73 Q78 38 78 48 V56 Q78 64 70 64 H30 Q22 64 22 56 V48 Q22 38 27 38 Z"
 
-private fun pathOf(d: String): Path = PathParser().parsePathString(d).toPath()
+// shortcut: unbounded per-process cache keyed by the path string; this file's
+// paths are ~30 literals, revisit only if motifs ever take dynamic paths
+private val pathCache = java.util.concurrent.ConcurrentHashMap<String, Path>()
+
+private fun pathOf(d: String): Path = pathCache.getOrPut(d) { PathParser().parsePathString(d).toPath() }
 
 /** the great helm: the sign-in and attendance mockups' portico symbol */
 @Composable

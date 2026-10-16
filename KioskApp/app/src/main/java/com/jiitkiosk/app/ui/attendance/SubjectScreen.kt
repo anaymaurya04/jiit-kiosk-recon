@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -103,7 +102,6 @@ fun SubjectScreen(
     val verdict = verdictOf(shown)
     val classes = sheet.daily[subject.subjectId]?.classes.orEmpty()
     val list = rememberLazyListState()
-    val titleCollapse = (list.scrollDepth() / 150f).coerceIn(0f, 1f)
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
@@ -189,20 +187,17 @@ fun SubjectScreen(
         }
 
         // The full display title belongs to the artboard at rest. Once it has
-        // scrolled away, this compact bar keeps the current subject identifiable
-        // instead of allowing its large text to disappear under the status bar.
-        if (titleCollapse > 0f) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart)
-                    .background(Ink)
-                    .statusBarsPadding()
-                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
-                    .graphicsLayer { alpha = titleCollapse },
-            ) {
-                D(subject.name, 22.sp, maxLines = 1)
-            }
+        // scrolled away, this compact bar keeps the current subject identifiable;
+        // the scroll is read in the draw phase so scrolling never recomposes.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopStart)
+                .background(Ink)
+                .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
+                .graphicsLayer { alpha = (list.scrollDepth() / 150f).coerceIn(0f, 1f) },
+        ) {
+            D(subject.name, 22.sp, maxLines = 1)
         }
     }
 }

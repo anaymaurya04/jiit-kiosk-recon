@@ -11,7 +11,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -110,7 +109,7 @@ private enum class GradesPage { Overview, GradeCards, Marks }
 
 @Composable
 fun GradesScreen(vm: KioskViewModel) {
-    var page by remember { mutableStateOf(GradesPage.Overview) }
+    var page by rememberSaveable { mutableStateOf(GradesPage.Overview) }
 
     // the system back button goes up a level before it leaves the app
     BackHandler(enabled = page != GradesPage.Overview) { page = GradesPage.Overview }
@@ -126,7 +125,6 @@ private fun GradesOverview(vm: KioskViewModel, open: (GradesPage) -> Unit) {
     var attempt by remember { mutableStateOf(0) }
     val state = rememberGrades(vm, attempt)
     val list = rememberLazyListState()
-    val titleCollapse = (list.scrollDepth() / 120f).coerceIn(0f, 1f)
 
     Box(Modifier.fillMaxWidth()) {
         LazyColumn(
@@ -201,19 +199,17 @@ private fun GradesOverview(vm: KioskViewModel, open: (GradesPage) -> Unit) {
             }
         }
 
-        // compact title bar
-        if (titleCollapse > 0f) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart)
-                    .background(Ink)
-                    .statusBarsPadding()
-                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
-                    .graphicsLayer { alpha = titleCollapse },
-            ) {
-                D("Grades", 22.sp, maxLines = 1)
-            }
+        // compact title bar; the scroll is read in the draw phase so scrolling
+        // never recomposes the screen
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopStart)
+                .background(Ink)
+                .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
+                .graphicsLayer { alpha = (list.scrollDepth() / 120f).coerceIn(0f, 1f) },
+        ) {
+            D("Grades", 22.sp, maxLines = 1)
         }
     }
 }
@@ -254,6 +250,8 @@ private fun Bars(results: List<SemesterResult>, modifier: Modifier = Modifier) {
 private fun GradeCardsScreen(vm: KioskViewModel, onBack: () -> Unit) {
     var attempt by remember { mutableStateOf(0) }
     val token = vm.session?.token.orEmpty()
+    // the same cache the overview fills: it carries the sgpa a grade card itself does not
+    val grades = rememberGrades(vm, attempt)
     val state = rememberCached(vm, "gradecards/$token", Cards.serializer(), attempt) { portal ->
         val program = portal.program()
         val cards = coroutineScope {
@@ -291,6 +289,8 @@ private fun GradeCardsScreen(vm: KioskViewModel, onBack: () -> Unit) {
                     val latestCard = semesters.last()
                     val totalCourses = latestCard.entries.size
                     val totalCredits = latestCard.entries.sumOf { it.credits }.toInt()
+                    val latestSgpa = (grades as? Load.Ok)?.value?.results
+                        ?.sortedBy { it.semester }?.lastOrNull()?.sgpa?.takeIf { it > 0 }
 
                     // Top summary pair from GradeCards.dc.html: SGPA hero (crimson gradient + halftone + vinyl) + stats card (courses, credits)
                     item {
@@ -314,7 +314,11 @@ private fun GradeCardsScreen(vm: KioskViewModel, onBack: () -> Unit) {
                                 )
                                 Column {
                                     Stamp("SGPA", background = Bone, color = Ink)
-                                    D("—", 52.sp, modifier = Modifier.padding(top = 6.dp))
+                                    if (latestSgpa != null) {
+                                        D(twoDecimals(latestSgpa), 52.sp, modifier = Modifier.padding(top = 6.dp))
+                                    } else {
+                                        MonoText("PENDING", color = Bone, modifier = Modifier.padding(top = 10.dp))
+                                    }
                                 }
                             }
                             Card2(Modifier.weight(1f)) {
@@ -453,18 +457,16 @@ private fun MarksScreen(vm: KioskViewModel, onBack: () -> Unit) {
                 if (subjects.isEmpty()) {
                     item { MonoText("That semester has no marks on the portal.") }
                 } else {
-                    // Extract Test-1 bars for the hero bar chart per MarksV2.dc.html
-                    val test1Bars = subjects.map { subj ->
+                    // Test-1 bars for the hero chart; the scale comes from the
+                    // portal's own maxima, never a hardcoded "out of 20"
+                    val test1 = subjects.mapNotNull { subj ->
                         val score = subj.scores.firstOrNull { it.event.contains("TEST-1", ignoreCase = true) || it.event.contains("T1", ignoreCase = true) }
-                        val shortLabel = subj.code.takeLast(3).ifBlank { subj.name.take(3) }
-                        val value = when (val s = score?.marks ?: score?.weighted) {
-                            is Score.Value -> s.obtained
-                            else -> null
-                        }
-                        Bar(shortLabel, value)
+                        val v = (score?.marks ?: score?.weighted) as? Score.Value ?: return@mapNotNull null
+                        Bar(subj.code.takeLast(3).ifBlank { subj.name.take(3) }, v.obtained) to v.max
                     }
 
-                    if (test1Bars.isNotEmpty()) {
+                    if (test1.isNotEmpty()) {
+                        val chartMax = test1.maxOf { it.second }.coerceAtLeast(1.0)
                         item {
                             Box(
                                 Modifier
@@ -477,9 +479,9 @@ private fun MarksScreen(vm: KioskViewModel, onBack: () -> Unit) {
                                     .entrance(3)
                             ) {
                                 Column {
-                                    Stamp("TEST-1 · OUT OF 20")
+                                    Stamp("TEST-1 · OUT OF ${trim(chartMax)}")
                                     Spacer(Modifier.height(10.dp))
-                                    BarChart(test1Bars, max = 20.0, threshold = 10.0, thresholdLabel = "HALF")
+                                    BarChart(test1.map { it.first }, max = chartMax, threshold = chartMax / 2, thresholdLabel = "HALF")
                                 }
                             }
                         }

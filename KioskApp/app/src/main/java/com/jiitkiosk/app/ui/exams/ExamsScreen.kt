@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -103,9 +102,6 @@ fun ExamsScreen(vm: KioskViewModel) {
     }
 
     val stamp = (sheet as? Load.Ok) ?: (periods as? Load.Ok)
-
-    // collapsed title bar mirrors SubjectScreen pattern
-    val titleCollapse = (list.scrollDepth() / 120f).coerceIn(0f, 1f)
 
     Box(Modifier.fillMaxWidth()) {
         LazyColumn(
@@ -216,19 +212,17 @@ fun ExamsScreen(vm: KioskViewModel) {
             item { MonoText("Room and seat numbers land about a day before the paper.", modifier = Modifier.entrance(Motion.MAX_STAGGER)) }
         }
 
-        // compact title bar once the header has scrolled away
-        if (titleCollapse > 0f) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart)
-                    .background(Ink)
-                    .statusBarsPadding()
-                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
-                    .graphicsLayer { alpha = titleCollapse },
-            ) {
-                D("Exams", 22.sp, maxLines = 1)
-            }
+        // compact title bar once the header has scrolled away; the scroll is
+        // read in the draw phase so scrolling never recomposes the screen
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopStart)
+                .background(Ink)
+                .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 10.dp)
+                .graphicsLayer { alpha = (list.scrollDepth() / 120f).coerceIn(0f, 1f) },
+        ) {
+            D("Exams", 22.sp, maxLines = 1)
         }
     }
 }
@@ -236,8 +230,6 @@ fun ExamsScreen(vm: KioskViewModel) {
 @Composable
 private fun NextPaperHero(paper: Paper, upcoming: Boolean, modifier: Modifier = Modifier) {
     val orbit = com.jiitkiosk.app.ui.rememberOrbit(6000)
-    val floatPx = (kotlin.math.sin(orbit.value * 2 * Math.PI).toFloat() * 4f)
-    val tiltDeg = (kotlin.math.sin(orbit.value * 2 * Math.PI).toFloat() * 2f)
 
     HeroPanel(
         height = 250.dp,
@@ -256,8 +248,10 @@ private fun NextPaperHero(paper: Paper, upcoming: Boolean, modifier: Modifier = 
                     .align(Alignment.TopEnd)
                     .offset(x = 60.dp, y = (-20).dp)
                     .graphicsLayer {
-                        translationY = floatPx
-                        rotationZ = tiltDeg
+                        // the orbit is read in the draw phase; the hero never recomposes
+                        val float = kotlin.math.sin(orbit.value * 2 * Math.PI).toFloat()
+                        translationY = float * 4f
+                        rotationZ = float * 2f
                     },
             )
         },

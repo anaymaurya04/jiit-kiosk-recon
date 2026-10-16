@@ -695,7 +695,7 @@ fun StatBox(label: String, value: String, modifier: Modifier = Modifier) {
         // label has to remain fully readable inside a third-width card, so it
         // intentionally switches to the compact metadata treatment instead of
         // being ellipsized into an ambiguous value.
-        if (value.length > 4) MonoText(value, color = Bone, medium = true)
+        if (value.toDoubleOrNull() == null) MonoText(value, color = Bone, medium = true)
         else D(value, 32.sp, maxLines = 1)
     }
 }
