@@ -75,12 +75,13 @@ class KioskWidget : AppWidgetProvider() {
             views.setViewVisibility(R.id.widget_pill, if (pill.isEmpty()) View.GONE else View.VISIBLE)
             views.setTextViewText(R.id.widget_semester, semesters.firstOrNull()?.description?.uppercase().orEmpty())
 
-            // the older of the two sources is the honest age of what is on screen
+            // the older of the two sources is the honest age of what is on screen;
+            // a missing attendance sheet says so instead of pretending freshness
             val at = listOfNotNull(sheet?.at, work?.at).minOrNull()
             views.setTextViewText(
                 R.id.widget_fresh,
                 when {
-                    at != null -> "UPDATED ${ago(at)}"
+                    sheet != null && at != null -> "UPDATED ${ago(at)}"
                     else -> "OPEN THE APP TO SYNC"
                 },
             )

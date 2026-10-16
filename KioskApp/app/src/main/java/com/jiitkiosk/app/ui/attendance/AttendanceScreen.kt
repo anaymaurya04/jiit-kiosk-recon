@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.domain.AttendanceMath
@@ -65,6 +67,7 @@ import com.jiitkiosk.app.ui.theme.TrooperMark
 import com.jiitkiosk.app.ui.theme.VinylMark
 import com.jiitkiosk.app.ui.theme.Violet
 import com.jiitkiosk.app.ui.theme.verdictOf
+import com.jiitkiosk.app.widget.KioskWidget
 import `in`.codelif.ktjiit.model.AttendanceDetail
 import `in`.codelif.ktjiit.model.AttendanceMeta
 import `in`.codelif.ktjiit.model.DailyAttendance
@@ -128,6 +131,11 @@ fun AttendanceScreen(vm: KioskViewModel) {
 
     val sheetOk = sheet as? Load.Ok
     val stamp = sheetOk ?: (meta as? Load.Ok)
+
+    // the widget's attendance half reads this same cache: any load, cached or
+    // fresh, means the home screen has something new to show
+    val context = LocalContext.current
+    LaunchedEffect(sheetOk?.at) { if (sheetOk != null) KioskWidget.refresh(context) }
 
     // the system back goes up a level before it leaves the app, and it does so
     // while following the gesture
