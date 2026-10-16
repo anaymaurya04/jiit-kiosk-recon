@@ -24,12 +24,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.classroom.ClassroomClient
 import com.jiitkiosk.app.classroom.ClassroomData
 import com.jiitkiosk.app.classroom.Work
 import com.jiitkiosk.app.data.HttpError
+import com.jiitkiosk.app.reminders.ReminderSync
 import com.jiitkiosk.app.ui.KioskViewModel
 import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.Card2
@@ -44,9 +46,9 @@ import com.jiitkiosk.app.ui.components.PrimaryButton
 import com.jiitkiosk.app.ui.components.ScreenTitle
 import com.jiitkiosk.app.ui.components.SkeletonScreen
 import com.jiitkiosk.app.ui.components.Stamp
-import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.rememberKept
 import com.jiitkiosk.app.ui.entrance
+import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
@@ -63,8 +65,9 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-private const val KEY = "classroom.work"
 private val DUE_DAY = DateTimeFormatter.ofPattern("EEE dd MMM", Locale.ENGLISH)
 private val DUE_TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH)
 private const val SOON_MS = 72L * 3_600_000
@@ -78,18 +81,20 @@ private const val SOON_MS = 72L * 3_600_000
 @Composable
 fun ClassroomScreen(vm: KioskViewModel) {
     val connect = rememberClassroomConnect(vm)
+    val context = LocalContext.current
     var attempt by remember { mutableIntStateOf(0) }
     var filter by remember { mutableIntStateOf(0) }
 
     val state = rememberKept(
         vm,
-        KEY,
+        ClassroomData.CACHE_KEY,
         ClassroomData.serializer(),
         attempt = attempt + connect.version,
         enabled = connect.connected,
     ) {
         val token = vm.classroom.token() ?: throw IllegalStateException("Classroom is not connected.")
-        ClassroomClient(token).fetch()
+        // the client is plain blocking HTTP; it must never run on the UI thread
+        withContext(Dispatchers.IO) { ClassroomClient(token).fetch() }
     }
     val now = remember(state) { System.currentTimeMillis() }
 
@@ -105,6 +110,12 @@ fun ClassroomScreen(vm: KioskViewModel) {
         } else if (!authDead) {
             autoTried = false
         }
+    }
+
+    // a fresh fetch is also what stops the reminders for work that just got submitted
+    val fresh = (state as? Load.Ok)?.value
+    LaunchedEffect(fresh) {
+        if (fresh != null) withContext(Dispatchers.IO) { ReminderSync.refresh(context, fresh) }
     }
 
     LazyColumn(
@@ -165,7 +176,23 @@ fun ClassroomScreen(vm: KioskViewModel) {
 
             state is Load.Loading -> item { SkeletonScreen() }
 
-            state is Load.Failed -> item { StateBox(state) { attempt++ } }
+            state is Load.Failed -> item {
+                Card2(Modifier.entrance(1)) {
+                    MonoText("COULDN'T LOAD", color = Bad, medium = true)
+                    Spacer(Modifier.height(6.dp))
+                    BodyText(classroomFriendly(state.error), color = Muted)
+                    Spacer(Modifier.height(12.dp))
+                    MonoText(
+                        "RETRY",
+                        color = Ink,
+                        medium = true,
+                        modifier = Modifier
+                            .background(Bone)
+                            .tap { attempt++ }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    )
+                }
+            }
 
             state is Load.Ok -> {
                 val data = state.value

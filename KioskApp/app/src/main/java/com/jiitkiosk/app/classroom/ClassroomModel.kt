@@ -23,9 +23,16 @@ data class Work(
     val dueHasTime: Boolean = false,
     val submitted: Boolean? = null,
     val submittedAt: Long? = null,
+    /** Classroom's own page for the item, when it offered one */
+    val link: String? = null,
 )
 
 @Serializable
 data class ClassroomData(val courses: List<Course>, val work: List<Work>) {
     val unsubmitted: Int get() = work.count { it.submitted == false }
+
+    companion object {
+        /** the one cache key the tab, the worker and the reminder sync all share */
+        const val CACHE_KEY = "classroom.work"
+    }
 }

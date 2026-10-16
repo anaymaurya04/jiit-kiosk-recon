@@ -1,6 +1,7 @@
 package com.jiitkiosk.app.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -128,10 +129,16 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
         } catch (e: CancellationException) {
             throw e
         } catch (e: HttpError) {
+            Log.w(TAG, "keep($key) failed with HTTP ${e.code}")
             if (e.code == 401 || e.code == 403) throw e
             graph.cache.read(key, ser) ?: throw e
         } catch (e: Throwable) {
+            Log.w(TAG, "keep($key) failed, falling back to cache", e)
             graph.cache.read(key, ser) ?: throw e
         }
+    }
+
+    private companion object {
+        const val TAG = "kiosk"
     }
 }

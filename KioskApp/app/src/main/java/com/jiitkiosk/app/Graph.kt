@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Context
 import com.jiitkiosk.app.classroom.ClassroomStore
 import com.jiitkiosk.app.data.Cache
+import com.jiitkiosk.app.reminders.Notifications
+import com.jiitkiosk.app.sync.ClassroomWorker
 import `in`.codelif.ktjiit.api.Portal
 import `in`.codelif.ktjiit.auth.Auth
 import `in`.codelif.ktjiit.auth.Session
@@ -17,6 +19,8 @@ class KioskApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         graph = Graph(this)
+        Notifications.ensureChannel(this)
+        ClassroomWorker.enqueue(this)
     }
 }
 

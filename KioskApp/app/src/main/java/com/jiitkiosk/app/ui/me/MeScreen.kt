@@ -54,6 +54,8 @@ import com.jiitkiosk.app.ui.components.PrimaryButton
 import com.jiitkiosk.app.ui.components.SectionHead
 import com.jiitkiosk.app.ui.classroom.rememberClassroomConnect
 import com.jiitkiosk.app.ui.grades.GradesScreen
+import com.jiitkiosk.app.ui.reminders.RemindersScreen
+import com.jiitkiosk.app.reminders.ReminderPrefs
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.Toggle
 import com.jiitkiosk.app.ui.components.attempt
@@ -150,7 +152,7 @@ private fun rememberMe(vm: KioskViewModel, attempt: Int): Load<MeData> {
     }
 }
 
-private enum class MePage { Overview, Profile, Fees, Hostel, Grades, Settings, Feedback }
+private enum class MePage { Overview, Profile, Fees, Hostel, Grades, Settings, Feedback, Reminders }
 
 @Composable
 fun MeScreen(vm: KioskViewModel) {
@@ -168,8 +170,13 @@ fun MeScreen(vm: KioskViewModel) {
         MePage.Fees -> FeesScreen(vm, attempt, retry) { page = MePage.Overview }
         MePage.Hostel -> HostelScreen(vm, attempt, retry) { page = MePage.Overview }
         MePage.Grades -> GradesScreen(vm, onExit = { page = MePage.Overview })
-        MePage.Settings -> SettingsScreen(vm) { page = MePage.Overview }
+        MePage.Settings -> SettingsScreen(
+            vm,
+            onBack = { page = MePage.Overview },
+            onReminders = { page = MePage.Reminders },
+        )
         MePage.Feedback -> FeedbackScreen(vm) { page = MePage.Overview }
+        MePage.Reminders -> RemindersScreen(vm) { page = MePage.Settings }
     }
 }
 
@@ -756,7 +763,7 @@ private fun HostelScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, 
 }
 
 @Composable
-private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
+private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit, onReminders: () -> Unit) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
@@ -829,7 +836,12 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit) {
                 classroom.error?.let {
                     BodyText(it, color = Bad, modifier = Modifier.padding(vertical = 6.dp))
                 }
-                RowLine(label = "Reminders", trailing = { MonoText("OFF") })
+                RowLine(
+                    label = "Reminders",
+                    onClick = onReminders,
+                    // recomposed fresh after the Reminders page returns, so this is never stale
+                    trailing = { MonoText(if (remember { ReminderPrefs(context).values().enabled }) "ON" else "OFF") },
+                )
                 RowLine(label = "LeetCode", trailing = { MonoText("NOT SET") })
                 RowLine(label = "GitHub", trailing = { MonoText("NOT SET") })
             }
