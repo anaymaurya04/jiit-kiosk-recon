@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jiitkiosk.app.calendar.CalInsert
 import com.jiitkiosk.app.classroom.ClassroomClient
 import com.jiitkiosk.app.classroom.ClassroomData
 import com.jiitkiosk.app.classroom.Work
@@ -266,6 +267,8 @@ private fun ClassroomHero(data: ClassroomData, now: Long, modifier: Modifier = M
 
 @Composable
 private fun WorkCard(work: Work, now: Long, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    var noCal by remember { mutableStateOf(false) }
     val missing = work.submitted == false && work.dueAt != null && work.dueAt < now
     val soon = work.submitted == false && work.dueAt != null && work.dueAt >= now && work.dueAt - now <= SOON_MS
     Card2(modifier = modifier) {
@@ -297,7 +300,31 @@ private fun WorkCard(work: Work, now: Long, modifier: Modifier = Modifier) {
                 ),
         )
         Spacer(Modifier.height(8.dp))
-        MonoText(statusText(work, now), color = if (missing) Bad else Muted)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MonoText(statusText(work, now), color = if (missing) Bad else Muted, modifier = Modifier.weight(1f))
+            if (work.dueAt != null && work.submitted != true) {
+                MonoText(
+                    "ADD TO CALENDAR",
+                    color = Crimson,
+                    modifier = Modifier.tap {
+                        val at = work.dueAt ?: return@tap
+                        // a due day without a time becomes an all-day entry in the
+                        // same zone the card prints it in
+                        val took = if (work.dueHasTime) {
+                            CalInsert.moment(context, work.title, at, work.courseName)
+                        } else {
+                            val day = Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault()).toLocalDate()
+                            CalInsert.span(context, work.title, day, day, work.courseName)
+                        }
+                        noCal = !took
+                    },
+                )
+            }
+        }
+        if (noCal) {
+            Spacer(Modifier.height(6.dp))
+            MonoText("NO CALENDAR APP TOOK THE INTENT", color = Bad)
+        }
     }
 }
 

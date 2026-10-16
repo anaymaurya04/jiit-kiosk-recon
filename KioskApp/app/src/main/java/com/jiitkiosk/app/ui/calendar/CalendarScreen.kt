@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.calendar.CalEvent
+import com.jiitkiosk.app.calendar.CalInsert
 import com.jiitkiosk.app.calendar.CalSemester
 import com.jiitkiosk.app.calendar.CalendarStore
 import com.jiitkiosk.app.data.Cache
@@ -90,6 +91,7 @@ fun CalendarScreen(vm: KioskViewModel, onExit: () -> Unit) {
     var draft by remember { mutableStateOf("") }
     var pendingRemove by remember { mutableStateOf<String?>(null) }
     var semesterNo by remember { mutableStateOf<Int?>(null) }
+    var noCal by remember { mutableStateOf(false) }
 
     // the number on the header is the portal's own semester, if Me has ever answered
     LaunchedEffect(Unit) {
@@ -170,8 +172,29 @@ fun CalendarScreen(vm: KioskViewModel, onExit: () -> Unit) {
 
         val onDay = selected
         if (onDay != null) {
+            val dayEvents = (official + user).filter { it.on(onDay) }.sortedBy { it.title }
             item {
                 Card2(Modifier.entrance(5)) {
+                    if (dayEvents.isNotEmpty()) {
+                        MonoText("ON THIS DAY")
+                        Spacer(Modifier.height(6.dp))
+                        dayEvents.forEach { event ->
+                            Row(
+                                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                BodyText(event.title, modifier = Modifier.weight(1f), maxLines = 2)
+                                MonoText(
+                                    "ADD TO CALENDAR",
+                                    color = Crimson,
+                                    modifier = Modifier.tap {
+                                        noCal = !CalInsert.span(context, event.title, event.from, event.to)
+                                    },
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                    }
                     MonoText("ADD YOUR OWN EVENT ON ${onDay.format(SHORT).uppercase(Locale.ENGLISH)}")
                     Spacer(Modifier.height(8.dp))
                     BasicTextField(
@@ -199,6 +222,10 @@ fun CalendarScreen(vm: KioskViewModel, onExit: () -> Unit) {
                         },
                         enabled = draft.isNotBlank(),
                     )
+                    if (noCal) {
+                        Spacer(Modifier.height(10.dp))
+                        MonoText("NO CALENDAR APP TOOK THE INTENT", color = Bad)
+                    }
                 }
             }
         }
