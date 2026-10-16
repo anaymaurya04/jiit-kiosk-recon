@@ -45,9 +45,6 @@ data class LeetStats(
 /** the public API is asked again only after this long */
 const val LEET_TTL_MS = 15 * 60_000L
 
-private const val WEEKS = 22
-private const val ONE_DAY_S = 86_400L
-
 private val json = Json { ignoreUnknownKeys = true }
 
 /**
@@ -114,17 +111,15 @@ object LeetCodeClient {
         val perDay: Map<Long, Int> = runCatching { json.parseToJsonElement(calendar) }.getOrNull()
             ?.let { it as? JsonObject }
             ?.mapNotNull { (k, v) ->
-                val day = k.toLongOrNull()?.div(ONE_DAY_S) ?: return@mapNotNull null
+                val day = k.toLongOrNull()?.let { dayOf(it) } ?: return@mapNotNull null
                 day to (v.jsonPrimitive.intOrNull ?: 0)
             }
             ?.toMap()
             ?: throw LeetSchema("The submission calendar was not readable.")
 
-        val today = nowSec / ONE_DAY_S
-        // top row is Sunday; 1970-01-01 was a Thursday, so +4 lines the epoch up with Sunday
-        val thisSunday = today - ((today + 4) % 7)
-        val startDay = thisSunday - (WEEKS - 1) * 7L
-        val days = (0 until WEEKS * 7).map { i -> perDay[startDay + i] ?: 0 }
+        val today = dayOf(nowSec)
+        val startDay = windowStart(today)
+        val days = daysOf(perDay, startDay)
 
         val topics = listOf("fundamental", "intermediate", "advanced")
             .flatMap { group ->
@@ -162,17 +157,6 @@ object LeetCodeClient {
             topics = topics,
             recent = recent,
         )
-    }
-
-    /** consecutive accepted days ending today or yesterday: today may still be unsolved */
-    private fun streak(perDay: Map<Long, Int>, today: Long): Int {
-        var day = if ((perDay[today] ?: 0) > 0) today else today - 1
-        var n = 0
-        while ((perDay[day] ?: 0) > 0) {
-            n++
-            day--
-        }
-        return n
     }
 
     suspend fun fetch(handle: String): LeetStats = withContext(Dispatchers.IO) {

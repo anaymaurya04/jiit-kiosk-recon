@@ -32,10 +32,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jiitkiosk.app.code.CodePrefs
+import com.jiitkiosk.app.code.GhLang
+import com.jiitkiosk.app.code.GhRepo
+import com.jiitkiosk.app.code.GitHubClient
+import com.jiitkiosk.app.code.GitHubStats
 import com.jiitkiosk.app.code.LEET_TTL_MS
 import com.jiitkiosk.app.code.LeetRecent
 import com.jiitkiosk.app.code.LeetStats
@@ -44,9 +49,11 @@ import com.jiitkiosk.app.code.LeetCodeClient
 import com.jiitkiosk.app.ui.KioskViewModel
 import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.Card2
+import com.jiitkiosk.app.ui.components.ChipRow
 import com.jiitkiosk.app.ui.components.D
 import com.jiitkiosk.app.ui.components.EmptyState
 import com.jiitkiosk.app.ui.components.FreshnessLine
+import com.jiitkiosk.app.ui.components.HeroPanel
 import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.ScreenTitle
@@ -55,31 +62,65 @@ import com.jiitkiosk.app.ui.components.Stamp
 import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.ago
 import com.jiitkiosk.app.ui.entrance
+import com.jiitkiosk.app.ui.theme.AccentDeep
+import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
+import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.LineStrong
 import com.jiitkiosk.app.ui.theme.LongswordMark
 import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.Night
 import com.jiitkiosk.app.ui.theme.Surface2
+import com.jiitkiosk.app.ui.theme.TowerMark
 import com.jiitkiosk.app.ui.theme.Violet
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
 
-// the two extra violet steps the board's heatmap adds between the theme's Night and Violet
+// LeetCode's heatmap adds two violet steps between the theme's Night and Violet
 private val HeatMid = Color(0xFF4A3A9A)
 private val HeatMax = Color(0xFFB0A0F0)
+// GitHub's ramp runs the crimson family off the same empty tile
+private val GhHeat1 = AccentDeep
+private val GhHeat2 = Color(0xFF8A2438)
+// the GitHub hero's violet, sampled off board 24
+private val GhHeroViolet = Color(0xFF241A3E)
 
 /**
- * The Code tab: the LeetCode board for the handle set in Settings. The numbers
- * come from LeetCode's public API and are re-read at most every 15 minutes;
- * everything on screen says when it was last read.
+ * The Code tab: the LeetCode and GitHub boards, one chip apart. Numbers come
+ * from the two public APIs and both screens say when they were last read.
  */
 @Composable
 fun CodeScreen(vm: KioskViewModel) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val prefs = remember { CodePrefs(context) }
+    var source by remember { mutableIntStateOf(0) }
+    when (source) {
+        0 -> LeetBoard(vm, prefs, source) { source = it }
+        else -> GitHubBoard(vm, prefs, source) { source = it }
+    }
+}
+
+@Composable
+private fun CodeHeader(title: String, meta: String, source: Int, onSource: (Int) -> Unit) {
+    Column(Modifier.entrance(0)) {
+        ScreenTitle(title, meta = meta)
+        ChipRow(listOf("LEETCODE", "GITHUB"), source, Modifier.padding(top = 12.dp)) { onSource(it) }
+    }
+}
+
+private val PAGE_PADDING = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp)
+
+// ---------------------------------------------------------------- LeetCode
+
+/**
+ * Board 23. LeetCode's public API is asked at most every 15 minutes; inside
+ * that window nothing is fetched and nothing is rewritten, so the freshness
+ * line keeps telling the truth about the data's age.
+ */
+@Composable
+private fun LeetBoard(vm: KioskViewModel, prefs: CodePrefs, source: Int, onSource: (Int) -> Unit) {
     val handle = remember { prefs.leetcode() }
     var attempt by remember { mutableIntStateOf(0) }
 
@@ -91,8 +132,6 @@ fun CodeScreen(vm: KioskViewModel) {
     }
     LaunchedEffect(key, attempt) {
         if (key == null || handle == null) return@LaunchedEffect
-        // inside the TTL nothing is asked of LeetCode and nothing is rewritten:
-        // the board shows the cached numbers under their real sync time
         if (seed != null && attempt == 0 && System.currentTimeMillis() - seed.at < LEET_TTL_MS) {
             state = Load.Ok(seed.value, seed.at)
             return@LaunchedEffect
@@ -108,12 +147,8 @@ fun CodeScreen(vm: KioskViewModel) {
     }
 
     if (handle == null) {
-        LazyColumn(
-            Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item { ScreenTitle("LeetCode", meta = "CODING PROFILE", modifier = Modifier.entrance(0)) }
+        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PAGE_PADDING, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { CodeHeader("LeetCode", "CODING PROFILE", source, onSource) }
             item {
                 EmptyState(
                     "No Handle Yet",
@@ -126,12 +161,8 @@ fun CodeScreen(vm: KioskViewModel) {
     }
 
     val stats = (state as? Load.Ok)?.value
-    LazyColumn(
-        Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item { ScreenTitle("LeetCode", meta = "@$handle", modifier = Modifier.entrance(0)) }
+    LazyColumn(Modifier.fillMaxWidth(), contentPadding = PAGE_PADDING, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { CodeHeader("LeetCode", "@$handle", source, onSource) }
         item { FreshnessLine(state, Modifier.entrance(1)) }
         if (stats == null) {
             item { StateBox(state, onRetry = { attempt++ }) }
@@ -154,14 +185,7 @@ fun CodeScreen(vm: KioskViewModel) {
                             MonoText("HARD", color = Crimson, modifier = Modifier.width(72.dp))
                             MonoText("${stats.hard}", medium = true)
                         }
-                        Box(
-                            Modifier
-                                .padding(top = 12.dp)
-                                .border(2.dp, LineStrong)
-                                .padding(horizontal = 10.dp, vertical = 5.dp),
-                        ) {
-                            MonoText("STREAK ${stats.streak} ${if (stats.streak == 1) "DAY" else "DAYS"}", color = Bone)
-                        }
+                        StreakChip(stats.streak, Modifier.padding(top = 12.dp))
                     }
                     LongswordMark(size = 84.dp, modifier = Modifier.padding(start = 4.dp))
                 }
@@ -171,7 +195,7 @@ fun CodeScreen(vm: KioskViewModel) {
             Card2(Modifier.entrance(3)) {
                 MonoText("SUBMISSIONS · LAST 22 WEEKS")
                 Spacer(Modifier.height(12.dp))
-                Heatmap(stats, Modifier.fillMaxWidth().aspectRatio(327f / 102f))
+                Heatmap(stats.days, ::leetHeat, Modifier.fillMaxWidth().aspectRatio(327f / 102f))
             }
         }
         if (stats.topics.isNotEmpty()) {
@@ -228,33 +252,6 @@ private fun SolvedRing(easy: Int, medium: Int, hard: Int, total: Int, size: Dp) 
     }
 }
 
-/** 22 weeks × 7 days of accepted-submission counts, oldest week first, Sunday on top */
-@Composable
-private fun Heatmap(stats: LeetStats, modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val u = this.size.width / 327f
-        val cell = 12f * u
-        val gap = 3f * u
-        for (i in stats.days.indices) {
-            val col = i / 7
-            val row = i % 7
-            drawRect(
-                color = heat(stats.days[i]),
-                topLeft = Offset(col * (cell + gap), row * (cell + gap)),
-                size = Size(cell, cell),
-            )
-        }
-    }
-}
-
-private fun heat(n: Int): Color = when {
-    n <= 0 -> Surface2
-    n < 5 -> Night
-    n < 10 -> HeatMid
-    n < 15 -> Violet
-    else -> HeatMax
-}
-
 @Composable
 private fun TopicsBars(topics: List<LeetTopic>) {
     val max = topics.maxOf { it.solved }.coerceAtLeast(1)
@@ -292,4 +289,205 @@ private fun RecentRow(row: LeetRecent, modifier: Modifier = Modifier) {
         }
         Stamp("ACCEPTED")
     }
+}
+
+// ------------------------------------------------------------------ GitHub
+
+/** Board 24. REST with ETags, plus the GraphQL contribution graph when a token is saved. */
+@Composable
+private fun GitHubBoard(vm: KioskViewModel, prefs: CodePrefs, source: Int, onSource: (Int) -> Unit) {
+    val handle = remember { prefs.github() }
+    val token = remember { prefs.githubToken() }
+    var attempt by remember { mutableIntStateOf(0) }
+
+    val key = handle?.let { "github/$it" }
+    val ser = GitHubStats.serializer()
+    val seed = remember(key, attempt) { key?.let { vm.lastGood(it, ser) } }
+    var state by remember(key, attempt) {
+        mutableStateOf<Load<GitHubStats>>(seed?.let { Load.Ok(it.value, it.at) } ?: Load.Loading)
+    }
+    LaunchedEffect(key, attempt) {
+        if (key == null || handle == null) return@LaunchedEffect
+        state = try {
+            val f = GitHubClient.fetch(handle, token, prefs.etags(handle), seed?.value)
+            prefs.setEtags(handle, f.etags)
+            if (f.changed || seed == null) {
+                val s = vm.keep(key, ser) { f.stats }
+                Load.Ok(s.value, s.at)
+            } else {
+                // every endpoint said 304: not one byte changed, so the data keeps its real age
+                Load.Ok(seed.value, seed.at)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            if (seed != null) Load.Ok(seed.value, seed.at, stale = true) else Load.Failed(e)
+        }
+    }
+
+    if (handle == null) {
+        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PAGE_PADDING, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { CodeHeader("GitHub", "CODING PROFILE", source, onSource) }
+            item {
+                EmptyState(
+                    "No Handle Yet",
+                    "Add your GitHub username in Me → Settings. Public data alone is enough; a token is optional and only lifts the rate limit.",
+                    Modifier.entrance(1),
+                ) { TowerMark(size = 120.dp, cut = Color.Transparent) }
+            }
+        }
+        return
+    }
+
+    val stats = (state as? Load.Ok)?.value
+    LazyColumn(Modifier.fillMaxWidth(), contentPadding = PAGE_PADDING, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { CodeHeader("GitHub", "@$handle", source, onSource) }
+        item { FreshnessLine(state, Modifier.entrance(1)) }
+        if (stats == null) {
+            item { StateBox(state, onRetry = { attempt++ }) }
+            return@LazyColumn
+        }
+        item { GitHubHero(stats, Modifier.entrance(2)) }
+        item {
+            Card2(Modifier.entrance(3)) {
+                MonoText(
+                    if (stats.publicActivityOnly) "PUBLIC ACTIVITY ONLY · LAST 22 WEEKS"
+                    else "CONTRIBUTIONS · LAST 22 WEEKS",
+                )
+                Spacer(Modifier.height(12.dp))
+                Heatmap(stats.days, ::ghHeat, Modifier.fillMaxWidth().aspectRatio(327f / 102f))
+                if (stats.publicActivityOnly) {
+                    BodyText(
+                        "Without a token this is the public events feed, about 90 days deep.",
+                        color = Muted,
+                        modifier = Modifier.padding(top = 10.dp),
+                    )
+                }
+            }
+        }
+        if (stats.languages.isNotEmpty()) {
+            item {
+                Card2(Modifier.entrance(4)) {
+                    MonoText("LANGUAGES")
+                    Spacer(Modifier.height(12.dp))
+                    LanguagesBar(stats.languages, stats.otherLangRepos)
+                    Spacer(Modifier.height(10.dp))
+                    MonoText(
+                        (
+                            stats.languages.map { it.name.uppercase(Locale.ENGLISH) } +
+                                listOfNotNull(if (stats.otherLangRepos > 0) "OTHER" else null)
+                            ).joinToString(" · "),
+                        color = Muted,
+                    )
+                }
+            }
+        }
+        if (stats.top.isNotEmpty()) {
+            item { SectionHead("Repositories", Modifier.padding(top = 10.dp, bottom = 4.dp).entrance(5)) }
+            items(stats.top, key = { it.name }) { repo ->
+                RepoCard(repo, Modifier.entrance(5))
+            }
+        }
+    }
+}
+
+@Composable
+private fun GitHubHero(stats: GitHubStats, modifier: Modifier = Modifier) {
+    HeroPanel(
+        height = 172.dp,
+        angle = 135f,
+        stops = arrayOf(0f to GhHeroViolet, 0.9f to Ink),
+        modifier = modifier,
+    ) {
+        TowerMark(
+            size = 168.dp,
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp),
+            color = Bone,
+            accent = Crimson,
+            cut = AccentDeep,
+        )
+        Column(Modifier.align(Alignment.CenterStart).padding(start = 16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(30.dp)) {
+                Column {
+                    MonoText("REPOS", color = Muted)
+                    D("${stats.repos}", 38.sp)
+                }
+                Column {
+                    MonoText("STARS", color = Muted)
+                    D("${stats.stars}", 38.sp)
+                }
+            }
+            StreakChip(stats.streak, Modifier.padding(top = 12.dp))
+        }
+    }
+}
+
+/** the languages bar: a weighted strip in the palette's order, leftovers in grey */
+@Composable
+private fun LanguagesBar(langs: List<GhLang>, other: Int, modifier: Modifier = Modifier) {
+    val colors = listOf(Bone, Violet, Crimson)
+    Box(modifier.fillMaxWidth().height(10.dp).background(Line)) {
+        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            langs.forEachIndexed { i, lang ->
+                Box(Modifier.weight(lang.repos.toFloat()).fillMaxHeight().background(colors[i % colors.size]))
+            }
+            if (other > 0) Box(Modifier.weight(other.toFloat()).fillMaxHeight().background(Muted))
+        }
+    }
+}
+
+@Composable
+private fun RepoCard(repo: GhRepo, modifier: Modifier = Modifier) {
+    Card2(modifier) {
+        MonoText(repo.name, color = Bone, medium = true)
+        repo.description?.takeIf { it.isNotBlank() }?.let {
+            BodyText(it, color = Muted, modifier = Modifier.padding(top = 4.dp))
+        }
+        MonoText(
+            listOfNotNull(repo.language?.uppercase(Locale.ENGLISH), "★ ${repo.stars}").joinToString(" · "),
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
+}
+
+// ------------------------------------------------------------------ shared
+
+@Composable
+private fun StreakChip(streak: Int, modifier: Modifier = Modifier) {
+    Box(modifier.border(2.dp, LineStrong).padding(horizontal = 10.dp, vertical = 5.dp)) {
+        MonoText("STREAK $streak ${if (streak == 1) "DAY" else "DAYS"}", color = Bone)
+    }
+}
+
+/** 22 weeks × 7 days, oldest week first, Sunday on top */
+@Composable
+private fun Heatmap(days: List<Int>, level: (Int) -> Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val u = this.size.width / 327f
+        val cell = 12f * u
+        val gap = 3f * u
+        for (i in days.indices) {
+            drawRect(
+                color = level(days[i]),
+                topLeft = Offset(i / 7 * (cell + gap), i % 7 * (cell + gap)),
+                size = Size(cell, cell),
+            )
+        }
+    }
+}
+
+private fun leetHeat(n: Int): Color = when {
+    n <= 0 -> Surface2
+    n < 5 -> Night
+    n < 10 -> HeatMid
+    n < 15 -> Violet
+    else -> HeatMax
+}
+
+private fun ghHeat(n: Int): Color = when {
+    n <= 0 -> Surface2
+    n <= 2 -> GhHeat1
+    n <= 5 -> GhHeat2
+    n <= 9 -> Crimson
+    else -> Bad
 }

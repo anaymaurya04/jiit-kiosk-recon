@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -863,6 +864,11 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit, onReminders: 
                 var leet by remember { mutableStateOf(codePrefs.leetcode()) }
                 var editingLeet by remember { mutableStateOf(false) }
                 var leetDraft by remember { mutableStateOf("") }
+                var gh by remember { mutableStateOf(codePrefs.github()) }
+                var ghTokenSaved by remember { mutableStateOf(codePrefs.githubToken() != null) }
+                var editingGh by remember { mutableStateOf(false) }
+                var ghDraft by remember { mutableStateOf("") }
+                var ghTokenDraft by remember { mutableStateOf("") }
                 RowLine(
                     label = "LeetCode",
                     onClick = {
@@ -917,7 +923,104 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit, onReminders: 
                         }
                     }
                 }
-                RowLine(label = "GitHub", trailing = { MonoText("NOT SET") })
+                RowLine(
+                    label = "GitHub",
+                    onClick = {
+                        ghDraft = gh.orEmpty()
+                        ghTokenDraft = ""
+                        editingGh = true
+                    },
+                    trailing = { MonoText(gh?.let { "@$it" } ?: "SET HANDLE") },
+                )
+                if (editingGh) {
+                    Column(Modifier.padding(vertical = 8.dp)) {
+                        BasicTextField(
+                            value = ghDraft,
+                            onValueChange = { ghDraft = it },
+                            singleLine = true,
+                            textStyle = Mono.copy(color = Bone, fontSize = 15.sp),
+                            cursorBrush = SolidColor(Crimson),
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            decorationBox = { inner ->
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .border(2.dp, Line)
+                                        .padding(horizontal = 12.dp),
+                                    contentAlignment = Alignment.CenterStart,
+                                ) {
+                                    if (ghDraft.isEmpty()) MonoText("USERNAME, NO @")
+                                    inner()
+                                }
+                            },
+                        )
+                        BasicTextField(
+                            value = ghTokenDraft,
+                            onValueChange = { ghTokenDraft = it },
+                            singleLine = true,
+                            textStyle = Mono.copy(color = Bone, fontSize = 15.sp),
+                            cursorBrush = SolidColor(Crimson),
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.padding(top = 8.dp).fillMaxWidth().height(44.dp),
+                            decorationBox = { inner ->
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .border(2.dp, Line)
+                                        .padding(horizontal = 12.dp),
+                                    contentAlignment = Alignment.CenterStart,
+                                ) {
+                                    if (ghTokenDraft.isEmpty()) {
+                                        MonoText(if (ghTokenSaved) "TOKEN SAVED — TYPE TO REPLACE" else "TOKEN, OPTIONAL")
+                                    }
+                                    inner()
+                                }
+                            },
+                        )
+                        BodyText(
+                            "The token stays sealed in this phone's Keystore and lifts GitHub's rate limit. " +
+                                "Without it the board shows PUBLIC ACTIVITY ONLY.",
+                            color = Muted,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                        Row(
+                            Modifier.padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            PrimaryButton(
+                                "Save",
+                                onClick = {
+                                    codePrefs.setGithub(ghDraft)
+                                    if (ghTokenDraft.isNotBlank()) codePrefs.setGithubToken(ghTokenDraft)
+                                    gh = codePrefs.github()
+                                    ghTokenSaved = codePrefs.githubToken() != null
+                                    editingGh = false
+                                },
+                                modifier = Modifier.weight(1f),
+                            )
+                            Box(
+                                Modifier
+                                    .clickable { editingGh = false }
+                                    .padding(horizontal = 8.dp, vertical = 14.dp),
+                            ) {
+                                MonoText("CANCEL")
+                            }
+                        }
+                        if (ghTokenSaved) {
+                            Box(
+                                Modifier
+                                    .clickable {
+                                        codePrefs.setGithubToken(null)
+                                        ghTokenSaved = false
+                                    }
+                                    .padding(vertical = 10.dp),
+                            ) {
+                                MonoText("REMOVE SAVED TOKEN", color = Bad)
+                            }
+                        }
+                    }
+                }
             }
         }
 
