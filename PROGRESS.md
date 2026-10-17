@@ -138,17 +138,21 @@ No screenshot-test framework exists (checked) → emulator screenshots stand in.
       badges, NEW tag (`NotesPrefs` seen ids), search + kind chips, course→topic groups (R2a)
 - [x] Schedule first run (board 10) + builder (board 11) (R2a) — `schedule/` package, day chips, dashed
       add box, subject picker off the attendance sheet, copy-to, one-step undo
-- [ ] Schedule day view per board 12 + hours tracking + SAFE/CLOSE/LOW markers — R2b
+- [x] Schedule day view per board 12 + hours chart + SAFE/CLOSE/LOW markers (R2b) — week strip,
+      hour grid with offset blocks (verdict-coloured rails), crimson NOW line ticking every 30s,
+      6-bar hours card, legend; markers read the attendance sheet (subjectId, else name); no
+      percentage → no marker, grey rail
 - [x] attendance line user-settable in Settings; one `verdictOf(percent, target, band)` drives the
-      Attendance stamps (+ subject screen) and will drive the r2b markers — defaults 75 ± 5
+      Attendance stamps (+ subject screen) and the schedule's markers — defaults 75 ± 5
 - [ ] one-time Classroom↔subject link confirm (deferred; builder stores subjectId when picked)
 - [ ] Reminders entry from the Assignments screen — R2c
 
 ### §6 Calendar — [x] built from the official PDF asset + user events; [ ] delta pass (R3)
 ### §7 Code — [x] LeetCode + GitHub built and cross-checked; [ ] re-verify vs boards 15/16 (R6)
 ### §8 Build order — theme [x]; art [ ] R4; components [x main set, ] R5 leftovers; motion [x];
-screens [x previous set, ] R6 pass; Class [R2a done: switch + Notes + Schedule first-run/builder;
-R2b: day view]; Code [x]; screenshot tests [none exist — ledger]
+screens [x previous set, ] R6 pass; Class [R2a + R2b done: switch, Schedule (first run / builder /
+day view), Notes; R2c: card reminder lines + Reminders entry]; Code [x]; screenshot tests
+[none exist — ledger]
 ### §9 Motion — [x] `Motion.kt` + wiring (the bank digit-roll was never shipped — ledger)
 ### §10 States — [x] for the existing screens (Phase 6 pass); [ ] for all new screens (R6)
 ### §11 Method — branch `feature/redesign` [x]; commits per step; this file kept current
@@ -209,3 +213,11 @@ R2b: day view]; Code [x]; screenshot tests [none exist — ledger]
   components: `SegmentedSwitch`, public `dashedBorder`; `design-system.md` §15 documents the family.
   Tests: 66 green (ScheduleTest 5 + VerdictTest 3 new). No device attached — visual pass still pending.
   Next: R2b day view (board 12) + hours + markers.
+- 2026-10-17 (R2b): schedule day view built (board 12). Landing for a saved schedule = the day view;
+  EDIT SCHEDULE opens the builder. Week strip, hour grid (blocks offset by start, 6dp verdict rail,
+  grey rail when the subject has no percentage), crimson NOW line + `Now h:mm a` stamp ticking every
+  30s, NEXT CLASS IN / TODAY pair, `HOURS THIS WEEK` card with the 6-bar chart, mono legend. Markers:
+  `markFor()` matches subjectId first, name second, then `verdictOf(percent, target, band)` — the same
+  line as Settings and the Attendance tab. Grid fits the day's span (floor/ceil to the hour, 4h min;
+  9AM–5PM when empty). Build + 66 tests green. Still no device — visual pass pending. Next: R2c
+  (card reminder lines, Reminders entry from Assignments), then R3.

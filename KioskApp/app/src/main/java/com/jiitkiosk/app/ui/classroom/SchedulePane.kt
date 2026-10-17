@@ -74,12 +74,12 @@ fun SchedulePane(vm: KioskViewModel) {
     var schedule by remember { mutableStateOf(ScheduleStore.load(vm.dataDir)) }
     var building by remember { mutableStateOf(false) }
     // while nothing is saved, the only thing to look at is the builder itself
-    if (schedule == null && !building) {
-        FirstRun(onCreate = { building = true })
-    } else {
-        ScheduleBuilder(
-            initial = schedule ?: Schedule(),
-            canBack = schedule != null,
+    val saved = schedule
+    when {
+        saved == null && !building -> FirstRun(onCreate = { building = true })
+        (saved == null || building) -> ScheduleBuilder(
+            initial = saved ?: Schedule(),
+            canBack = saved != null,
             hasPrev = ScheduleStore.hasPrev(vm.dataDir),
             onBack = { building = false },
             onSave = { draft ->
@@ -87,14 +87,15 @@ fun SchedulePane(vm: KioskViewModel) {
                 building = false
             },
             onRevert = { schedule = ScheduleStore.revert(vm.dataDir) },
-            subjects = rememberSubjects(vm),
+            subjects = rememberScheduleSubjects(vm),
         )
+        else -> ScheduleDayPane(vm, requireNotNull(saved), onEdit = { building = true })
     }
 }
 
-/** the attendance sheet's subjects, for the builder's picker; empty until that tab has data */
+/** the attendance sheet's subjects, for the builder's picker and the day view's markers */
 @Composable
-private fun rememberSubjects(vm: KioskViewModel): List<SubjectAttendance> {
+internal fun rememberScheduleSubjects(vm: KioskViewModel): List<SubjectAttendance> {
     val token = vm.session?.token.orEmpty()
     val meta = rememberCached(vm, "att-meta/$token", AttendanceMeta.serializer(), attempt = 0) { it.attendanceMeta() }
     val semester = (meta as? Load.Ok)?.value?.semesters?.firstOrNull()
