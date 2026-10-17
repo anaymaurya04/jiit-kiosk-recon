@@ -420,3 +420,33 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   `NextUpTest` pins 17 cases (start/end boundaries, overlap both ways, class across noon, midnight
   rollover, Saturday→Monday wrap, Sunday look-forward, malformed starts, timezone change, a DST
   spring-forward day). Build + tests green. Next: W2 (snapshot + six renderers + picker previews).
+- 2026-10-17 (W2): the six widgets built. `widget/WidgetSnapshot.kt` reads every cache the tiles
+  glance at in one pass — cache-only by construction: no network, no session, no login flow, so a
+  widget always paints, even offline and even expired. `widget/WidgetRender.kt` is the one painter:
+  per-`appWidgetId` settings from the existing `kiosk` prefs (`WidgetPrefs`), the boards' colours as
+  ARGB (`WidgetColors`), pure formatters with the clock passed in (`WidgetFormat`, plus `WidgetData`'s
+  ring/metric helpers), ring + meter bitmaps because RemoteViews cannot draw arcs (`WidgetArt`), the
+  ghost artworks as vectors (hourglass/shield/tome/tablet/moon, exact board geometry incl. the moon's
+  0.25 halo), and `widget_card` (surface, 2dp Line, square). Board 28's mark chips reuse the app's
+  lifted `ui/theme/Markers.markFor` — `ScheduleDay`'s private copy is gone, call site unchanged. Five
+  new providers (`NextClassWidget`, `AttendanceWidget`, `PendingWidget`, `ClassesWidget`,
+  `DashboardWidget`) share one `WidgetProvider` base; `KioskWidget` upgrades in place to the Today 4×2
+  provider and its companion `refresh(context)` now repaints all six, so `MainActivity.onResume` and
+  the Classroom sync needed no changes. Board-31 states wired: expired strip + `SHOWING DATA FROM …`
+  in warn colour (the expanded widget's own tap goes to reconnect), no-schedule ("TAP TO CREATE" →
+  schedule builder), all-clear (moon + "NEXT: MON 10:00 AM · SUBJECT"), and the updating skeleton
+  (outlined blocks, column dividers, `UPDATING…` in the footer slot) behind the `widget_updating`
+  pref — `readSnapshot` reads it today; W4's worker will set it, so that tile becomes reachable the
+  moment the scheduler lands. Widget taps deep-link through `MainActivity.EXTRA_OPEN` (schedule /
+  attendance / assignments / reconnect) into `AppShell`'s one-shot consumer; the Classroom screen
+  takes `jump`/`onJumped` for panes 1 (assignments) and 2 (schedule). Preview rule kept: every
+  layout's picker samples are the boards' own values under a SAMPLE chip the first paint hides, and
+  hidden-by-default state blocks stay GONE in the previews. All six info XMLs use
+  `updatePeriodMillis="0"` (W4 owns the driven updates; boards 28-31 pinned sizes/cells). Old
+  `widget_kiosk.xml` deleted, superseded by `widget_today.xml`. 17 suites / 98 tests green
+  (`WidgetFormatTest` pins subject codes, countdowns, pending order/counts, sync lines, hours,
+  headings, and that one date reads FRI 16 OCT); build shows only the 7 baseline warnings. Not yet
+  verified: the emulator visual pass against boards 28–33 (next), the updating tile until W4 sets the
+  flag, deep links on a real launcher, and the full data states without the account. Ledgered
+  deviations: per-widget settings live in the `kiosk` prefs file (not DataStore, same reasoning as
+  before), and the dashboard reuses the state card compactly where no board pins it.

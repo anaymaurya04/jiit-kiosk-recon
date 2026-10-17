@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- board 31 no-schedule ghost: the tablet, cracked screen, crimson marks -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp"
+    android:height="56dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="#F0EEE9"
+        android:pathData="M22 92 V32 Q22 8 50 8 Q78 8 78 32 V92Z" />
+    <path
+        android:fillColor="#141418"
+        android:pathData="M34,30 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 z" />
+    <path
+        android:fillColor="#141418"
+        android:pathData="M50 36 L56 26 L62 36Z" />
+    <path
+        android:fillColor="#141418"
+        android:pathData="M60,22 h3 v14 h-3 z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M34,46 h9 v9 h-9 z"
+        android:strokeColor="#141418"
+        android:strokeWidth="2.5" />
+    <path
+        android:fillColor="#141418"
+        android:pathData="M59.5,50 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M48 66 A7 7 0 1 0 55 56"
+        android:strokeColor="#141418"
+        android:strokeWidth="2.5" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M36 74 H44 M40 70 V78 M58 70 L66 78 M66 70 L58 78"
+        android:strokeColor="#141418"
+        android:strokeWidth="2.5" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M44 50 L52 56"
+        android:strokeColor="#C23B4E"
+        android:strokeWidth="3" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M30 86 H70"
+        android:strokeColor="#C23B4E"
+        android:strokeWidth="4" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M58 8 L52 30 L60 40 L54 56"
+        android:strokeColor="#3A3A44"
+        android:strokeWidth="1.5" />
+</vector>

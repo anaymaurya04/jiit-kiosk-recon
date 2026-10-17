@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- board 28, the pending tile's ghost: the tome, violet cover, crimson spine -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="84dp"
+    android:height="84dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="#7B5CD6"
+        android:pathData="M18,8 h64 v82 h-64 z" />
+    <path
+        android:fillColor="#C23B4E"
+        android:pathData="M18,8 h12 v82 h-12 z" />
+    <path
+        android:fillColor="#F0EEE9"
+        android:pathData="M22,90 h60 v5 h-60 z" />
+    <path
+        android:fillColor="#F0EEE9"
+        android:pathData="M76,42 h10 v14 h-10 z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M56 34 L68 49 L56 64 L44 49Z"
+        android:strokeColor="#F0EEE9"
+        android:strokeWidth="3" />
+    <path
+        android:fillColor="#F0EEE9"
+        android:pathData="M53,49 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 z" />
+</vector>

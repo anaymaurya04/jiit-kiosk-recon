@@ -83,12 +83,19 @@ private const val SOON_MS = 72L * 3_600_000
  * fixes it.
  */
 @Composable
-fun ClassroomScreen(vm: KioskViewModel, onReminders: () -> Unit) {
+fun ClassroomScreen(vm: KioskViewModel, onReminders: () -> Unit, jump: Int = 0, onJumped: () -> Unit = {}) {
     val connect = rememberClassroomConnect(vm)
     val context = LocalContext.current
     var attempt by remember { mutableIntStateOf(0) }
     var filter by remember { mutableIntStateOf(0) }
     var pane by rememberSaveable { mutableIntStateOf(0) }
+    // a widget tap can ask for a specific pane (1 assignments, 2 schedule)
+    LaunchedEffect(jump) {
+        if (jump in 1..2) {
+            pane = jump - 1
+            onJumped()
+        }
+    }
 
     val state = rememberKept(
         vm,

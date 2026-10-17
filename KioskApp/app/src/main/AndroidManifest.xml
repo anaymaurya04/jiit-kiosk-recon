@@ -42,13 +42,79 @@
         <receiver
             android:name=".widget.KioskWidget"
             android:enabled="true"
-            android:exported="false">
+            android:exported="false"
+            android:label="@string/widget_today_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_kiosk_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.NextClassWidget"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/widget_next_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_next_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.AttendanceWidget"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/widget_attendance_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_attendance_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.PendingWidget"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/widget_pending_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_pending_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.ClassesWidget"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/widget_classes_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_classes_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.DashboardWidget"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/widget_dashboard_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_dashboard_info" />
         </receiver>
     </application>
 

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RemoteViews-safe only. The sample values are board 28's; every field is rewritten on paint, and the SAMPLE chip is hidden at render. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_card"
+    android:padding="12dp">
+
+    <ImageView
+        android:id="@+id/next_ghost"
+        android:layout_width="84dp"
+        android:layout_height="84dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="-6dp"
+        android:layout_marginEnd="-16dp"
+        android:alpha="0.10"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_ghost_hourglass" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/ibm_plex_mono_medium"
+            android:letterSpacing="0.05"
+            android:text="@string/w_next"
+            android:textColor="#A09DA6"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/next_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/barlow_condensed_semibold"
+            android:includeFontPadding="false"
+            android:text="2:00 PM"
+            android:textColor="#F0EEE9"
+            android:textSize="38sp" />
+
+        <TextView
+            android:id="@+id/next_subject"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="@font/ibm_plex_sans_medium"
+            android:maxLines="2"
+            android:text="Foundations of Data Analytics"
+            android:textColor="#F0EEE9"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/next_chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#4CC38A"
+                android:fontFamily="@font/ibm_plex_mono_medium"
+                android:paddingStart="5dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="5dp"
+                android:paddingBottom="2dp"
+                android:text="✓ SAFE"
+                android:textColor="#0B0B0D"
+                android:textSize="10sp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/next_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/ibm_plex_mono_regular"
+                android:text="1H 20M"
+                android:textColor="#F0EEE9"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_sample"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:background="#F0EEE9"
+        android:fontFamily="@font/ibm_plex_mono_medium"
+        android:paddingStart="5dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="5dp"
+        android:paddingBottom="2dp"
+        android:text="SAMPLE"
+        android:textColor="#0B0B0D"
+        android:textSize="9sp" />
+</FrameLayout>

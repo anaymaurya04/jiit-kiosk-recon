@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
@@ -38,12 +40,25 @@ import com.jiitkiosk.app.ui.theme.CrimsonDeep
 import com.jiitkiosk.app.ui.theme.Line
 
 @Composable
-fun AppShell(vm: KioskViewModel) {
+fun AppShell(vm: KioskViewModel, open: String? = null, onOpened: () -> Unit = {}) {
     // the design opens on Attendance: there is no home tab in it
     var tab by rememberSaveable { mutableStateOf(Tab.Attendance) }
     // one-shot: the Assignments pane's Reminders button must land on the Me tab's
     // Reminders page, which MeScreen owns
     var openReminders by rememberSaveable { mutableStateOf(false) }
+    // one-shot: which Class pane a widget tap asked for (0 none, 1 assignments, 2 schedule)
+    var classJump by rememberSaveable { mutableIntStateOf(0) }
+
+    // a widget tap's landing spot, consumed exactly once
+    LaunchedEffect(open) {
+        when (open) {
+            "attendance" -> tab = Tab.Attendance
+            "assignments" -> { classJump = 1; tab = Tab.Class }
+            "schedule" -> { classJump = 2; tab = Tab.Class }
+            "reconnect" -> vm.startReconnect()
+        }
+        if (open != null) onOpened()
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -72,7 +87,11 @@ fun AppShell(vm: KioskViewModel) {
                         when (shown) {
                             Tab.Attendance -> AttendanceScreen(vm)
                             Tab.Exams -> ExamsScreen(vm)
-                            Tab.Class -> ClassroomScreen(vm) { openReminders = true; tab = Tab.Me }
+                            Tab.Class -> ClassroomScreen(
+                                vm,
+                                { openReminders = true; tab = Tab.Me },
+                                classJump,
+                            ) { classJump = 0 }
                             Tab.Code -> CodeScreen(vm)
                             Tab.Me -> MeScreen(vm, openReminders) { openReminders = false }
                         }

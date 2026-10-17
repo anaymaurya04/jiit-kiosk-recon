@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- picker-preview meter only (SE 86): the renderer paints the live bitmap over it -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="164dp"
+    android:height="6dp"
+    android:viewportWidth="100"
+    android:viewportHeight="6">
+    <path
+        android:fillColor="#26262E"
+        android:pathData="M0,0 h100 v6 h-100 z" />
+    <path
+        android:fillColor="#4CC38A"
+        android:pathData="M0,0 h86 v6 h-86 z" />
+</vector>

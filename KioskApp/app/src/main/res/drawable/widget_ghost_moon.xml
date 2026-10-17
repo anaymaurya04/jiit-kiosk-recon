@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- board 31 all-clear ghost: the moon, violet halo, bone crescent, craters and star -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="110dp"
+    android:height="110dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillAlpha="0.25"
+        android:fillColor="#7B5CD6"
+        android:pathData="M8,50 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0 z" />
+    <path
+        android:fillColor="#F0EEE9"
+        android:pathData="M62 8 A42 42 0 1 0 92 62 A34 34 0 1 1 62 8Z" />
+    <path
+        android:fillColor="#3A3A44"
+        android:pathData="M29,48 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 z" />
+    <path
+        android:fillColor="#3A3A44"
+        android:pathData="M42.5,72 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path
+        android:fillColor="#3A3A44"
+        android:pathData="M25.5,68 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M80 14 V26 M74 20 H86"
+        android:strokeColor="#F0EEE9"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="#F0EEE9"
+        android:pathData="M84.5,42 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0 z" />
+</vector>

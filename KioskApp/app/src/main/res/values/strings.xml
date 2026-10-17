@@ -1,4 +1,28 @@
 <resources>
     <string name="app_name">JIIT Kiosk</string>
-    <string name="widget_description">Attendance percentage and the next Classroom deadline</string>
+
+    <!-- the six home-screen widgets, boards 28-33 -->
+    <string name="widget_next_label">Next class</string>
+    <string name="widget_attendance_label">Attendance</string>
+    <string name="widget_pending_label">Pending</string>
+    <string name="widget_today_label">Today</string>
+    <string name="widget_classes_label">Classes</string>
+    <string name="widget_dashboard_label">Dashboard</string>
+    <string name="widget_next_description">Your next class, from the saved schedule.</string>
+    <string name="widget_attendance_description">Overall attendance and your lowest subject.</string>
+    <string name="widget_pending_description">Classroom work still to submit.</string>
+    <string name="widget_today_description">Next class, attendance and pending work in one card.</string>
+    <string name="widget_classes_description">Today\’s classes and what is left.</string>
+    <string name="widget_dashboard_description">The whole day: classes, attendance, pending work.</string>
+
+    <!-- labels inside the widget cards, boards 28-31 -->
+    <string name="w_next">NEXT CLASS</string>
+    <string name="w_attendance">ATTENDANCE</string>
+    <string name="w_attend_short">ATTEND.</string>
+    <string name="w_lowest">LOWEST</string>
+    <string name="w_overall">OVERALL</string>
+    <string name="w_pending">PENDING</string>
+    <string name="w_to_submit">TO SUBMIT</string>
+    <string name="w_next_due">NEXT DUE</string>
+    <string name="w_classes">CLASSES</string>
 </resources>

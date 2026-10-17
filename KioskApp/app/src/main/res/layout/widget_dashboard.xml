@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RemoteViews-safe only. Board 30's Dashboard tile with its sample values; every field is rewritten on paint. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_card"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/dash_strip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:background="#C23B4E"
+            android:fontFamily="@font/ibm_plex_mono_medium"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:paddingStart="4dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="2dp"
+            android:text="SESSION EXPIRED · TAP TO RECONNECT"
+            android:textColor="#F0EEE9"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/dash_content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="bottom"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/dash_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/barlow_condensed_semibold"
+                    android:includeFontPadding="false"
+                    android:text="Today"
+                    android:textColor="#F0EEE9"
+                    android:textSize="26sp" />
+
+                <TextView
+                    android:id="@+id/dash_sync"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:text="FRI 16 OCT · SYNCED 4 MIN AGO"
+                    android:textColor="#A09DA6"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/ibm_plex_mono_medium"
+                android:letterSpacing="0.05"
+                android:text="@string/w_classes"
+                android:textColor="#A09DA6"
+                android:textSize="10sp" />
+
+            <LinearLayout
+                android:id="@+id/dash_row1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:minHeight="41dp"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/dash_bar1"
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#C23B4E" />
+
+                <TextView
+                    android:id="@+id/dash_time1"
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ibm_plex_mono_regular"
+                    android:text="2:00 PM"
+                    android:textColor="#F0EEE9"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/dash_subject1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/ibm_plex_sans_medium"
+                    android:maxLines="1"
+                    android:text="Foundations of Data Analytics"
+                    android:textColor="#F0EEE9"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/dash_chip1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#4CC38A"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="✓ SAFE"
+                    android:textColor="#0B0B0D"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/dash_row2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="41dp"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/dash_bar2"
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#C23B4E"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/dash_time2"
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ibm_plex_mono_regular"
+                    android:text="4:00 PM"
+                    android:textColor="#F0EEE9"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/dash_subject2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/ibm_plex_sans_medium"
+                    android:maxLines="1"
+                    android:text="Software Engineering"
+                    android:textColor="#F0EEE9"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/dash_chip2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#E0A030"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="! CLOSE"
+                    android:textColor="#0B0B0D"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/dash_row3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="41dp"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/dash_bar3"
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#C23B4E"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/dash_time3"
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ibm_plex_mono_regular"
+                    android:text="6:00 PM"
+                    android:textColor="#F0EEE9"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/dash_subject3"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/ibm_plex_sans_medium"
+                    android:maxLines="1"
+                    android:text="Image Processing"
+                    android:textColor="#F0EEE9"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/dash_chip3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#E0566A"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="✕ LOW"
+                    android:textColor="#0B0B0D"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/dash_more"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="@font/ibm_plex_mono_medium"
+                android:letterSpacing="0.05"
+                android:text="+2 MORE TODAY"
+                android:textColor="#A09DA6"
+                android:textSize="10sp" />
+
+            <LinearLayout
+                android:id="@+id/dash_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <FrameLayout
+                    android:layout_width="84dp"
+                    android:layout_height="84dp">
+
+                    <ImageView
+                        android:id="@+id/dash_state_ghost"
+                        android:layout_width="84dp"
+                        android:layout_height="84dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/widget_ghost_moon" />
+
+                    <ImageView
+                        android:id="@+id/dash_state_tablet"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center_vertical|start"
+                        android:importantForAccessibility="no"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/widget_ghost_tablet"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/dash_state_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/barlow_condensed_semibold"
+                        android:includeFontPadding="false"
+                        android:text="All clear"
+                        android:textColor="#F0EEE9"
+                        android:textSize="26sp" />
+
+                    <TextView
+                        android:id="@+id/dash_state_sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/ibm_plex_sans_regular"
+                        android:text="No more classes today. Nothing due."
+                        android:textColor="#A09DA6"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/dash_state_next"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/ibm_plex_mono_medium"
+                        android:text="NEXT: MON 10:00 AM · SOFTWARE ENGINEERING"
+                        android:textColor="#A09DA6"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/dash_state_chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="#F0EEE9"
+                        android:fontFamily="@font/ibm_plex_mono_medium"
+                        android:paddingStart="5dp"
+                        android:paddingTop="2dp"
+                        android:paddingEnd="5dp"
+                        android:paddingBottom="2dp"
+                        android:text="TAP TO CREATE"
+                        android:textColor="#0B0B0D"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/ibm_plex_mono_medium"
+                android:letterSpacing="0.05"
+                android:text="@string/w_attendance"
+                android:textColor="#A09DA6"
+                android:textSize="10sp" />
+
+            <LinearLayout
+                android:id="@+id/dash_att"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="52dp"
+                    android:layout_height="52dp">
+
+                    <ImageView
+                        android:id="@+id/dash_ring"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:layout_gravity="center"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/widget_ring_sample" />
+
+                    <TextView
+                        android:id="@+id/dash_percent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:fontFamily="@font/ibm_plex_mono_regular"
+                        android:text="78"
+                        android:textColor="#F0EEE9"
+                        android:textSize="11sp" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/dash_strip1"
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/dash_code1"
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/ibm_plex_mono_medium"
+                            android:text="SE"
+                            android:textColor="#A09DA6"
+                            android:textSize="10sp" />
+
+                        <ImageView
+                            android:id="@+id/dash_meter1"
+                            android:layout_width="0dp"
+                            android:layout_height="6dp"
+                            android:layout_weight="1"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/widget_meter_sample" />
+
+                        <TextView
+                            android:id="@+id/dash_pct1"
+                            android:layout_width="26dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/ibm_plex_mono_regular"
+                            android:gravity="end"
+                            android:text="86"
+                            android:textColor="#A09DA6"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/dash_strip2"
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/dash_code2"
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/ibm_plex_mono_medium"
+                            android:text="IP"
+                            android:textColor="#A09DA6"
+                            android:textSize="10sp" />
+
+                        <ImageView
+                            android:id="@+id/dash_meter2"
+                            android:layout_width="0dp"
+                            android:layout_height="6dp"
+                            android:layout_weight="1"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/widget_meter_sample" />
+
+                        <TextView
+                            android:id="@+id/dash_pct2"
+                            android:layout_width="26dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/ibm_plex_mono_regular"
+                            android:gravity="end"
+                            android:text="61"
+                            android:textColor="#A09DA6"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/dash_strip3"
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/dash_code3"
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/ibm_plex_mono_medium"
+                            android:text="FDA"
+                            android:textColor="#A09DA6"
+                            android:textSize="10sp" />
+
+                        <ImageView
+                            android:id="@+id/dash_meter3"
+                            android:layout_width="0dp"
+                            android:layout_height="6dp"
+                            android:layout_weight="1"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/widget_meter_sample" />
+
+                        <TextView
+                            android:id="@+id/dash_pct3"
+                            android:layout_width="26dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/ibm_plex_mono_regular"
+                            android:gravity="end"
+                            android:text="72"
+                            android:textColor="#A09DA6"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/dash_pend_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/ibm_plex_mono_medium"
+                android:letterSpacing="0.05"
+                android:text="PENDING · 3"
+                android:textColor="#A09DA6"
+                android:textSize="10sp" />
+
+            <LinearLayout
+                android:id="@+id/dash_work1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/dash_work1_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/ibm_plex_sans_medium"
+                        android:maxLines="1"
+                        android:text="Lab report 4"
+                        android:textColor="#F0EEE9"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/dash_work1_course"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/ibm_plex_mono_medium"
+                        android:letterSpacing="0.05"
+                        android:maxLines="1"
+                        android:text="SOFTWARE ENGINEERING"
+                        android:textColor="#A09DA6"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/dash_work1_chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="#E0566A"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="MISSING"
+                    android:textColor="#0B0B0D"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/dash_work2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/dash_work2_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/ibm_plex_sans_medium"
+                        android:maxLines="1"
+                        android:text="Quiz 2 prep"
+                        android:textColor="#F0EEE9"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/dash_work2_course"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/ibm_plex_mono_medium"
+                        android:letterSpacing="0.05"
+                        android:maxLines="1"
+                        android:text="IMAGE PROCESSING"
+                        android:textColor="#A09DA6"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/dash_work2_chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="#26262E"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="IN 5H"
+                    android:textColor="#F0EEE9"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_sample"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:background="#F0EEE9"
+        android:fontFamily="@font/ibm_plex_mono_medium"
+        android:paddingStart="5dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="5dp"
+        android:paddingBottom="2dp"
+        android:text="SAMPLE"
+        android:textColor="#0B0B0D"
+        android:textSize="9sp" />
+</FrameLayout>

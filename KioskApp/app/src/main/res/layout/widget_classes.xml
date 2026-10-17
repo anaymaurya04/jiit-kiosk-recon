@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RemoteViews-safe only. Board 29's Classes tile with its sample values; every field is rewritten on paint. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_card"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/classes_header_left"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/ibm_plex_mono_medium"
+                android:letterSpacing="0.05"
+                android:text="TODAY · FRI 16 OCT"
+                android:textColor="#A09DA6"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/classes_sync"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/ibm_plex_mono_medium"
+                android:text="SYNCED 4 MIN AGO"
+                android:textColor="#A09DA6"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/classes_row1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="41dp"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/classes_bar1"
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#C23B4E" />
+
+                <TextView
+                    android:id="@+id/classes_time1"
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ibm_plex_mono_regular"
+                    android:text="2:00 PM"
+                    android:textColor="#F0EEE9"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/classes_subject1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/ibm_plex_sans_medium"
+                    android:maxLines="1"
+                    android:text="Foundations of Data Analytics"
+                    android:textColor="#F0EEE9"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/classes_chip1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#4CC38A"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="✓ SAFE"
+                    android:textColor="#0B0B0D"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/classes_row2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="41dp"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/classes_bar2"
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#C23B4E"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/classes_time2"
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ibm_plex_mono_regular"
+                    android:text="4:00 PM"
+                    android:textColor="#F0EEE9"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/classes_subject2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/ibm_plex_sans_medium"
+                    android:maxLines="1"
+                    android:text="Software Engineering"
+                    android:textColor="#F0EEE9"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/classes_chip2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#E0A030"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="! CLOSE"
+                    android:textColor="#0B0B0D"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/classes_row3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="41dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <View
+                    android:id="@+id/classes_bar3"
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#C23B4E"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/classes_time3"
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ibm_plex_mono_regular"
+                    android:text="6:00 PM"
+                    android:textColor="#F0EEE9"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/classes_subject3"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/ibm_plex_sans_medium"
+                    android:maxLines="1"
+                    android:text="Image Processing"
+                    android:textColor="#F0EEE9"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/classes_chip3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#E0566A"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="✕ LOW"
+                    android:textColor="#0B0B0D"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/classes_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/ibm_plex_mono_medium"
+            android:letterSpacing="0.05"
+            android:text="+1 MORE TODAY · 3H OF CLASSES"
+            android:textColor="#A09DA6"
+            android:textSize="10sp" />
+
+        <LinearLayout
+            android:id="@+id/classes_state"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="110dp"
+                android:layout_height="110dp">
+
+                <ImageView
+                    android:id="@+id/classes_state_ghost"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/widget_ghost_moon" />
+
+                <ImageView
+                    android:id="@+id/classes_state_tablet"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/widget_ghost_tablet"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/classes_state_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/barlow_condensed_semibold"
+                    android:includeFontPadding="false"
+                    android:text="All clear"
+                    android:textColor="#F0EEE9"
+                    android:textSize="26sp" />
+
+                <TextView
+                    android:id="@+id/classes_state_sub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/ibm_plex_sans_regular"
+                    android:text="No more classes today. Nothing due."
+                    android:textColor="#A09DA6"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/classes_state_next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:text="NEXT: MON 10:00 AM · SOFTWARE ENGINEERING"
+                    android:textColor="#A09DA6"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/classes_state_chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="#F0EEE9"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:paddingStart="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="5dp"
+                    android:paddingBottom="2dp"
+                    android:text="TAP TO CREATE"
+                    android:textColor="#0B0B0D"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_sample"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:background="#F0EEE9"
+        android:fontFamily="@font/ibm_plex_mono_medium"
+        android:paddingStart="5dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="5dp"
+        android:paddingBottom="2dp"
+        android:text="SAMPLE"
+        android:textColor="#0B0B0D"
+        android:textSize="9sp" />
+</FrameLayout>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- picker-preview ring only: the renderer paints the live bitmap over it -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M32,6 a26,26 0 1,0 0,52 a26,26 0 1,0 0,-52"
+        android:strokeColor="#26262E"
+        android:strokeWidth="6" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M32 6 A26 26 0 1 1 6.5 27.1"
+        android:strokeColor="#E0A030"
+        android:strokeWidth="6" />
+</vector>

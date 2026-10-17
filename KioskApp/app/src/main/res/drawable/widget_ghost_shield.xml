@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- board 28, the attendance tile's ghost: the shield, crimson half, tile-coloured cuts -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="84dp"
+    android:height="84dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="#F0EEE9"
+        android:pathData="M18 12 H82 V50 Q82 78 50 94 Q18 78 18 50Z" />
+    <path
+        android:fillColor="#C23B4E"
+        android:pathData="M50 12 H82 V50 Q82 78 50 94Z" />
+    <path
+        android:fillColor="#141418"
+        android:pathData="M48.5,12 h3 v82 h-3 z" />
+    <path
+        android:fillColor="#141418"
+        android:pathData="M50 30 L58 44 L50 58 L42 44Z" />
+</vector>

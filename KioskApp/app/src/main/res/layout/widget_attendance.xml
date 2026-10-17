@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RemoteViews-safe only. Board 28's attendance tile with its sample values; rewritten on paint. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_card"
+    android:padding="12dp">
+
+    <ImageView
+        android:id="@+id/att_ghost"
+        android:layout_width="84dp"
+        android:layout_height="84dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="-6dp"
+        android:layout_marginEnd="-16dp"
+        android:alpha="0.10"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_ghost_shield" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/ibm_plex_mono_medium"
+            android:letterSpacing="0.05"
+            android:text="@string/w_attendance"
+            android:textColor="#A09DA6"
+            android:textSize="10sp" />
+
+        <FrameLayout
+            android:layout_width="58dp"
+            android:layout_height="58dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="6dp">
+
+            <ImageView
+                android:id="@+id/att_ring"
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:layout_gravity="center"
+                android:scaleType="fitXY"
+                android:src="@drawable/widget_ring_sample" />
+
+            <TextView
+                android:id="@+id/att_percent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/ibm_plex_mono_regular"
+                android:text="78"
+                android:textColor="#F0EEE9"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/att_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/ibm_plex_mono_medium"
+                android:gravity="center"
+                android:text="NOT SYNCED"
+                android:textColor="#A09DA6"
+                android:textSize="10sp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/att_lowest_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="@font/ibm_plex_mono_medium"
+            android:letterSpacing="0.05"
+            android:text="@string/w_lowest"
+            android:textColor="#A09DA6"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/att_lowest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/ibm_plex_sans_medium"
+            android:maxLines="1"
+            android:text="Image Processing"
+            android:textColor="#F0EEE9"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/att_chip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="#E0566A"
+            android:fontFamily="@font/ibm_plex_mono_medium"
+            android:paddingStart="5dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="5dp"
+            android:paddingBottom="2dp"
+            android:text="✕ 61% LOW"
+            android:textColor="#0B0B0D"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_sample"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:background="#F0EEE9"
+        android:fontFamily="@font/ibm_plex_mono_medium"
+        android:paddingStart="5dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="5dp"
+        android:paddingBottom="2dp"
+        android:text="SAMPLE"
+        android:textColor="#0B0B0D"
+        android:textSize="9sp" />
+</FrameLayout>

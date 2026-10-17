@@ -1,5 +1,6 @@
 package com.jiitkiosk.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -11,6 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.jiitkiosk.app.signin.SignInScreen
@@ -25,6 +29,15 @@ class MainActivity : ComponentActivity() {
 
     private val vm: KioskViewModel by viewModels()
 
+    /** where a widget tap asked to land; the shell consumes it once */
+    private var open by mutableStateOf<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        open = intent.getStringExtra(EXTRA_OPEN)
+    }
+
     /**
      * Opening the app is the user asking for what is on the home screen to be
      * current, and a chance to renew the portal token before it is ever missed.
@@ -38,6 +51,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        open = intent.getStringExtra(EXTRA_OPEN)
         // the app is dark whatever the system is set to, so the bar icons stay light
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
@@ -52,11 +66,16 @@ class MainActivity : ComponentActivity() {
                             BackHandler(enabled = vm.reconnecting) { vm.cancelReconnect() }
                             SignInScreen(vm)
                         } else {
-                            AppShell(vm)
+                            AppShell(vm, open) { open = null }
                         }
                     }
                 }
             }
         }
+    }
+
+    companion object {
+        /** the extra a widget tap carries: schedule, attendance, assignments, reconnect */
+        const val EXTRA_OPEN = "com.jiitkiosk.app.open"
     }
 }

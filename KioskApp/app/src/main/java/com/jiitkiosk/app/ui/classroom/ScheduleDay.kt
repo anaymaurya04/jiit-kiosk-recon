@@ -50,8 +50,7 @@ import com.jiitkiosk.app.ui.theme.Crimson
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.Surface1
-import com.jiitkiosk.app.ui.theme.Verdict
-import com.jiitkiosk.app.ui.theme.verdictOf
+import com.jiitkiosk.app.ui.theme.markFor
 import `in`.codelif.ktjiit.model.SubjectAttendance
 import java.time.LocalDate
 import java.time.LocalTime
@@ -245,14 +244,6 @@ private fun HoursCard(schedule: Schedule, today: Int?) {
             }
         }
     }
-}
-
-/** the subject's attendance verdict, when the sheet knows the subject and a percentage */
-private fun markFor(entry: ClassEntry, subjects: List<SubjectAttendance>, target: Int, band: Int): Verdict? {
-    val byId = entry.subjectId?.let { id -> subjects.firstOrNull { it.subjectId == id } }
-    val match = byId ?: subjects.firstOrNull { it.name.equals(entry.subject, ignoreCase = true) }
-    val percent = match?.combinedPercent ?: return null
-    return verdictOf(percent, target, band)
 }
 
 /** "LAB · ROOM 201 · 2H" — the board's mono line under a class */
