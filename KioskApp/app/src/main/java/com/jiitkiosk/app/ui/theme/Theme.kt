@@ -37,6 +37,7 @@ val Surface2 = Color(0xFF1C1C22) // secondary tiles
 val LineStrong = Color(0xFF3A3A44) // dashed and empty borders, inactive chips
 val AccentDeep = Color(0xFF5A1522)
 val Steel = Color(0xFF14202E) // trooper tile background
+val Cursed = Color(0xFF241338) // cursed-campus shadow (board 27)
 
 /** pure-black mode maps the page onto true black, as the design system asks */
 val PureBlack = Color(0xFF000000)

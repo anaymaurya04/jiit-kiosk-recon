@@ -438,3 +438,399 @@ fun RadarMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, acce
     }
 }
 
+
+// ---------------------------------------------------------------- board 27: the rest of the library
+
+/** pennant: events, announcements */
+@Composable
+fun PennantMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = MarkRing) {
+    val p0 = remember { pathOf("M25 12 H84 L68 30 L84 48 H25Z") }
+    val p1 = remember { pathOf("M34 26 L52 30 L34 34Z") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(color, Offset(20f, 6f), Size(5f, 88f))
+            drawPath(p0, accent)
+            drawPath(p1, color)
+            drawRect(cut, Offset(14f, 90f), Size(17f, 5f))
+        }
+    }
+}
+
+
+/** sentinel visor: system alerts, low attendance, admin */
+@Composable
+fun SentinelMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = AccentDeep) {
+    val p0 = remember { pathOf("M26 14 H74 L88 36 V70 L70 94 H30 L12 70 V36Z") }
+    val p1 = remember { pathOf("M24 40 H76 L68 58 H32Z") }
+    val p2 = remember { pathOf("M50 14 V40") }
+    val p3 = remember { pathOf("M34 74 H66 M38 82 H62") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, color)
+            drawPath(p1, accent)
+            drawPath(p2, cut, style = Stroke(4f))
+            drawPath(p3, cut, style = Stroke(3f))
+        }
+    }
+}
+
+
+/** rocket: updates, app version, launch */
+@Composable
+fun RocketMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, aux: Color = Violet, cut: Color = Night) {
+    val p0 = remember { pathOf("M50 4 Q70 26 66 60 H34 Q30 26 50 4Z") }
+    val p1 = remember { pathOf("M34 46 L16 74 L34 68Z M66 46 L84 74 L66 68Z") }
+    val p2 = remember { pathOf("M40 64 L50 94 L60 64Z") }
+    val p3 = remember { pathOf("M45 64 L50 80 L55 64Z") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, color)
+            drawCircle(aux, 9f, Offset(50f, 34f))
+            drawCircle(cut, 9f, Offset(50f, 34f), style = Stroke(3f))
+            drawPath(p1, accent)
+            drawPath(p2, accent)
+            drawPath(p3, color)
+        }
+    }
+}
+
+
+/** crescent moon: offline, cached data, night */
+@Composable
+fun MoonMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, aux: Color = Violet, cut: Color = MarkRing) {
+    val p0 = remember { pathOf("M62 8 A42 42 0 1 0 92 62 A34 34 0 1 1 62 8Z") }
+    val p1 = remember { pathOf("M80 14 V26 M74 20 H86") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawCircle(aux.copy(alpha = 0.25f), 44f, Offset(52f, 50f))
+            drawPath(p0, color)
+            drawCircle(cut, 5f, Offset(34f, 48f))
+            drawCircle(cut, 3.5f, Offset(46f, 72f))
+            drawCircle(cut, 2.5f, Offset(28f, 68f))
+            drawPath(p1, color, style = Stroke(2f))
+            drawCircle(color, 1.5f, Offset(86f, 42f))
+        }
+    }
+}
+
+
+/** flying V: events, cultural, clubs */
+@Composable
+fun GuitarMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = MarkRing, shade: Color = Surface2) {
+    val p0 = remember { pathOf("M50 44 L20 94 L38 96 L50 74 L62 96 L80 94Z") }
+    val p1 = remember { pathOf("M50 10 V48") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(cut, Offset(46f, 10f), Size(8f, 42f))
+            drawRect(accent, Offset(43f, 3f), Size(14f, 10f))
+            drawPath(p0, color)
+            drawRect(shade, Offset(40f, 60f), Size(20f, 4f))
+            drawRect(accent, Offset(43f, 68f), Size(14f, 4f))
+            drawPath(p1, shade, style = Stroke(1f))
+        }
+    }
+}
+
+
+/** cassette: documents, records, history */
+@Composable
+fun CassetteMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Surface2, shade: Color = MarkRing) {
+    val p0 = remember { pathOf("M20 78 L26 70 H74 L80 78Z") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(color, Offset(8f, 22f), Size(84f, 56f))
+            drawRect(accent, Offset(16f, 28f), Size(68f, 20f))
+            drawRect(cut, Offset(38f, 54f), Size(24f, 14f))
+            drawCircle(cut, 8f, Offset(30f, 61f))
+            drawCircle(cut, 8f, Offset(70f, 61f))
+            drawCircle(color, 3f, Offset(30f, 61f))
+            drawCircle(color, 3f, Offset(70f, 61f))
+            drawPath(p0, shade)
+        }
+    }
+}
+
+
+/** headphones: focus, feedback, help */
+@Composable
+fun HeadphonesMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = MarkRing) {
+    val p0 = remember { pathOf("M20 60 V48 Q20 14 50 14 Q80 14 80 48 V60") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, color, style = Stroke(7f))
+            drawRect(accent, Offset(10f, 54f), Size(18f, 32f))
+            drawRect(accent, Offset(72f, 54f), Size(18f, 32f))
+            drawRect(cut, Offset(28f, 60f), Size(6f, 20f))
+            drawRect(cut, Offset(66f, 60f), Size(6f, 20f))
+        }
+    }
+}
+
+
+/** amp stack: notifications */
+@Composable
+fun AmpMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = MarkCore, shade: Color = Surface2) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(cut, Offset(14f, 8f), Size(72f, 84f))
+            drawRect(color, Offset(14f, 8f), Size(72f, 84f), style = Stroke(3f))
+            drawCircle(color, 22f, Offset(50f, 62f), style = Stroke(3f))
+            drawCircle(accent, 11f, Offset(50f, 62f))
+            drawCircle(shade, 3f, Offset(50f, 62f))
+            drawCircle(color, 4f, Offset(30f, 24f))
+            drawCircle(color, 4f, Offset(44f, 24f))
+            drawRect(cut, Offset(58f, 21f), Size(20f, 6f))
+        }
+    }
+}
+
+
+/** skeleton key: login, access, bank reveal */
+@Composable
+fun KeyMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson) {
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawCircle(color, 19f, Offset(26f, 50f), style = Stroke(8f))
+            drawRect(color, Offset(44f, 46f), Size(48f, 8f))
+            drawRect(color, Offset(76f, 54f), Size(8f, 14f))
+            drawRect(color, Offset(62f, 54f), Size(8f, 9f))
+            drawCircle(accent, 5f, Offset(26f, 50f))
+        }
+    }
+}
+
+
+/** lightning: urgent, fast action */
+@Composable
+fun BoltMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson) {
+    val p0 = remember { pathOf("M60 4 L20 56 H44 L36 96 L80 40 H54Z") }
+    val p1 = remember { pathOf("M60 4 L44 56 H54 L60 40Z") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, accent)
+            drawPath(p1, color.copy(alpha = 0.35f))
+        }
+    }
+}
+
+
+/** pigeon: notices, login, anything watched */
+@Composable
+fun PigeonMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Cursed, shade: Color = MarkRing) {
+    val p0 = remember { pathOf("M58 22 V10") }
+    val p1 = remember { pathOf("M54 42 Q30 46 22 64 Q20 80 38 84 H64 Q84 80 82 60 Q80 46 68 42Z") }
+    val p2 = remember { pathOf("M74 30 L90 35 L74 40Z") }
+    val p3 = remember { pathOf("M34 62 Q50 54 68 66 Q58 78 38 74Z") }
+    val p4 = remember { pathOf("M22 64 L6 78 L26 78Z") }
+    val p5 = remember { pathOf("M46 84 V94 M58 84 V94 M42 94 H50 M54 94 H62") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, color, style = Stroke(2.5f))
+            drawCircle(accent, 3f, Offset(58f, 8f))
+            drawPath(p1, color)
+            drawCircle(color, 13f, Offset(62f, 32f))
+            drawPath(p2, accent)
+            drawCircle(cut, 7f, Offset(64f, 31f))
+            drawCircle(accent, 7f, Offset(64f, 31f), style = Stroke(2f))
+            drawCircle(accent, 3f, Offset(64f, 31f))
+            drawPath(p3, shade)
+            drawPath(p4, shade)
+            drawPath(p5, accent, style = Stroke(3f))
+        }
+    }
+}
+
+
+/** blessed backup: saved, synced, cached safely */
+@Composable
+fun BackupMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, aux: Color = Violet, cut: Color = MarkRing, shade: Color = Cursed) {
+    val p0 = remember { pathOf("M24 52 Q4 44 2 24 Q18 28 24 42Z M76 52 Q96 44 98 24 Q82 28 76 42Z") }
+    val p1 = remember { pathOf("M22 30 H70 L80 40 V90 H22Z") }
+    val p2 = remember { pathOf("M36 70 H64 M36 78 H56") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawOval(aux, Offset(30.0f, 8.0f), Size(40.0f, 12.0f))
+            drawPath(p0, color)
+            drawPath(p1, color)
+            drawRect(cut, Offset(34f, 30f), Size(28f, 18f))
+            drawRect(shade, Offset(52f, 33f), Size(6f, 12f))
+            drawRect(accent, Offset(30f, 60f), Size(40f, 30f))
+            drawPath(p2, shade, style = Stroke(3f))
+        }
+    }
+}
+
+
+/** silicon basilica: campus, institute, the portal itself */
+@Composable
+fun BasilicaMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, aux: Color = Violet, cut: Color = Cursed) {
+    val p0 = remember { pathOf("M30 92 V40 L50 12 L70 40 V92Z") }
+    val p1 = remember { pathOf("M12 46 L21 22 L30 46Z M70 46 L79 22 L88 46Z") }
+    val p2 = remember { pathOf("M44 40 V36 M50 40 V36 M56 40 V36 M44 58 V62 M50 58 V62 M56 58 V62 M41 45 H37 M41 51 H37 M59 45 H63 M59 51 H63") }
+    val p3 = remember { pathOf("M42 92 V76 Q50 66 58 76 V92Z") }
+    val p4 = remember { pathOf("M16 60 H26 M16 70 H26 M74 60 H84 M74 70 H84") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, color)
+            drawRect(color, Offset(12f, 46f), Size(18f, 46f))
+            drawRect(color, Offset(70f, 46f), Size(18f, 46f))
+            drawPath(p1, color)
+            drawRect(cut, Offset(41f, 40f), Size(18f, 18f))
+            drawRect(aux, Offset(46f, 45f), Size(8f, 8f))
+            drawPath(p2, color, style = Stroke(2f))
+            drawPath(p3, cut)
+            drawPath(p4, cut, style = Stroke(2f))
+        }
+    }
+}
+
+
+/** glitch animal: errors, corrupted data, retry */
+@Composable
+fun GlitchMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, aux: Color = Violet, cut: Color = Cursed) {
+    val p0 = remember { pathOf("M24 22 L28 4 L44 22Z M56 22 L72 4 L76 22Z") }
+    val p1 = remember { pathOf("M10 64 H20 M80 50 H92") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, color)
+            drawRect(color, Offset(24f, 22f), Size(52f, 10f))
+            drawRect(color, Offset(20f, 32f), Size(60f, 10f))
+            drawRect(accent, Offset(30f, 42f), Size(56f, 8f))
+            drawRect(color, Offset(14f, 50f), Size(56f, 8f))
+            drawRect(aux, Offset(22f, 58f), Size(56f, 12f))
+            drawRect(color, Offset(30f, 70f), Size(40f, 10f))
+            drawRect(color, Offset(40f, 80f), Size(20f, 8f))
+            drawRect(cut, Offset(32f, 34f), Size(9f, 5f))
+            drawRect(cut, Offset(58f, 34f), Size(9f, 5f))
+            drawRect(accent, Offset(46f, 48f), Size(8f, 5f))
+            drawPath(p1, aux, style = Stroke(2f))
+        }
+    }
+}
+
+
+/** forbidden coffee: locked, restricted, permission denied */
+@Composable
+fun CoffeeMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, aux: Color = Violet, cut: Color = MarkCore) {
+    val p0 = remember { pathOf("M36 30 Q28 20 38 12 Q46 6 38 0 M54 30 Q46 20 56 12") }
+    val p1 = remember { pathOf("M20 40 H68 V72 Q68 90 44 90 Q20 90 20 72Z") }
+    val p2 = remember { pathOf("M68 48 H78 Q90 48 90 60 Q90 72 76 72 H68") }
+    val p3 = remember { pathOf("M20 60 H68") }
+    val p4 = remember { pathOf("M41 58 V52 Q45 46 49 52 V58") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, aux, style = Stroke(3f))
+            drawPath(p1, color)
+            drawPath(p2, color, style = Stroke(6f))
+            drawOval(cut, Offset(20.0f, 35.0f), Size(48.0f, 10.0f))
+            drawPath(p3, accent, style = Stroke(6f))
+            drawRect(accent, Offset(38f, 58f), Size(14f, 14f))
+            drawPath(p4, color, style = Stroke(3f))
+        }
+    }
+}
+
+
+/** bone archive: old records, previous semesters, archived */
+@Composable
+fun BoneArchiveMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = MarkCore) {
+    val p0 = remember { pathOf("M20 36 H80 M20 64 H80") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawRect(cut, Offset(20f, 8f), Size(60f, 84f))
+            drawRect(color, Offset(20f, 8f), Size(60f, 84f), style = Stroke(3f))
+            drawPath(p0, color, style = Stroke(3f))
+            drawRect(color, Offset(36f, 19f), Size(28f, 5f))
+            drawCircle(color, 3.5f, Offset(36f, 18f))
+            drawCircle(color, 3.5f, Offset(36f, 25f))
+            drawCircle(color, 3.5f, Offset(64f, 18f))
+            drawCircle(color, 3.5f, Offset(64f, 25f))
+            drawRect(color, Offset(36f, 47f), Size(28f, 5f))
+            drawCircle(color, 3.5f, Offset(36f, 46f))
+            drawCircle(color, 3.5f, Offset(36f, 53f))
+            drawCircle(color, 3.5f, Offset(64f, 46f))
+            drawCircle(color, 3.5f, Offset(64f, 53f))
+            drawRect(color, Offset(36f, 75f), Size(28f, 5f))
+            drawCircle(color, 3.5f, Offset(36f, 74f))
+            drawCircle(color, 3.5f, Offset(36f, 81f))
+            drawCircle(color, 3.5f, Offset(64f, 74f))
+            drawCircle(color, 3.5f, Offset(64f, 81f))
+            drawRect(accent, Offset(40f, 29f), Size(20f, 4f))
+        }
+    }
+}
+
+
+/** cursor necromancer: search, command palette, revive cache */
+@Composable
+fun NecromancerMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, aux: Color = Violet, cut: Color = MarkRing, shade: Color = Cursed) {
+    val p0 = remember { pathOf("M50 10 Q70 12 72 38 L84 92 H12 L28 38 Q30 12 50 10Z") }
+    val p1 = remember { pathOf("M80 10 H96 M88 10 V30 M80 30 H96") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, cut)
+            drawPath(p0, color, style = Stroke(3f))
+            drawOval(shade, Offset(38.0f, 25.0f), Size(24.0f, 30.0f))
+            drawRect(accent, Offset(40f, 38f), Size(6f, 5f))
+            drawRect(accent, Offset(54f, 38f), Size(6f, 5f))
+            drawRect(color, Offset(86f, 14f), Size(4f, 80f))
+            drawPath(p1, accent, style = Stroke(3.5f))
+            drawRect(aux, Offset(8f, 22f), Size(3f, 10f))
+            drawRect(aux, Offset(68f, 6f), Size(3f, 10f))
+        }
+    }
+}
+
+
+/** untranslated tablet: unknown field, missing data, unsupported */
+@Composable
+fun TabletMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, cut: Color = Cursed, shade: Color = MarkRing) {
+    val p0 = remember { pathOf("M22 92 V32 Q22 8 50 8 Q78 8 78 32 V92Z") }
+    val p1 = remember { pathOf("M50 36 L56 26 L62 36Z") }
+    val p2 = remember { pathOf("M48 66 A7 7 0 1 0 55 56") }
+    val p3 = remember { pathOf("M36 74 H44 M40 70 V78 M58 70 L66 78 M66 70 L58 78") }
+    val p4 = remember { pathOf("M44 50 L52 56") }
+    val p5 = remember { pathOf("M30 86 H70") }
+    val p6 = remember { pathOf("M58 8 L52 30 L60 40 L54 56") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, color)
+            drawCircle(cut, 4f, Offset(38f, 30f))
+            drawPath(p1, cut)
+            drawRect(cut, Offset(60f, 22f), Size(3f, 14f))
+            drawRect(cut, Offset(34f, 46f), Size(9f, 9f))
+            drawCircle(cut, 2.5f, Offset(62f, 50f))
+            drawPath(p2, cut, style = Stroke(2.5f))
+            drawPath(p3, cut)
+            drawPath(p3, cut, style = Stroke(2.5f))
+            drawPath(p4, accent, style = Stroke(3f))
+            drawPath(p5, accent, style = Stroke(4f))
+            drawPath(p6, shade, style = Stroke(1.5f))
+        }
+    }
+}
+
+
+/** tech debt bonsai: pending items, about, credits */
+@Composable
+fun BonsaiMark(size: Dp, modifier: Modifier = Modifier, color: Color = Bone, accent: Color = Crimson, aux: Color = Violet, cut: Color = MarkRing) {
+    val p0 = remember { pathOf("M30 74 H70 L66 92 H34Z") }
+    val p1 = remember { pathOf("M50 72 Q38 60 50 50 Q62 42 48 32") }
+    val p2 = remember { pathOf("M52 52 Q68 50 76 40 M46 60 Q34 56 28 48") }
+    val p3 = remember { pathOf("M62 44 V58 M30 50 V62 M80 42 V54") }
+    Canvas(modifier.size(size)) {
+        scale(this.size.minDimension / 100f, pivot = Offset.Zero) {
+            drawPath(p0, accent)
+            drawRect(cut, Offset(28f, 70f), Size(44f, 6f))
+            drawPath(p1, color, style = Stroke(6f))
+            drawPath(p2, color, style = Stroke(4f))
+            drawCircle(aux, 14f, Offset(48f, 24f))
+            drawCircle(aux, 10f, Offset(76f, 34f))
+            drawCircle(aux, 10f, Offset(26f, 42f))
+            drawPath(p3, color, style = Stroke(1.5f))
+            drawRect(accent, Offset(58f, 58f), Size(9f, 11f))
+            drawRect(color, Offset(26f, 62f), Size(9f, 11f))
+            drawCircle(accent, 5f, Offset(80f, 58f))
+        }
+    }
+}

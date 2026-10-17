@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,6 +52,7 @@ import com.jiitkiosk.app.ui.entrance
 import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
+import com.jiitkiosk.app.ui.theme.CassetteMark
 import com.jiitkiosk.app.ui.theme.Crimson
 import com.jiitkiosk.app.ui.theme.CrimsonDeep
 import com.jiitkiosk.app.ui.theme.DossierMark
@@ -199,6 +201,12 @@ private fun NotesHero(count: Int, modifier: Modifier = Modifier) {
         angle = 160f,
         stops = arrayOf(0f to Crimson, 0.7f to CrimsonDeep),
         modifier = modifier,
+        art = {
+            // the cassette runs off the bottom-right corner, as on the board
+            Box(Modifier.align(Alignment.BottomEnd).offset(x = 10.dp, y = 24.dp)) {
+                CassetteMark(size = 150.dp)
+            }
+        },
     ) {
         Column(Modifier.align(Alignment.TopStart).padding(start = 14.dp, top = 14.dp)) {
             Stamp("New this week")

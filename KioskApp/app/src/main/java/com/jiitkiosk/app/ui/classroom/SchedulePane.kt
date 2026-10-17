@@ -53,11 +53,11 @@ import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
-import com.jiitkiosk.app.ui.theme.DossierMark
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.LineStrong
 import com.jiitkiosk.app.ui.theme.Mono
 import com.jiitkiosk.app.ui.theme.Muted
+import com.jiitkiosk.app.ui.theme.TabletMark
 import `in`.codelif.ktjiit.model.AttendanceMeta
 import `in`.codelif.ktjiit.model.SubjectAttendance
 import java.time.LocalDate
@@ -115,7 +115,7 @@ private fun FirstRun(onCreate: () -> Unit) {
                 "Nothing carved in stone yet",
                 "Your college doesn't publish class timings, so build your own once. It stays as your schedule until you change it.",
                 Modifier.entrance(0).padding(top = 8.dp),
-            ) { DossierMark(size = 110.dp) }
+            ) { TabletMark(size = 110.dp) }
         }
         item { PrimaryButton("Create schedule", onClick = onCreate, modifier = Modifier.entrance(1)) }
         item {

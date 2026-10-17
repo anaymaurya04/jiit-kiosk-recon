@@ -81,9 +81,11 @@ New in this brief, not built yet:
 **R3 — Exams / Calendar delta (§6).** Compare boards 04/05 against the built `ExamsScreen` /
 `CalendarScreen`; fix any deltas found. No new sources; nothing invented.
 
-**R4 — Art (§8.3).** Add the 19 missing motifs from board 27 as Compose `Canvas`/`ImageVector`
-(paths extracted from the rendered board); use them by meaning in the new screens; audit that no
-motif repeats twice on one screen.
+**R4 — Art (§8.3). [done]** All 19 missing board-27 motifs ported into `ui/theme/Art.kt` (SVG paths
+extracted from the rendered board; literal colours kept as parameters over theme-token defaults; new
+`Cursed` token for the cursed-campus shadow). All 36 now exist. Cassette = Notes hero art (board 13),
+tablet = Schedule first-run art (board 10). Family tints + rules recorded in `design-system.md` §17;
+remaining swaps (pigeon/bolt/glitch/…) come with the R6 match pass.
 
 **R5 — Kit leftovers (§8.2/8.4).** Verify every component named in §8.4 exists; add the small
 missing ones (`SegmentedSwitch`, `ScheduleBlock`; check the Donut/AttendanceRing naming).
@@ -153,7 +155,7 @@ No screenshot-test framework exists (checked) → emulator screenshots stand in.
 ### §6 Calendar — [x] rebuilt to board 05 (R3): exam papers merged with the official asset + user events;
 device visual pass pending
 ### §7 Code — [x] LeetCode + GitHub built and cross-checked; [ ] re-verify vs boards 15/16 (R6)
-### §8 Build order — theme [x]; art [ ] R4; components [x main set, ] R5 leftovers; motion [x];
+### §8 Build order — theme [x]; art [x] R4; components [x main set, ] R5 leftovers; motion [x];
 screens [x previous set, ] R6 pass; Class [R2a–R2c done: switch, Schedule (first run / builder /
 day view), Notes, card reminder line + bar, Reminders entry]; Exams/Calendar [R3: board 04 no delta,
 board 05 rebuilt on exam data]; Code [x]; screenshot tests
@@ -217,6 +219,13 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   official-asset rows (the board samples none but dropping them would drop the official calendar), the two-tap
   REMOVE on the student's own rows, and ADD TO CALENDAR on the day card. New `CalendarRowsTest` pins the
   row mapping and the registration pick. 73 tests green.
+- 2026-10-17 (R4): board 27's 19 missing motifs ported into `Art.kt` with a one-off DOM→Kotlin converter
+  (literal SVG fills kept as parameters defaulting to theme tokens; `Cursed #241338` added to `Theme.kt`).
+  Board rules — pick the motif by meaning, tint by family (crimson knights / violet space / graphite band
+  / steel archive), never the same motif twice on one screen — are in `design-system.md` §17. Cassette
+  took the Notes hero (board 13 draws it 150px off the corner) and tablet the Schedule first-run empty
+  state (board 10). `AttendanceScreen.Ghost`'s four-motif cycle over the subject list is a standing
+  exception until boards 02/03 are re-checked at R6.
 - Carried from earlier rounds (still true): debug-key release signing; no screenshot-test infra;
   notification timing under Doze not assertable headlessly; GitHub token path not device-run
   with a live PAT.
@@ -261,3 +270,9 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   rebuilt — exam papers merged in from the same cache the Exams tab fills, board-row/grid/hero/track/axis
   styling applied, weekend days muted, day card and ADD TO CALENDAR cover exams. `CalendarRowsTest` (4)
   pins the mapping + registration pick. Build + 73 tests green. Next: R4 (19 missing motifs from board 27).
+- 2026-10-17 (R4): art library complete — the 19 missing motifs (pennant, sentinel, rocket, moon, guitar,
+  cassette, headphones, amp, key, bolt, pigeon, backup, basilica, glitch, coffee, bonearchive,
+  necromancer, tablet, bonsai) added to `Art.kt` from board 27's own SVG paths; `Cursed` token added to
+  `Theme.kt`. Cassette = Notes hero art, tablet = Schedule first-run art (was dossier). Build + 73 tests
+  green; only the 7 pre-existing warnings. Still no device — visual pass pending. Next: R5 (kit leftovers,
+  §8.4 inventory).
