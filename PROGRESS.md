@@ -108,6 +108,25 @@ parser never produces values it cannot read, so there is nothing to detect yet).
 current; deviations and anything unverified listed; final build green (`app-debug.apk`); the emulator
 pass is the one piece a device must do.
 
+**WE — Feature E: home-screen widgets (§10 / §18).** Boards 28–33 extracted from the master
+file into `design/boards/` (canonical pixel reference; renders in `%TEMP%\opencode\shots\board-*.png`).
+Six widgets: Next class 2×2, Attendance 2×2, Pending 2×2, Today 4×2, Classes 4×2, Dashboard 4×5 —
+one cache-only data layer, one RemoteViews renderer, per-widget settings (board 33).
+- API: **RemoteViews** — §10 allows it where the app does not use Glance; the existing widget
+  already ships RemoteViews and the "ask before adding dependencies" rule stands. Glance would add
+  androidx.glance + its runtime for no gain here.
+- The existing `KioskWidget` (old board-less 4×2 attendance+deadline, v0.2.4) **upgrades in place**
+  into the **Today (4×2)** provider under the same component name, so home-screen instances survive
+  the update; five new providers join it.
+- Settings per `appWidgetId` in the app's existing `kiosk` SharedPreferences (no DataStore
+  dependency — §10 deviation, ledger); `onDeleted` cleans up.
+- Data: `schedule.json` via `ScheduleStore`, attendance sheet via `Cache` (session token key),
+  Classroom cache, `kiosk/session_expired` — read-only, never network, never login-blocking.
+- Steps: W1 next-class state machine + row phases + tests → W2 snapshot + six renderers +
+  picker previews → W3 the board-33 config screen → W4 update scheduler (updatePeriodMillis 0;
+  class start/end + midnight alarms, boot/date/tz/app-update, worker, coalesced) → W5 states
+  (board 31) + emulator screenshots + ledger.
+
 **Risks.** No account on the emulator → live-portal paths stay device-lite (refresh chains,
 real sheets). Classroom verification needs the emulator's college account (signed in during
 Phase 2 — re-check). Schedules are user data: screens must be honestly empty until built.
@@ -177,6 +196,18 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
 ### §11 Method — branch `feature/redesign` [x]; commits per step; this file kept current
 ### §12 Done means — [ ] after R1–R7
 
+### §10 Widgets (Feature E) — [W1 done; boards 28–33 extracted and read]
+- [x] boards 28–33 extracted (Small/Wide/Large/States/Home screen/Settings) + rendered
+- [x] W1: `widget/NextUp.kt` — live/later/no-schedule state, today's row phases, clock labels;
+      `NextUpTest` (17 cases: boundaries, overlap, noon, midnight, weekly wrap, zones, DST, malformed)
+- [ ] W2: shared cache snapshot + six providers/renderers + picker previews
+- [ ] W3: per-widget settings screen (board 33): SHOW toggles, classes 1–3, Match app/Transparent,
+      hide subject names, live preview, Done
+- [ ] W4: update scheduler — no `updatePeriodMillis`; class start/end + midnight alarms, boot /
+      date / tz / app update, worker, coalesced; scheduler planner unit-tested
+- [ ] W5: every board-31 state rendered (normal / no schedule / session expired / updating /
+      all clear / not signed in / missing data) + emulator screenshots vs boards
+
 ## Ledger (this round; older entries live in `docs/PROGRESS.md`)
 
 - 2026-10-17: boards re-extracted from the new master file (27, up from 25) — `design/boards/`
@@ -238,6 +269,12 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   took the Notes hero (board 13 draws it 150px off the corner) and tablet the Schedule first-run empty
   state (board 10). `AttendanceScreen.Ghost`'s four-motif cycle over the subject list is a standing
   exception until boards 02/03 are re-checked at R6.
+- 2026-10-17 (WE): boards 28–33 (widgets) extracted from the master file — the 27-board extraction
+  had skipped them. Board nits for W2: the Dashboard sample prints a finished row "10:00" (24h) where
+  everything else is "2:00 PM" — treated as a sample slip, one 12h format ships; tile borders and the
+  per-tile ghost motifs get measured from the board DOM at build time. Decision: per-widget settings
+  live in the existing `kiosk` SharedPreferences keyed by `appWidgetId` (§10 suggests DataStore; adding
+  a dependency needs a ruling, and prefs are the app's own convention for the same job).
 - Carried from earlier rounds (still true): debug-key release signing; no screenshot-test infra;
   notification timing under Doze not assertable headlessly; GitHub token path not device-run
   with a live PAT.
@@ -371,3 +408,15 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   the real account (phone detached — long runs moved to the `medium_phone` emulator). On the next
   phone install the banner must not appear while data is fresh; logcat `kiosk-auth` says
   "portal refresh skipped, token valid until …".
+- 2026-10-17 (WE/W1): widgets resumed per the master prompt §10/§18. Boards 28–33 extracted
+  (the earlier 27-board pass had skipped them) and read: three 2×2 variants (Next class /
+  Attendance / Pending), Today 4×2, Classes 4×2, Dashboard 4×5, the five states, the home-screen
+  composite and the settings screen. API decision: RemoteViews (no new dependency; the existing
+  widget ships it). Old `KioskWidget` becomes the Today 4×2 provider so existing home-screen
+  instances upgrade in place. W1 shipped: `widget/NextUp.kt` — a pure next-class state machine
+  (live class wins; else the earliest start ahead over the Mon–Sat week, including the 7-day wrap
+  after a weekly schedule's last class — board 31's "NEXT: MON 10:00 AM"), today's row phases
+  (Done/Live/Upcoming for the Classes and Dashboard rows) and the widgets' clock labels.
+  `NextUpTest` pins 17 cases (start/end boundaries, overlap both ways, class across noon, midnight
+  rollover, Saturday→Monday wrap, Sunday look-forward, malformed starts, timezone change, a DST
+  spring-forward day). Build + tests green. Next: W2 (snapshot + six renderers + picker previews).
