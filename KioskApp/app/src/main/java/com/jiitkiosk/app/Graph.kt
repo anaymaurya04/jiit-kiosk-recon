@@ -75,10 +75,25 @@ class Graph(context: Context) {
      * One silent refresh for whoever is awake: the resume path and the 15-minute
      * worker. Only an explicit rejection flips [sessionExpired]; network trouble
      * throws and changes nothing.
+     *
+     * A token that is still inside its own life does not need extending — and the
+     * portal refuses to extend it anyway ({"msg":"Error"}), which used to read as
+     * "session rejected" and light the banner on every app open while every data
+     * call worked. A provably valid token is a healthy session; say so and skip.
      */
     suspend fun refreshPortal(): Boolean {
         val s = session() ?: return false
-        val ok = auth.refresh(s)
+        if (s.validAt(transport.clock.now())) {
+            sessionExpired = false
+            Log.i(TAG, "portal refresh skipped, token valid until ${s.expiresAt}")
+            return true
+        }
+        val ok = try {
+            auth.refresh(s)
+        } catch (e: Throwable) {
+            Log.i(TAG, "refresh threw ${e.javaClass.simpleName}: ${e.message?.take(80)}")
+            throw e
+        }
         sessionExpired = !ok
         Log.i(TAG, "portal refresh ok=$ok")
         return ok

@@ -33,6 +33,12 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // android.util.Log is a no-op on the JVM test classpath
+            isReturnDefaultValues = true
+        }
+    }
     packaging {
         resources.excludes += listOf("/META-INF/{AL2.0,LGPL2.1}", "DebugProbesKt.bin", "kotlin-tooling-metadata.json", "/META-INF/*.version")
     }

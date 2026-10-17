@@ -34,6 +34,9 @@ public data class Session(
             val claims = Transport.json.parseToJsonElement(String(Base64.getUrlDecoder().decode(payload)))
             Instant.ofEpochSecond(claims.jsonObject["exp"]!!.jsonPrimitive.long)
         }.getOrNull()
+
+    /** true while the token provably has life left; no exp claim counts as not provable */
+    public fun validAt(now: Instant): Boolean = expiresAt?.isAfter(now) == true
 }
 
 @Serializable

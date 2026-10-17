@@ -1,17 +1,21 @@
 package `in`.codelif.ktjiit.auth
 
+import android.util.Log
 import `in`.codelif.ktjiit.http.PortalException
 import `in`.codelif.ktjiit.http.Transport
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import java.time.Instant
 import java.time.format.DateTimeFormatter
+import java.util.Base64
 import java.util.Locale
 
 @Serializable
@@ -68,23 +72,56 @@ public class Auth(private val transport: Transport) {
     /**
      * what the portal does on a 401: ask to extend the session, then retry with the
      * same token. returns true if the server said Success.
+     *
+     * shortcut: three tokendate candidates until a live log pins the one the server
+     * wants; first Success wins, and the log names it
      */
     public suspend fun refresh(session: Session): Boolean {
-        val payload = buildJsonObject {
-            put("username", session.username)
-            put("tokendate", session.tokenDate)
+        val candidates = LinkedHashMap<String, String>()
+        fun offer(label: String, value: String) {
+            if (value.isNotEmpty() && !candidates.containsValue(value)) candidates[label] = value
         }
-        val res = try {
-            transport.post("/token/refreshTokenRequest", session.token, payload, encrypt = false)
-        } catch (e: PortalException.SessionExpired) {
-            return false
-        } catch (e: PortalException.PortalError) {
-            return false
+        offer("stored", session.tokenDate)
+        jwtIssuedAt(session.token)?.let { offer("iat", jsDateString(it)) }
+        offer("now", jsDateString(transport.clock.now()))
+
+        for ((label, date) in candidates) {
+            val msg = ask(session, date)
+            if (msg == "Success") {
+                Log.i(TAG, "refresh ok via '$label'")
+                return true
+            }
+            Log.i(TAG, "refresh['$label'] -> ${msg ?: "no answer"}")
         }
-        return runCatching { res.jsonObject["msg"]?.jsonPrimitive?.content == "Success" }.getOrDefault(false)
+        return false
     }
 
+    private suspend fun ask(session: Session, tokendate: String): String? {
+        val payload = buildJsonObject {
+            put("username", session.username)
+            put("tokendate", tokendate)
+        }
+        return try {
+            val res = transport.post("/token/refreshTokenRequest", session.token, payload, encrypt = false)
+            runCatching { res.jsonObject["msg"]?.jsonPrimitive?.contentOrNull }.getOrNull()
+        } catch (e: PortalException.SessionExpired) {
+            Log.i(TAG, "refresh ask: http 401")
+            null
+        } catch (e: PortalException.PortalError) {
+            // the server's own verdict, never the payload
+            Log.i(TAG, "refresh ask: http ${e.code}: ${e.errors.joinToString("; ").take(120)}")
+            null
+        }
+    }
+
+    /** the jwt's own issue moment, in server time */
+    private fun jwtIssuedAt(token: String): Instant? = runCatching {
+        val claims = Transport.json.parseToJsonElement(String(Base64.getUrlDecoder().decode(token.split('.')[1])))
+        Instant.ofEpochSecond(claims.jsonObject["iat"]!!.jsonPrimitive.long)
+    }.getOrNull()
+
     internal companion object {
+        private const val TAG = "kiosk-auth"
         private val JS_DATE = DateTimeFormatter.ofPattern("EEE MMM dd yyyy HH:mm:ss 'GMT+0530 (India Standard Time)'", Locale.US)
 
         fun jsDateString(at: Instant): String = JS_DATE.format(at.atOffset(`in`.codelif.ktjiit.crypto.IST))

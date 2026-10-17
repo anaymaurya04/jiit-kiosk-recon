@@ -353,3 +353,21 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   hub shows no "Me" title and its tile grid ends with Grades/Calendar where board 17 starts with
   them; the Classroom panes' own failure boxes predate R6b's `StateBox` and still hand-roll the
   old card (every other screen uses `StateBox`).
+- 2026-10-17 (R9): session banner hotfix. The user's report — "session expiring every time the app
+  closes" — reproduced on the device: the crimson `SESSION EXPIRED · TAP TO RECONNECT` banner sat on
+  top of `SYNCED JUST NOW` data. The token was alive the whole time. Cause, pinned by new one-line
+  `kiosk-auth` logs (no PII, no token material): `refreshTokenRequest` answers `{"msg":"Error"}` while
+  the JWT is still inside its 2h window, and the app read any non-Success as "the portal rejected the
+  session" — so every cold start's proactive refresh raised the banner while every data call kept
+  working (the portal's own web app only ever refreshes *after* a 401, i.e. after the token has truly
+  died). Fix: `Session.validAt(now)` over the JWT `exp` claim plus a guard in `Graph.refreshPortal` —
+  a provably valid token is a healthy session, so clear the flag and skip the request; refresh now
+  fires only past expiry (resume path, 15-min worker and the 401 path keep the chain alive exactly the
+  way the web app does). `Auth.refresh` keeps a three-candidate `tokendate` probe (stored login time,
+  JWT `iat`, now) returning the first Success and logging which one won — the server's exact
+  `tokendate` semantics stay unpinned until a live log names the accepted candidate. Also:
+  `testOptions.unitTests.isReturnDefaultValues` so `android.util.Log` is a no-op in JVM tests, and a
+  new `SessionGuardTest`. 15 suites / 75 tests green. Not verified live: the guard never ran against
+  the real account (phone detached — long runs moved to the `medium_phone` emulator). On the next
+  phone install the banner must not appear while data is fresh; logcat `kiosk-auth` says
+  "portal refresh skipped, token valid until …".
