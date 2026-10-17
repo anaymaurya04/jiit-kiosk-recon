@@ -92,7 +92,7 @@ remaining swaps (pigeon/bolt/glitch/…) come with the R6 match pass.
 only caller), the attendance donut as `Ring` with the one `verdictOf(...)` driving all verdicts.
 Nothing was missing, so no kit code changed; the name map is `design-system.md` §18.
 
-**R6 — Match pass (§12 + §10). [R6a code-level done — device pass pending]**
+**R6 — Match pass (§12 + §10). [R6a + R6b code-level done — device pass pending]**
 Every board matched against the code at its call sites (board DOM vs Kotlin; no device attached —
 `adb devices` empty, so the screenshot half of §12 defers). R6a: attendance tower hero + per-verdict
 ghosts (board 02), Class tome hero (09), quiet Notes hero (13), LeetCode stats hero + ring geometry
@@ -104,8 +104,9 @@ JPortal vinyl 64 (19), calendar (05, R3), exams hero (04, R3), notes cassette. R
 Still open: the device screenshot pass; board 25's unsupported-field card is skipped on purpose (the
 parser never produces values it cannot read, so there is nothing to detect yet).
 
-**R7 — Closing (§11/§12).** Unit tests green; `PROGRESS.md` current; deviations and anything
-unverified listed; final build + emulator pass.
+**R7 — Closing (§11/§12). [code-level done — emulator pass pending]** Unit tests green; `PROGRESS.md`
+current; deviations and anything unverified listed; final build green (`app-debug.apk`); the emulator
+pass is the one piece a device must do.
 
 **Risks.** No account on the emulator → live-portal paths stay device-lite (refresh chains,
 real sheets). Classroom verification needs the emulator's college account (signed in during
@@ -326,3 +327,9 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   padding, radius 16; was 64) and tab labels 11sp (was 12). Board 25's unsupported-field card is
   deliberately not built (the parser never sees values it cannot read). Build + 73 tests green; only the
   baseline warnings. Next: the device visual pass when the phone is attached.
+- 2026-10-17 (R7): closing. Final `assembleDebug` + `testDebugUnitTest` green (13 suites / 73 tests); a
+  full `--rerun-tasks` recompile shows exactly the 7 baseline warnings (PortalWeb ×2, CodeScreen ×2,
+  MeScreen ×3) and nothing new. Debug-signed APK at `KioskApp/app/build/outputs/apk/debug/app-debug.apk`,
+  ready to sideload. Deviations / unverified: the device visual pass (no device attached — the §12
+  screenshots), live-portal refresh chains and Classroom re-verification (need the account on a device),
+  board 25's unsupported-field card (deliberately not built). Open rulings unchanged.
