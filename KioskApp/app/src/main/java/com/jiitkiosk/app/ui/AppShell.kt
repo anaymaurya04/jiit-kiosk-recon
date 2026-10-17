@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -19,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -27,9 +29,12 @@ import com.jiitkiosk.app.ui.attendance.AttendanceScreen
 import com.jiitkiosk.app.ui.classroom.ClassroomScreen
 import com.jiitkiosk.app.ui.code.CodeScreen
 import com.jiitkiosk.app.ui.components.BottomNav
+import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.Tab
 import com.jiitkiosk.app.ui.exams.ExamsScreen
 import com.jiitkiosk.app.ui.me.MeScreen
+import com.jiitkiosk.app.ui.theme.Crimson
+import com.jiitkiosk.app.ui.theme.CrimsonDeep
 import com.jiitkiosk.app.ui.theme.Line
 
 @Composable
@@ -53,21 +58,43 @@ fun AppShell(vm: KioskViewModel) {
             }
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            // top-level tabs crossfade; the slide is for pages inside a tab. The
-            // holder is why a tab comes back with its scroll and its open subject.
-            val holder = rememberSaveableStateHolder()
-            Crossfade(targetState = tab, animationSpec = tween(Motion.FAST), label = "tab") { shown ->
-                holder.SaveableStateProvider(shown) {
-                    when (shown) {
-                        Tab.Attendance -> AttendanceScreen(vm)
-                        Tab.Exams -> ExamsScreen(vm)
-                        Tab.Class -> ClassroomScreen(vm)
-                        Tab.Code -> CodeScreen(vm)
-                        Tab.Me -> MeScreen(vm)
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            if (vm.expired) SessionBanner { vm.startReconnect() }
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                // top-level tabs crossfade; the slide is for pages inside a tab. The
+                // holder is why a tab comes back with its scroll and its open subject.
+                val holder = rememberSaveableStateHolder()
+                Crossfade(targetState = tab, animationSpec = tween(Motion.FAST), label = "tab") { shown ->
+                    holder.SaveableStateProvider(shown) {
+                        when (shown) {
+                            Tab.Attendance -> AttendanceScreen(vm)
+                            Tab.Exams -> ExamsScreen(vm)
+                            Tab.Class -> ClassroomScreen(vm)
+                            Tab.Code -> CodeScreen(vm)
+                            Tab.Me -> MeScreen(vm)
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+/** the soft-expired session line: cached data stays live under it, one tap reconnects */
+@Composable
+private fun SessionBanner(onTap: () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .background(CrimsonDeep)
+            .drawBehind {
+                drawLine(Crimson, Offset(0f, size.height), Offset(size.width, size.height), 2.dp.toPx())
+            }
+            .tap(onTap)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        MonoText("SESSION EXPIRED · TAP TO RECONNECT", color = Crimson, medium = true)
     }
 }

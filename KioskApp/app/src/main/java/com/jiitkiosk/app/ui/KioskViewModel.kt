@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import com.jiitkiosk.app.KioskApplication
 import com.jiitkiosk.app.data.HttpError
 import com.jiitkiosk.app.data.Snapshot
+import com.jiitkiosk.app.domain.SessionState
 import `in`.codelif.ktjiit.api.Portal
 import `in`.codelif.ktjiit.auth.PortalConfig
 import `in`.codelif.ktjiit.auth.Session
@@ -28,10 +29,22 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
     var signedOut by mutableStateOf<String?>(null)
         private set
 
+    private val health = SessionState(graph.sessionExpired)
+
+    /** true when the portal rejected the token and the refresh failed too */
+    var expired by mutableStateOf(health.expired)
+        private set
+
+    /** the banner was tapped: the sign-in screen takes over, cached data stays */
+    var reconnecting by mutableStateOf(false)
+        private set
+
     fun remember(session: Session) {
         graph.remember(session)
         this.session = session
         signedOut = null
+        reconnecting = false
+        clearExpiry()
     }
 
     /** the user's own choice: no explanation needed */
@@ -39,13 +52,51 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
         graph.forget(clearCache)
         session = null
         signedOut = null
+        reconnecting = false
+        clearExpiry()
     }
 
-    /** the portal said no: the cache stays, but the login says honestly why it showed up */
-    private fun sessionEnded() {
-        graph.forget(clearCache = false)
-        session = null
+    /**
+     * The portal said no and the refresh failed with it: the local session stays,
+     * every cached screen stays readable, and the shell shows the reconnect
+     * banner. Logging out is still the only thing that clears anything.
+     */
+    private fun softExpire() {
+        health.rejected()
+        expired = true
+        graph.sessionExpired = true
+    }
+
+    private fun clearExpiry() {
+        health.revived()
+        expired = false
+        graph.sessionExpired = false
+    }
+
+    fun startReconnect() {
         signedOut = "Session expired, sign in again."
+        reconnecting = true
+    }
+
+    fun cancelReconnect() {
+        reconnecting = false
+    }
+
+    private var revivedAt = 0L
+
+    /**
+     * The proactive half of §4: called on resume (throttled — a resume storm
+     * must not become a request storm) and by the 15-minute worker. Silent on
+     * network trouble; an explicit rejection flips the banner on.
+     */
+    suspend fun revive() {
+        if (session == null) return
+        val now = System.currentTimeMillis()
+        if (now - revivedAt < REVIVE_EVERY_MS) return
+        revivedAt = now
+        runCatching { graph.refreshPortal() }.onSuccess { ok ->
+            if (ok) clearExpiry() else softExpire()
+        }
     }
 
     /** pure-black mode, remembered between launches */
@@ -70,7 +121,8 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
 
     /**
      * Runs a portal call, and when the token has aged out asks the portal to
-     * extend it and tries once more. Only if that fails does the session end.
+     * extend it and tries once more. Only an explicit rejection that the refresh
+     * could not fix soft-expires the session; everything else keeps it.
      */
     suspend fun <T> call(block: suspend (Portal) -> T): T {
         val current = session ?: throw PortalException.SessionExpired()
@@ -78,7 +130,7 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
             block(graph.portal(current))
         } catch (e: PortalException.SessionExpired) {
             if (!graph.auth.refresh(current)) {
-                sessionEnded()
+                softExpire()
                 throw e
             }
             // refresh extends the same token, so the session object is unchanged
@@ -105,7 +157,8 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
         } catch (e: CancellationException) {
             throw e
         } catch (e: PortalException.SessionExpired) {
-            throw e
+            // soft-expired keeps the local session: cached data keeps the screen alive
+            graph.cache.read(key, ser) ?: throw e
         } catch (e: Throwable) {
             graph.cache.read(key, ser) ?: throw e
         }
@@ -140,5 +193,6 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
         const val TAG = "kiosk"
+        const val REVIVE_EVERY_MS = 10 * 60_000L
     }
 }

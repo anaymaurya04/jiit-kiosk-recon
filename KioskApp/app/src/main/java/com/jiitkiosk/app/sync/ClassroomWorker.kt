@@ -8,6 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.jiitkiosk.app.KioskApplication
 import com.jiitkiosk.app.classroom.ClassroomClient
 import com.jiitkiosk.app.classroom.ClassroomData
 import com.jiitkiosk.app.classroom.ClassroomStore
@@ -29,6 +30,8 @@ import java.util.concurrent.TimeUnit
 class ClassroomWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        // the portal's own token rides along: one 15-minute worker, both clocks
+        runCatching { (applicationContext as KioskApplication).graph.refreshPortal() }
         val store = ClassroomStore(applicationContext)
         val token = store.token() ?: return Result.success()
         return try {
