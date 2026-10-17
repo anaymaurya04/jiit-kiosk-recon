@@ -223,7 +223,7 @@ private fun AttendanceList(
 
                     meta is Load.Ok && semesters.isEmpty() -> item(key = "no-sem") {
                         EmptyState("No Registrations", "The portal has no attendance registration on your record yet.") {
-                            TowerMark(color = LineStrong, accent = LineStrong, cut = LineStrong, size = 120.dp)
+                            TowerMark(color = LineStrong, accent = LineStrong, cut = LineStrong, size = 150.dp)
                         }
                     }
 
@@ -231,7 +231,7 @@ private fun AttendanceList(
 
                     sheet is Load.Ok && sheet.value.detail.subjects.isEmpty() -> item(key = "no-subjects") {
                         EmptyState("Nothing Marked", "The semester is registered but no class has been marked yet.") {
-                            TowerMark(color = LineStrong, accent = LineStrong, cut = LineStrong, size = 120.dp)
+                            TowerMark(color = LineStrong, accent = LineStrong, cut = LineStrong, size = 150.dp)
                         }
                     }
 

@@ -76,9 +76,14 @@ import com.jiitkiosk.app.ui.rememberSpin
 import com.jiitkiosk.app.ui.shimmer
 import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
+import com.jiitkiosk.app.ui.theme.BasilicaMark
 import com.jiitkiosk.app.ui.theme.Bone
+import com.jiitkiosk.app.ui.theme.CoffeeMark
 import com.jiitkiosk.app.ui.theme.Crimson
+import com.jiitkiosk.app.ui.theme.Cursed
+import com.jiitkiosk.app.ui.theme.DeadSunMark
 import com.jiitkiosk.app.ui.theme.Display
+import com.jiitkiosk.app.ui.theme.GlitchMark
 import com.jiitkiosk.app.ui.theme.IconAttendance
 import com.jiitkiosk.app.ui.theme.IconBack
 import com.jiitkiosk.app.ui.theme.IconClass
@@ -450,9 +455,9 @@ fun BottomNav(current: Tab, modifier: Modifier = Modifier, onSelect: (Tab) -> Un
         ) {
             Box(
                 Modifier
-                    .size(64.dp, 32.dp)
+                    .size(52.dp, 32.dp)
                     .graphicsLayer {
-                        // stretched while the pill is still travelling, at rest it is exactly 64
+                        // stretched while the pill is still travelling, at rest it is exactly 52
                         val stretch = 1f + 0.18f * abs(x.value - target)
                         scaleX = stretch
                     }
@@ -475,7 +480,7 @@ fun BottomNav(current: Tab, modifier: Modifier = Modifier, onSelect: (Tab) -> Un
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Box(Modifier.width(64.dp).height(32.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.width(52.dp).height(32.dp), contentAlignment = Alignment.Center) {
                         Icon(
                             tab.icon,
                             contentDescription = tab.label,
@@ -483,7 +488,7 @@ fun BottomNav(current: Tab, modifier: Modifier = Modifier, onSelect: (Tab) -> Un
                             modifier = Modifier.size(24.dp),
                         )
                     }
-                    Text(tab.label, style = Sans.copy(fontSize = 12.sp), color = tint)
+                    Text(tab.label, style = Sans.copy(fontSize = 11.sp), color = tint)
                 }
             }
         }
@@ -629,8 +634,34 @@ fun StateBox(state: Load<*>, onRetry: (() -> Unit)? = null) {
     when (state) {
         is Load.Loading -> SkeletonScreen()
 
-        is Load.Failed -> Card2 {
-            MonoText("COULDN'T LOAD", color = Bad, medium = true)
+        is Load.Failed -> Column(Modifier.fillMaxWidth()) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(270.dp)
+                    .clipToBounds()
+                    .background(Cursed)
+                    .halftone()
+                    .border(2.dp, Bone),
+                contentAlignment = Alignment.Center,
+            ) {
+                // one motif per failure kind, as the state boards pair them
+                when (state.error) {
+                    is PortalException.Network -> DeadSunMark(size = 190.dp)
+                    is PortalException.Forbidden -> CoffeeMark(size = 220.dp)
+                    else -> GlitchMark(size = 220.dp)
+                }
+            }
+            MonoText("COULDN'T LOAD", color = Bad, medium = true, modifier = Modifier.padding(top = 14.dp))
+            Spacer(Modifier.height(6.dp))
+            D(
+                when (state.error) {
+                    is PortalException.Network -> "The sun is dead"
+                    is PortalException.Forbidden -> "Not for you"
+                    else -> "Glitch"
+                },
+                34.sp,
+            )
             Spacer(Modifier.height(6.dp))
             BodyText(friendly(state.error), color = Muted)
             if (onRetry != null) {
@@ -655,7 +686,20 @@ fun StateBox(state: Load<*>, onRetry: (() -> Unit)? = null) {
 @Composable
 fun FullState(state: Load<*>, onRetry: (() -> Unit)? = null) {
     if (state is Load.Loading) {
-        Column(Modifier.fillMaxSize().padding(20.dp)) { SkeletonScreen() }
+        // board 24: the syncing panel, its basilica, the mono line under it
+        Column(Modifier.fillMaxSize().padding(20.dp)) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clipToBounds()
+                    .background(Cursed)
+                    .halftone()
+                    .border(2.dp, Bone),
+                contentAlignment = Alignment.Center,
+            ) { BasilicaMark(size = 170.dp) }
+            MonoText("SYNCING…", modifier = Modifier.padding(top = 14.dp))
+        }
         return
     }
     Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.Center) {
@@ -818,7 +862,7 @@ fun PrimaryButton(
     }
 }
 
-/** the dashed empty/error panel: a big grey motif, a heading, one quiet line */
+/** the state panel, as the boards draw it: a cursed slab with the motif, the words beneath */
 @Composable
 fun EmptyState(
     heading: String,
@@ -826,17 +870,20 @@ fun EmptyState(
     modifier: Modifier = Modifier,
     art: @Composable BoxScope.() -> Unit = {},
 ) {
-    Column(
-        modifier
-            .fillMaxWidth()
-            .dashedBorder(LineStrong)
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(Modifier.padding(bottom = 14.dp), contentAlignment = Alignment.Center) { art() }
-        D(heading, 28.sp, align = TextAlign.Center)
+    Column(modifier.fillMaxWidth()) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clipToBounds()
+                .background(Cursed)
+                .halftone()
+                .border(2.dp, Bone),
+            contentAlignment = Alignment.Center,
+        ) { art() }
+        D(heading, 34.sp, modifier = Modifier.padding(top = 14.dp))
         Spacer(Modifier.height(8.dp))
-        BodyText(sentence, color = Muted, modifier = Modifier.padding(horizontal = 8.dp))
+        BodyText(sentence, color = Muted)
     }
 }
 

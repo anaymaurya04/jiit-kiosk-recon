@@ -57,8 +57,10 @@ import com.jiitkiosk.app.ui.theme.Crimson
 import com.jiitkiosk.app.ui.theme.DossierMark
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
+import com.jiitkiosk.app.ui.theme.LineStrong
 import com.jiitkiosk.app.ui.theme.Mono
 import com.jiitkiosk.app.ui.theme.Muted
+import com.jiitkiosk.app.ui.theme.NecromancerMark
 import com.jiitkiosk.app.ui.theme.Surface2
 import com.jiitkiosk.app.ui.theme.TomeMark
 import java.time.Instant
@@ -156,7 +158,19 @@ fun NotesPane(vm: KioskViewModel, state: Load<ClassroomData>, connect: Classroom
                                 "No material matches this search or filter."
                             },
                             Modifier.entrance(3),
-                        ) { DossierMark(size = 110.dp) }
+                        ) {
+                            // board 21 gives the missed search its own séance; the empty list keeps the archive
+                            if (all.isEmpty()) {
+                                DossierMark(size = 150.dp)
+                            } else {
+                                NecromancerMark(
+                                    size = 170.dp,
+                                    color = LineStrong,
+                                    accent = LineStrong,
+                                    aux = LineStrong,
+                                )
+                            }
+                        }
                     }
                 } else {
                     for ((course, list) in visible.groupBy { it.courseName }) {

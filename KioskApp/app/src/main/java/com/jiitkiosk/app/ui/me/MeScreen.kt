@@ -69,8 +69,10 @@ import com.jiitkiosk.app.ui.components.rememberCached
 import com.jiitkiosk.app.ui.components.scrollDepth
 import com.jiitkiosk.app.ui.entrance
 import com.jiitkiosk.app.ui.theme.Bad
+import com.jiitkiosk.app.ui.theme.BonsaiMark
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
+import com.jiitkiosk.app.ui.theme.Cursed
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.LineStrong
@@ -1125,6 +1127,22 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit, onReminders: 
                     }
                 }
             }
+        }
+
+        // board 26's About panel: the bonsai above the version block
+        item {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+                    .height(230.dp)
+                    .clipToBounds()
+                    .background(Cursed)
+                    .halftone()
+                    .border(2.dp, Bone)
+                    .entrance(5),
+                contentAlignment = Alignment.Center,
+            ) { BonsaiMark(size = 190.dp) }
         }
 
         // Spinning vinyl JPortal block

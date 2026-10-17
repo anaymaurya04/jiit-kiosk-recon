@@ -100,8 +100,9 @@ ghosts (board 02), Class tome hero (09), quiet Notes hero (13), LeetCode stats h
 raven ghost + cursed preview tile (14), first-run cursed panel (10), Then-card motif alternation +
 countdown casing (04), Grades four-motif cycle (07), `ChipRow` 40dp chips, longsword fuller off Steel.
 Verified already matching, untouched: sign-in (01), attendance hero metrics, subject ring 96 (03),
-JPortal vinyl 64 (19), calendar (05, R3), exams hero (04, R3), notes cassette. Still open: the boards
-20–26 full-state pass and the device screenshot pass.
+JPortal vinyl 64 (19), calendar (05, R3), exams hero (04, R3), notes cassette. R6b then took the boards 20–26 state pass (status log; `design-system.md` §19).
+Still open: the device screenshot pass; board 25's unsupported-field card is skipped on purpose (the
+parser never produces values it cannot read, so there is nothing to detect yet).
 
 **R7 — Closing (§11/§12).** Unit tests green; `PROGRESS.md` current; deviations and anything
 unverified listed; final build + emulator pass.
@@ -170,8 +171,8 @@ day view), Notes, card reminder line + bar, Reminders entry]; Exams/Calendar [R3
 board 05 rebuilt on exam data]; Code [x]; screenshot tests
 [none exist — ledger]
 ### §9 Motion — [x] `Motion.kt` + wiring (the bank digit-roll was never shipped — ledger)
-### §10 States — [x] for the existing screens (Phase 6 pass); [R6a] new screens carry their states;
-[ ] boards 20–26 full-state pass (R6b)
+### §10 States — [x] for the existing screens (Phase 6 pass); [x] new screens carry their states;
+[x] boards 20–26 state pass (R6b) — device visual pass pending
 ### §11 Method — branch `feature/redesign` [x]; commits per step; this file kept current
 ### §12 Done means — [ ] after R1–R7
 
@@ -311,3 +312,17 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   Already matching, left alone: sign-in page, attendance hero metrics, subject ring 96, JPortal vinyl 64,
   calendar (R3), exams hero (R3). Build + 73 tests green; only the 7 baseline warnings. Next: R6b
   (boards 20–26 state panels + the nav-bar gradient) and the device visual pass when the phone is back.
+- 2026-10-17 (R6b): boards 20–26 state pass. `EmptyState` is now the boards' state panel: a 220dp cursed
+  slab (solid 2dp bone border, halftone) with the motif centred and the heading/body beneath it, replacing
+  the dashed grey box across all 18 call sites. `StateBox` failures render the board's full treatment: a
+  270dp cursed panel with one motif per failure kind (network → dead sun 190, forbidden → coffee 220,
+  anything else → glitch 220), the red "COULDN'T LOAD" kicker, the board's voice heading ("The sun is
+  dead" / "Not for you" / "Glitch"), the friendly(e) line and the RETRY button. `FullState` loading is
+  board 24 (200dp panel + basilica 170 + "SYNCING…"); inline section loaders keep their skeletons. Notes
+  search-miss art is now the board-21 necromancer (170, grey LineStrong), the empty list keeps the
+  archive dossier (110→150). Settings gained board 26's About panel (230dp cursed slab + bonsai 190)
+  above the version block; the version row keeps board 19's vinyl 64 (boards 19 and 26 both draw that
+  row — one design kept). Nav bar per boards 20–26: the active pill is now 52×32 (24 icon + 4/14
+  padding, radius 16; was 64) and tab labels 11sp (was 12). Board 25's unsupported-field card is
+  deliberately not built (the parser never sees values it cannot read). Build + 73 tests green; only the
+  baseline warnings. Next: the device visual pass when the phone is attached.
