@@ -1,5 +1,6 @@
 package com.jiitkiosk.app.classroom
 
+import android.util.Log
 import com.jiitkiosk.app.data.HttpError
 import com.jiitkiosk.app.data.HttpJson
 import org.json.JSONArray
@@ -69,8 +70,9 @@ class ClassroomClient(private val token: String) {
                     .associate { it.optString("topicId") to it.optString("name").ifBlank { "Untitled topic" } }
             }.getOrDefault(emptyMap())
             val posts = page(
+                // materials refuse every sort but updateTime, and its desc is already the default
                 "courses/${course.id}/courseWorkMaterials?courseWorkMaterialStates=PUBLISHED" +
-                    "&orderBy=creationTime+desc&pageSize=100",
+                    "&pageSize=100",
                 "courseWorkMaterial",
             )
             for (raw in posts) {
@@ -169,7 +171,14 @@ class ClassroomClient(private val token: String) {
             val separator = if ('?' in path) '&' else '?'
             val url = BASE + path +
                 (pageToken?.let { separator + "pageToken=" + URLEncoder.encode(it, "UTF-8") } ?: "")
-            val body = JSONObject(HttpJson.get(url, bearer = token))
+            val text = try {
+                HttpJson.get(url, bearer = token)
+            } catch (e: HttpError) {
+                // Google's body names the rejected parameter; without it a 400 is a dead end
+                Log.w(TAG, "$path -> HTTP ${e.code}: ${e.body.take(240)}")
+                throw e
+            }
+            val body = JSONObject(text)
             val array: JSONArray = body.optJSONArray(key) ?: JSONArray()
             for (i in 0 until array.length()) out += array.getJSONObject(i)
             pageToken = body.optString("nextPageToken").ifBlank { null }
@@ -195,5 +204,6 @@ class ClassroomClient(private val token: String) {
     private companion object {
         const val BASE = "https://classroom.googleapis.com/v1/"
         const val DAY = 24L * 3_600_000
+        const val TAG = "kiosk-classroom"
     }
 }

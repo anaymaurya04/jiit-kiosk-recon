@@ -104,15 +104,18 @@ fun ClassroomScreen(vm: KioskViewModel, onReminders: () -> Unit) {
     val now = remember(state) { System.currentTimeMillis() }
 
     // the access token lives about an hour: when it has run out, renew it
-    // silently once instead of parking the user on a Reconnect button
+    // silently once instead of parking the user on a Reconnect button. The
+    // guard clears only once a fetch actually lands — while a seed is still on
+    // screen a denied refresh would otherwise renew again on every pass.
     val failure = (state as? Load.Failed)?.error
     val authDead = failure is HttpError && (failure.code == 401 || failure.code == 403)
+    val landed = (state as? Load.Ok)?.let { !it.refreshing } == true
     var autoTried by remember { mutableStateOf(false) }
-    LaunchedEffect(authDead) {
+    LaunchedEffect(authDead, landed) {
         if (authDead && !autoTried && !connect.connecting) {
             autoTried = true
             connect.connect()
-        } else if (!authDead) {
+        } else if (landed) {
             autoTried = false
         }
     }

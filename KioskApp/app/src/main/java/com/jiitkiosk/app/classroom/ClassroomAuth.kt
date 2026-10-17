@@ -21,11 +21,18 @@ import com.google.android.gms.common.api.Scope
  */
 object ClassroomAuth {
 
-    /** courses, coursework, and the student's own submissions — nothing else, ever */
+    /**
+     * One read-only scope per list the Class tab reads, nothing else, ever.
+     * Google answers 403 for a list whose own scope is missing — and that 403
+     * fails the whole sync, not just the rows that list feeds — so materials
+     * and topics each need theirs alongside courses, coursework and submissions.
+     */
     val SCOPES = listOf(
         "https://www.googleapis.com/auth/classroom.courses.readonly",
         "https://www.googleapis.com/auth/classroom.coursework.me.readonly",
         "https://www.googleapis.com/auth/classroom.student-submissions.me.readonly",
+        "https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly",
+        "https://www.googleapis.com/auth/classroom.topics.readonly",
     )
 
     fun client(activity: Activity): AuthorizationClient = Identity.getAuthorizationClient(activity)

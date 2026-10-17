@@ -333,3 +333,23 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   ready to sideload. Deviations / unverified: the device visual pass (no device attached — the §12
   screenshots), live-portal refresh chains and Classroom re-verification (need the account on a device),
   board 25's unsupported-field card (deliberately not built). Open rulings unchanged.
+- 2026-10-17 (R8): device pass + Class tab hotfix. Phone attached: Attendance, Exams, Class
+  (Assignments/Schedule/Notes), Code, Me hub + Profile verified against the boards on hardware —
+  hero arts, verdict ghosts, chips, nav pill and the state panels all render as built; the R6a/R6b
+  deltas are visibly live. Found and fixed the reason Notes never loaded (three stacked causes):
+  (1) `ClassroomAuth.SCOPES` only asked for courses/coursework/submissions, so
+  `courses.courseWorkMaterials.list` 403'd — and `keep()` deliberately rethrows 401/403 instead of
+  serving cache, so that one missing scope failed the whole sync and nothing ever reached the
+  Notes cache. Both materials and topics read-only scopes are now requested; `ClassroomScopesTest`
+  pins all five so a future edit cannot silently drop one. (2) With scopes granted the fetch died
+  on HTTP 400: `courseWorkMaterials.list` rejects `orderBy=creationTime desc` (updateTime is its
+  only sortable field and desc is already the default) — the parameter is gone. (3) The silent
+  re-auth in `ClassroomScreen` cleared its once-guard while the stale seed was still on screen, so
+  a denied fetch re-authorized every ~11s forever; it now clears only when a fetch actually lands.
+  `ClassroomClient` logs the path and Google's error body on an HttpError (this is what pinned the
+  400 to its parameter). Verified on the phone: Class → Notes renders the real materials with
+  per-course headers, DOC/PDF/PPT badges and added-dates, "SYNCED JUST NOW". 14 suites / 74 tests
+  green. Open design nits found by the same pass (awaiting a ruling, nothing changed yet): the Me
+  hub shows no "Me" title and its tile grid ends with Grades/Calendar where board 17 starts with
+  them; the Classroom panes' own failure boxes predate R6b's `StateBox` and still hand-roll the
+  old card (every other screen uses `StateBox`).

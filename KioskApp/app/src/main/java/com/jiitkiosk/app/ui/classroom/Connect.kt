@@ -109,7 +109,7 @@ fun rememberClassroomConnect(vm: KioskViewModel): ClassroomConnect {
 fun classroomFriendly(e: Throwable): String = when {
     e is HttpError && e.code == 401 -> "Classroom access has expired. Connect again."
     e is HttpError && e.code == 403 ->
-        "Google says this account has not granted all three read-only scopes. Connect again to re-approve."
+        "Google says this account has not granted all the read-only scopes Classroom needs. Connect again to re-approve."
     e is HttpError && e.code == 429 -> "Classroom is rate-limiting. Try again in a minute."
     e is HttpError -> "Classroom answered HTTP ${e.code}."
     e is ApiException ->
