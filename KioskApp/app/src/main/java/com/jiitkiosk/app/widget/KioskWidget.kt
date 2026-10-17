@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import com.jiitkiosk.app.MainActivity
@@ -16,6 +17,7 @@ import com.jiitkiosk.app.data.Cache
 import com.jiitkiosk.app.ui.attendance.Sheet
 import com.jiitkiosk.app.ui.components.ago
 import `in`.codelif.ktjiit.model.AttendanceMeta
+import java.io.File
 
 /**
  * The home-screen glance: the attendance hero's number and the classroom's next
@@ -55,6 +57,16 @@ class KioskWidget : AppWidgetProvider() {
                 semesters.firstOrNull()?.let { cache.read("att/$t/${it.id}", Sheet.serializer()) }
             }
             val work = cache.read(ClassroomData.CACHE_KEY, ClassroomData.serializer())
+
+            // diagnostic: exactly what this paint can see (temporary)
+            Log.d(
+                "kiosk-widget",
+                "token=${token?.take(8)} meta=${semesters.size} sheet=${sheet?.value?.detail?.subjects?.size} " +
+                    "work=${work != null} files=${File(context.filesDir, "portal-cache").listFiles()?.joinToString { it.name }}",
+            )
+            if (token == null) {
+                Log.d("kiosk-widget", "prefs=${context.getSharedPreferences("kiosk", Context.MODE_PRIVATE).all.keys}")
+            }
 
             val percent = sheet?.value?.detail?.subjects?.mapNotNull { it.percent }?.let { percentOf(it) }
             val next = work?.value?.work?.let { nextOf(it, now) }

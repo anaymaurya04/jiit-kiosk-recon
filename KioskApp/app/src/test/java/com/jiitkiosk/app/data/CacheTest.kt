@@ -48,4 +48,30 @@ class CacheTest {
         cache.clear()
         assertNull(cache.read("me/t", MeData.serializer()))
     }
+
+    @Test
+    fun aTokenKeyLongerThanTheFileSystemAllowsStillRoundTrips() {
+        // a real portal token is a ~600-char JWT; a filename cannot carry it
+        val dir = Files.createTempDirectory("kiosk-cache").toFile()
+        val key = "att-meta/eyJhbGciOiJIUzI1NiJ9." + "x".repeat(600)
+
+        Cache(dir).write(key, MeData.serializer(), MeData(bank = BankInfo(bank = "SBI")))
+
+        // a later instance must find the same file, and its name must fit the cap
+        assertEquals("SBI", Cache(dir).read(key, MeData.serializer())?.value?.bank?.bank)
+        val name = File(dir, "portal-cache").listFiles()!!.single().name
+        assertTrue("name fits the 255-byte file system cap", name.length <= 255)
+    }
+
+    @Test
+    fun keysThatFitTheLimitKeepTheFileNameOldBuildsWrote() {
+        // updates must find caches already on disk: names under the cap stay as they are
+        val dir = Files.createTempDirectory("kiosk-cache").toFile()
+        val key = "att/eyJhbGciOiJIUzI1NiJ9." + "x".repeat(200)
+
+        Cache(dir).write(key, MeData.serializer(), MeData())
+
+        val expected = "att_eyJhbGciOiJIUzI1NiJ9." + "x".repeat(200) + ".json"
+        assertTrue(File(dir, "portal-cache").resolve(expected).exists())
+    }
 }
