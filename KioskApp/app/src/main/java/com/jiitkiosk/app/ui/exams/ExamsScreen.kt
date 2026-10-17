@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -195,7 +196,7 @@ fun ExamsScreen(vm: KioskViewModel) {
 
                         if (rest.isNotEmpty()) {
                             item { SectionHead("Then", Modifier.padding(top = 10.dp, bottom = 4.dp).entrance(4)) }
-                            items(rest, key = { it.slot.code + "/" + it.slot.date + "/" + it.slot.start }) { paper ->
+                            itemsIndexed(rest, key = { _, paper -> paper.slot.code + "/" + paper.slot.date + "/" + paper.slot.start }) { i, paper ->
                                 val date = paper.slot.day
                                 val dayStr = date?.dayOfMonth?.toString() ?: "—"
                                 val monthStr = date?.month?.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH)?.uppercase() ?: ""
@@ -214,13 +215,21 @@ fun ExamsScreen(vm: KioskViewModel) {
                                     tag = paper.event.takeIf { it.isNotBlank() }?.uppercase(),
                                     room = roomSeat,
                                     art = {
-                                        com.jiitkiosk.app.ui.theme.SatelliteMark(
-                                            size = 70.dp,
-                                            color = Bone,
-                                            accent = com.jiitkiosk.app.ui.theme.Crimson,
-                                            panel = Violet,
-                                            cut = com.jiitkiosk.app.ui.theme.Surface1
-                                        )
+                                        // the board alternates the motif down the Then list
+                                        if (i % 2 == 0) {
+                                            com.jiitkiosk.app.ui.theme.SatelliteMark(
+                                                size = 70.dp,
+                                                color = Bone,
+                                                accent = com.jiitkiosk.app.ui.theme.Crimson,
+                                                panel = Violet,
+                                                cut = com.jiitkiosk.app.ui.theme.Surface1
+                                            )
+                                        } else {
+                                            com.jiitkiosk.app.ui.theme.MicMark(
+                                                size = 70.dp,
+                                                cut = com.jiitkiosk.app.ui.theme.Surface1,
+                                            )
+                                        }
                                     },
                                     modifier = Modifier.padding(bottom = 4.dp),
                                 )
@@ -298,9 +307,9 @@ private fun NextPaperHero(paper: Paper, upcoming: Boolean, modifier: Modifier = 
                 val days = left / 1440
                 val hours = (left % 1440) / 60
                 val minutes = left % 60
-                D(if (days > 0) "${days}d" else "${hours}h", 64.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
+                D(if (days > 0) "${days}D" else "${hours}H", 64.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
                 D(
-                    if (days > 0) "${hours}h ${minutes}m" else "${minutes}m",
+                    if (days > 0) "${hours}H ${minutes}M" else "${minutes}M",
                     64.sp,
                     maxLines = 1,
                     modifier = Modifier.padding(bottom = 6.dp),

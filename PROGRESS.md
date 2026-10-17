@@ -92,9 +92,16 @@ remaining swaps (pigeon/bolt/glitch/…) come with the R6 match pass.
 only caller), the attendance donut as `Ring` with the one `verdictOf(...)` driving all verdicts.
 Nothing was missing, so no kit code changed; the name map is `design-system.md` §18.
 
-**R6 — Match pass (§12 + §10).** Every board against the emulator with screenshots; the new
-screens carry all §10 states from the start (skeleton, cached-refreshing, empty, failed,
-locked, missing field, not-connected, soft-expired, long names, 2× font, 360dp, dark, pure black).
+**R6 — Match pass (§12 + §10). [R6a code-level done — device pass pending]**
+Every board matched against the code at its call sites (board DOM vs Kotlin; no device attached —
+`adb devices` empty, so the screenshot half of §12 defers). R6a: attendance tower hero + per-verdict
+ghosts (board 02), Class tome hero (09), quiet Notes hero (13), LeetCode stats hero + ring geometry
+(15), GitHub basilica on Cursed (16), Me hub/profile card heights + program arts (17/18), Reminders
+raven ghost + cursed preview tile (14), first-run cursed panel (10), Then-card motif alternation +
+countdown casing (04), Grades four-motif cycle (07), `ChipRow` 40dp chips, longsword fuller off Steel.
+Verified already matching, untouched: sign-in (01), attendance hero metrics, subject ring 96 (03),
+JPortal vinyl 64 (19), calendar (05, R3), exams hero (04, R3), notes cassette. Still open: the boards
+20–26 full-state pass and the device screenshot pass.
 
 **R7 — Closing (§11/§12).** Unit tests green; `PROGRESS.md` current; deviations and anything
 unverified listed; final build + emulator pass.
@@ -156,14 +163,15 @@ No screenshot-test framework exists (checked) → emulator screenshots stand in.
 
 ### §6 Calendar — [x] rebuilt to board 05 (R3): exam papers merged with the official asset + user events;
 device visual pass pending
-### §7 Code — [x] LeetCode + GitHub built and cross-checked; [ ] re-verify vs boards 15/16 (R6)
+### §7 Code — [x] LeetCode + GitHub built and cross-checked; [x] re-verified vs boards 15/16 in R6
 ### §8 Build order — theme [x]; art [x] R4; components [x all, R5 check done]; motion [x];
 screens [x previous set, ] R6 pass; Class [R2a–R2c done: switch, Schedule (first run / builder /
 day view), Notes, card reminder line + bar, Reminders entry]; Exams/Calendar [R3: board 04 no delta,
 board 05 rebuilt on exam data]; Code [x]; screenshot tests
 [none exist — ledger]
 ### §9 Motion — [x] `Motion.kt` + wiring (the bank digit-roll was never shipped — ledger)
-### §10 States — [x] for the existing screens (Phase 6 pass); [ ] for all new screens (R6)
+### §10 States — [x] for the existing screens (Phase 6 pass); [R6a] new screens carry their states;
+[ ] boards 20–26 full-state pass (R6b)
 ### §11 Method — branch `feature/redesign` [x]; commits per step; this file kept current
 ### §12 Done means — [ ] after R1–R7
 
@@ -283,3 +291,23 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   `verdictOf`), so no kit code changed. Name map in `design-system.md` §18. Next: R6 (board-by-board
   match pass + §10 states; nits already queued: Exams `9h` vs board `9H`, BackRow icon, chip/stamp
   min-heights, CalendarScreen slot line, Ghost cycle re-check, motif swaps for the new library).
+- 2026-10-17 (R6a): board-by-board match pass done at code level — no device attached (`adb devices`
+  empty), so the screenshot pass defers. Delivered: attendance hero helm→tower (all-bone, 150, same
+  offsets) and the subject ghost now verdict-based (Safe shield / Close hourglass / Low sentinel, 90dp
+  at 0.18; was an index cycle) — board 02; the tab's two empty-state arts follow the tower. Class hero
+  crimson→ink@90, 170dp, the violet block replaced by the board's tome (150 @ +20/+24, 0.9) — board 09.
+  Notes hero quiet (Surface2→ink@85), cassette kept — board 13. LeetCode stats card rebuilt as the
+  board's hero (160dp, steel→ink@90, sword 150 @ +30/+24 at 0.5 alpha behind the numbers) with the ring
+  at 130dp and the board's ring geometry (r 26 / stroke 10 per 80-viewBox; centre number 25% of the
+  ring) — board 15. GitHub hero 150dp, cursed→ink@90, basilica 180 cropped bottom-right; `GhHeroViolet`
+  retired — board 16. Me hub card 214dp, Grades tile tome→vinyl (all 8 tiles now board-matched); profile
+  card 194dp with pennant (BATCH), sentinel `cut=Surface1` (SECTION), full-colour hourglass/tower and
+  the raven `cut=Surface1` — boards 17/18. Reminders: faint raven behind the Google card; the preview
+  card = the board's 56dp cursed tile + raven (cut Cursed) beside the label and text — board 14.
+  First run = the board's 250dp cursed panel (solid bone border, halftone, 200dp tablet) with the words
+  under it — board 10. Exams: countdown units uppercase (`[n]D`/`[n]H`), Then cards alternate
+  satellite/microphone — board 04. Grades subject cards cycle four motifs at 100dp — board 07.
+  `ChipRow` chips 40dp tall, 12dp sides; longsword fuller now Steel (`Art.kt`) per boards 15/27.
+  Already matching, left alone: sign-in page, attendance hero metrics, subject ring 96, JPortal vinyl 64,
+  calendar (R3), exams hero (R3). Build + 73 tests green; only the 7 baseline warnings. Next: R6b
+  (boards 20–26 state panels + the nav-bar gradient) and the device visual pass when the phone is back.

@@ -56,16 +56,16 @@ import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
 import com.jiitkiosk.app.ui.theme.CrimsonDeep
-import com.jiitkiosk.app.ui.theme.HelmMark
+import com.jiitkiosk.app.ui.theme.HourglassMark
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.LineStrong
-import com.jiitkiosk.app.ui.theme.MarkRing
-import com.jiitkiosk.app.ui.theme.PlanetMark
 import com.jiitkiosk.app.ui.theme.Ring
-import com.jiitkiosk.app.ui.theme.TrooperMark
-import com.jiitkiosk.app.ui.theme.VinylMark
-import com.jiitkiosk.app.ui.theme.Violet
+import com.jiitkiosk.app.ui.theme.SentinelMark
+import com.jiitkiosk.app.ui.theme.ShieldMark
+import com.jiitkiosk.app.ui.theme.Surface1
+import com.jiitkiosk.app.ui.theme.TowerMark
+import com.jiitkiosk.app.ui.theme.Verdict
 import com.jiitkiosk.app.ui.theme.verdictOf
 import com.jiitkiosk.app.widget.KioskWidget
 import `in`.codelif.ktjiit.model.AttendanceDetail
@@ -223,7 +223,7 @@ private fun AttendanceList(
 
                     meta is Load.Ok && semesters.isEmpty() -> item(key = "no-sem") {
                         EmptyState("No Registrations", "The portal has no attendance registration on your record yet.") {
-                            HelmMark(arch = LineStrong, accent = LineStrong, detail = LineStrong, size = 120.dp)
+                            TowerMark(color = LineStrong, accent = LineStrong, cut = LineStrong, size = 120.dp)
                         }
                     }
 
@@ -231,7 +231,7 @@ private fun AttendanceList(
 
                     sheet is Load.Ok && sheet.value.detail.subjects.isEmpty() -> item(key = "no-subjects") {
                         EmptyState("Nothing Marked", "The semester is registered but no class has been marked yet.") {
-                            HelmMark(arch = LineStrong, accent = LineStrong, detail = LineStrong, size = 120.dp)
+                            TowerMark(color = LineStrong, accent = LineStrong, cut = LineStrong, size = 120.dp)
                         }
                     }
 
@@ -269,11 +269,10 @@ private fun Overall(average: Double, index: Int, offset: () -> Float, modifier: 
         stops = arrayOf(0f to Crimson, 0.7f to CrimsonDeep),
         modifier = modifier.entrance(index),
         art = {
-            HelmMark(
-                arch = Ink,
-                accent = Crimson,
-                detail = Crimson,
+            TowerMark(
                 size = 150.dp,
+                accent = Bone,
+                cut = Bone,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(x = 10.dp, y = 30.dp)
@@ -313,8 +312,8 @@ private fun SubjectCard(
             .tap(onClick)
             .entrance(step),
     ) {
-        // the mockups give each card a different faint motif behind the content
-        Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp).alpha(0.18f)) { Ghost(index) }
+        // the board gives each card the faint motif of its own verdict
+        Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-8).dp).alpha(0.18f)) { Ghost(verdict) }
 
         Row(
             Modifier.padding(12.dp),
@@ -348,13 +347,12 @@ private fun SubjectCard(
     }
 }
 
-/** one faint motif per subject, cycled so a list never repeats the same one twice in a row */
+/** one faint motif per verdict, as the board's three rows show */
 @Composable
-private fun Ghost(index: Int) {
-    when (index % 4) {
-        0 -> HelmMark(arch = Bone, accent = Crimson, detail = Ink, size = 90.dp)
-        1 -> PlanetMark(planet = Violet, ring = Bone, speck = Bone, detail = Ink, size = 90.dp)
-        2 -> VinylMark(label = Crimson, groove = MarkRing, disc = Ink, size = 90.dp)
-        else -> TrooperMark(band = Violet, card = Bone, clip = Crimson, size = 90.dp)
+private fun Ghost(verdict: Verdict) {
+    when (verdict) {
+        Verdict.Safe -> ShieldMark(size = 90.dp, cut = Surface1)
+        Verdict.Close -> HourglassMark(size = 90.dp)
+        Verdict.Low -> SentinelMark(size = 90.dp, cut = Surface1)
     }
 }

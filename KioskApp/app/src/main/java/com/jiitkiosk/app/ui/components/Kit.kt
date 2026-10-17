@@ -347,15 +347,20 @@ fun ChipRow(labels: List<String>, selected: Int, modifier: Modifier = Modifier, 
                 animationSpec = tween(Motion.FAST),
                 label = "chip",
             )
-            Text(
-                text = label.uppercase(),
-                style = Mono.copy(fontWeight = FontWeight.Medium),
-                color = Bone,
+            Box(
                 modifier = Modifier
+                    .heightIn(min = 40.dp)
                     .tap { onSelect(i) }
                     .background(bg)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-            )
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = label.uppercase(),
+                    style = Mono.copy(fontWeight = FontWeight.Medium),
+                    color = Bone,
+                )
+            }
         }
     }
 }

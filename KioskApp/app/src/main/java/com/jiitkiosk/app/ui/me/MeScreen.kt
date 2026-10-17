@@ -112,12 +112,14 @@ import com.jiitkiosk.app.updates.Updates
 import com.jiitkiosk.app.ui.theme.CometMark
 import com.jiitkiosk.app.ui.theme.DossierMark
 import com.jiitkiosk.app.ui.theme.GearMark
-import com.jiitkiosk.app.ui.theme.HelmMark
 import com.jiitkiosk.app.ui.theme.HourglassMark
 import com.jiitkiosk.app.ui.theme.MarkCore
 import com.jiitkiosk.app.ui.theme.MicMark
+import com.jiitkiosk.app.ui.theme.PennantMark
 import com.jiitkiosk.app.ui.theme.RavenMark
+import com.jiitkiosk.app.ui.theme.SentinelMark
 import com.jiitkiosk.app.ui.theme.ShieldMark
+import com.jiitkiosk.app.ui.theme.Surface1
 import com.jiitkiosk.app.ui.theme.TomeMark
 import com.jiitkiosk.app.ui.theme.TowerMark
 import com.jiitkiosk.app.ui.theme.VinylMark
@@ -239,7 +241,7 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
                     name = general?.name?.takeIf { it.isNotBlank() } ?: vm.session?.username.orEmpty(),
                     enrolment = general?.enrollmentNo ?: vm.session?.username.orEmpty(),
                     modifier = Modifier.entrance(0),
-                    height = 190.dp,
+                    height = 214.dp,
                 ) {
                     Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = 10.dp)) {
                         TrooperMark(band = Violet, card = Bone, clip = Crimson, size = 150.dp)
@@ -380,7 +382,7 @@ private fun MeOverview(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, op
                             onClick = { open(MePage.Grades) },
                         ) {
                             Box(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp)) {
-                                TomeMark(size = 100.dp)
+                                VinylMark(label = Crimson, groove = LineStrong, disc = MarkCore, size = 100.dp)
                             }
                         }
                         ArtTile(
@@ -478,7 +480,7 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                     name = general.name.ifBlank { vm.session?.username.orEmpty() },
                     enrolment = general.enrollmentNo.ifBlank { vm.session?.username.orEmpty() },
                     modifier = Modifier.entrance(2),
-                    height = 170.dp,
+                    height = 194.dp,
                 ) {
                     Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = 10.dp)) {
                         TrooperMark(band = Violet, card = Bone, clip = Crimson, size = 150.dp)
@@ -504,7 +506,7 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                             modifier = Modifier.weight(1f),
                             art = {
                                 Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
-                                    TowerMark(size = 70.dp, color = LineStrong)
+                                    PennantMark(size = 70.dp)
                                 }
                             },
                         ) {
@@ -515,7 +517,7 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                             modifier = Modifier.weight(1f),
                             art = {
                                 Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
-                                    HelmMark(arch = LineStrong, accent = LineStrong, detail = Line, size = 70.dp)
+                                    SentinelMark(size = 70.dp, cut = Surface1)
                                 }
                             },
                         ) {
@@ -532,7 +534,7 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                             modifier = Modifier.weight(1f),
                             art = {
                                 Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
-                                    HourglassMark(size = 70.dp, color = LineStrong)
+                                    HourglassMark(size = 70.dp)
                                 }
                             },
                         ) {
@@ -552,7 +554,7 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                             modifier = Modifier.weight(1f),
                             art = {
                                 Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
-                                    TowerMark(size = 70.dp, color = LineStrong)
+                                    TowerMark(size = 70.dp, cut = Surface1)
                                 }
                             },
                         ) {
@@ -590,7 +592,7 @@ private fun ProfileScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit,
                     modifier = Modifier.entrance(8),
                     art = {
                         Box(Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-10).dp)) {
-                            RavenMark(size = 80.dp, color = LineStrong)
+                            RavenMark(size = 80.dp, cut = Surface1)
                         }
                     },
                 ) {

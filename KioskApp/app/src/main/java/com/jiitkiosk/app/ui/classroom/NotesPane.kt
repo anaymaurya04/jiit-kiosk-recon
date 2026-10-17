@@ -54,12 +54,12 @@ import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.CassetteMark
 import com.jiitkiosk.app.ui.theme.Crimson
-import com.jiitkiosk.app.ui.theme.CrimsonDeep
 import com.jiitkiosk.app.ui.theme.DossierMark
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.Mono
 import com.jiitkiosk.app.ui.theme.Muted
+import com.jiitkiosk.app.ui.theme.Surface2
 import com.jiitkiosk.app.ui.theme.TomeMark
 import java.time.Instant
 import java.time.ZoneId
@@ -193,13 +193,13 @@ fun NotesPane(vm: KioskViewModel, state: Load<ClassroomData>, connect: Classroom
     }
 }
 
-/** the crimson hero: how much arrived in the last seven days */
+/** the quiet hero: how much arrived in the last seven days */
 @Composable
 private fun NotesHero(count: Int, modifier: Modifier = Modifier) {
     HeroPanel(
         height = 120.dp,
         angle = 160f,
-        stops = arrayOf(0f to Crimson, 0.7f to CrimsonDeep),
+        stops = arrayOf(0f to Surface2, 0.85f to Ink),
         modifier = modifier,
         art = {
             // the cassette runs off the bottom-right corner, as on the board

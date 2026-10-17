@@ -26,6 +26,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,14 +60,11 @@ import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
-import com.jiitkiosk.app.ui.theme.CrimsonDeep
 import com.jiitkiosk.app.ui.theme.DossierMark
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.Muted
-import com.jiitkiosk.app.ui.theme.PlanetMark
 import com.jiitkiosk.app.ui.theme.TomeMark
-import com.jiitkiosk.app.ui.theme.Violet
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -288,16 +286,14 @@ private fun ClassroomHero(data: ClassroomData, now: Long, modifier: Modifier = M
         .filter { it.submitted == false && it.dueAt != null && it.dueAt > now }
         .minByOrNull { it.dueAt!! }
     HeroPanel(
-        height = 168.dp,
+        height = 170.dp,
         angle = 160f,
-        stops = arrayOf(0f to Crimson, 0.7f to CrimsonDeep),
+        stops = arrayOf(0f to Crimson, 0.9f to Ink),
         modifier = modifier,
         art = {
-            // the violet block runs off the right edge, as on the board
-            Box(Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(150.dp).background(Violet)) {
-                Box(Modifier.align(Alignment.TopEnd).offset(x = 30.dp, y = (-18).dp)) {
-                    PlanetMark(planet = Violet, ring = Bone, speck = Violet, detail = Ink, size = 150.dp)
-                }
+            // the book runs off the bottom-right corner, as on the board
+            Box(Modifier.align(Alignment.BottomEnd).offset(x = 20.dp, y = 24.dp).alpha(0.9f)) {
+                TomeMark(size = 150.dp)
             }
         },
     ) {

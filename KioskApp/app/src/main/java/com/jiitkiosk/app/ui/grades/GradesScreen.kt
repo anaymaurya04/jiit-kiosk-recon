@@ -495,10 +495,12 @@ private fun MarksScreen(vm: KioskViewModel, onBack: () -> Unit) {
                             Card2(
                                 Modifier.padding(top = 4.dp).entrance(4 + (sIdx % 4)),
                                 art = {
-                                    when (sIdx % 3) {
-                                        0 -> com.jiitkiosk.app.ui.theme.GearMark(size = 90.dp, cut = com.jiitkiosk.app.ui.theme.Surface1)
-                                        1 -> com.jiitkiosk.app.ui.theme.RadarMark(size = 90.dp)
-                                        else -> com.jiitkiosk.app.ui.theme.TomeMark(size = 90.dp)
+                                    // the board cycles the four card motifs in order
+                                    when (sIdx % 4) {
+                                        0 -> com.jiitkiosk.app.ui.theme.GearMark(size = 100.dp, cut = com.jiitkiosk.app.ui.theme.Surface1)
+                                        1 -> com.jiitkiosk.app.ui.theme.RadarMark(size = 100.dp)
+                                        2 -> com.jiitkiosk.app.ui.theme.TomeMark(size = 100.dp)
+                                        else -> com.jiitkiosk.app.ui.theme.HourglassMark(size = 100.dp)
                                     }
                                 }
                             ) {

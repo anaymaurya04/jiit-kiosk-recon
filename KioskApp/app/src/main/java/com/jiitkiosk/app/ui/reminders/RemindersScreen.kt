@@ -7,12 +7,15 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
@@ -23,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -53,9 +57,13 @@ import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
+import com.jiitkiosk.app.ui.theme.Cursed
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.Mono
 import com.jiitkiosk.app.ui.theme.Muted
+import com.jiitkiosk.app.ui.theme.RavenMark
+import com.jiitkiosk.app.ui.theme.Surface1
+import com.jiitkiosk.app.ui.theme.halftone
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -109,7 +117,13 @@ fun RemindersScreen(vm: KioskViewModel, onBack: () -> Unit) {
         }
 
         item {
-            Card2(Modifier.entrance(2)) {
+            Card2(
+                Modifier.entrance(2),
+                art = {
+                    // the board's faint raven sits behind this card
+                    RavenMark(size = 90.dp, cut = Surface1)
+                },
+            ) {
                 MonoText("GOOGLE ACCOUNT CONNECTED")
                 Spacer(Modifier.height(4.dp))
                 BodyText(
@@ -220,24 +234,28 @@ fun RemindersScreen(vm: KioskViewModel, onBack: () -> Unit) {
         }
 
         item {
-            MonoText(
-                "PREVIEW · NOTIFICATION",
-                modifier = Modifier.entrance(7).padding(top = 22.dp, bottom = 6.dp),
-            )
-        }
-        item {
             val next = plan.firstOrNull()
-            Card2(Modifier.entrance(7)) {
-                if (next != null) {
-                    BodyText("${next.work.title} is due in ${next.leadHours}h")
-                    Spacer(Modifier.height(4.dp))
-                    MonoText("${next.work.courseName.uppercase(Locale.ENGLISH)} · NOT SUBMITTED")
-                    Spacer(Modifier.height(10.dp))
-                    MonoText("NEXT PING ${fireLabel(next.fireAt)} · ${plan.size} SCHEDULED")
-                } else {
-                    MonoText("NOTHING SCHEDULED", color = Bone, medium = true)
-                    Spacer(Modifier.height(4.dp))
-                    MonoText(whyNone(values, allowed))
+            Card2(Modifier.padding(top = 22.dp).entrance(7)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // the board's cursed tile with the raven in it
+                    Box(Modifier.size(56.dp).background(Cursed).halftone()) {
+                        Box(Modifier.align(Alignment.Center)) { RavenMark(size = 56.dp, cut = Cursed) }
+                    }
+                    Column(Modifier.weight(1f)) {
+                        MonoText("PREVIEW · NOTIFICATION")
+                        Spacer(Modifier.height(6.dp))
+                        if (next != null) {
+                            BodyText("${next.work.title} is due in ${next.leadHours}h")
+                            Spacer(Modifier.height(4.dp))
+                            MonoText("${next.work.courseName.uppercase(Locale.ENGLISH)} · NOT SUBMITTED")
+                            Spacer(Modifier.height(10.dp))
+                            MonoText("NEXT PING ${fireLabel(next.fireAt)} · ${plan.size} SCHEDULED")
+                        } else {
+                            MonoText("NOTHING SCHEDULED", color = Bone, medium = true)
+                            Spacer(Modifier.height(4.dp))
+                            MonoText(whyNone(values, allowed))
+                        }
+                    }
                 }
             }
         }

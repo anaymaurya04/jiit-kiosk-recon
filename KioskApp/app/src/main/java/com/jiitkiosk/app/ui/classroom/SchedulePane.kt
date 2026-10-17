@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +43,6 @@ import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.Card2
 import com.jiitkiosk.app.ui.components.ChipRow
 import com.jiitkiosk.app.ui.components.D
-import com.jiitkiosk.app.ui.components.EmptyState
 import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.PrimaryButton
@@ -53,11 +53,13 @@ import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
+import com.jiitkiosk.app.ui.theme.Cursed
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.LineStrong
 import com.jiitkiosk.app.ui.theme.Mono
 import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.TabletMark
+import com.jiitkiosk.app.ui.theme.halftone
 import `in`.codelif.ktjiit.model.AttendanceMeta
 import `in`.codelif.ktjiit.model.SubjectAttendance
 import java.time.LocalDate
@@ -111,15 +113,30 @@ private fun FirstRun(onCreate: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            EmptyState(
-                "Nothing carved in stone yet",
-                "Your college doesn't publish class timings, so build your own once. It stays as your schedule until you change it.",
-                Modifier.entrance(0).padding(top = 8.dp),
-            ) { TabletMark(size = 110.dp) }
+            // board 10: the cursed panel carries only the art; the words sit under it
+            Box(
+                Modifier
+                    .padding(top = 8.dp)
+                    .fillMaxWidth()
+                    .height(250.dp)
+                    .clipToBounds()
+                    .background(Cursed)
+                    .halftone()
+                    .border(2.dp, Bone)
+                    .entrance(0),
+                contentAlignment = Alignment.Center,
+            ) { TabletMark(size = 200.dp) }
         }
-        item { PrimaryButton("Create schedule", onClick = onCreate, modifier = Modifier.entrance(1)) }
+        item { D("Nothing carved in stone yet", 34.sp, modifier = Modifier.entrance(1)) }
         item {
-            Box(Modifier.fillMaxWidth().entrance(2), contentAlignment = Alignment.Center) {
+            BodyText(
+                "Your college doesn't publish class timings, so build your own once. It stays as your schedule until you change it.",
+                modifier = Modifier.entrance(1),
+            )
+        }
+        item { PrimaryButton("Create schedule", onClick = onCreate, modifier = Modifier.entrance(2)) }
+        item {
+            Box(Modifier.fillMaxWidth().entrance(3), contentAlignment = Alignment.Center) {
                 MonoText("TAKES ABOUT A MINUTE · STORED ON THIS PHONE")
             }
         }

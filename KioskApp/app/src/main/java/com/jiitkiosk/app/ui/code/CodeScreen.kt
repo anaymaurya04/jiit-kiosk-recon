@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -63,9 +65,11 @@ import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.ago
 import com.jiitkiosk.app.ui.entrance
 import com.jiitkiosk.app.ui.theme.AccentDeep
+import com.jiitkiosk.app.ui.theme.BasilicaMark
 import com.jiitkiosk.app.ui.theme.Bad
 import com.jiitkiosk.app.ui.theme.Bone
 import com.jiitkiosk.app.ui.theme.Crimson
+import com.jiitkiosk.app.ui.theme.Cursed
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
 import com.jiitkiosk.app.ui.theme.LineStrong
@@ -74,6 +78,7 @@ import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.Night
 import com.jiitkiosk.app.ui.theme.Surface2
 import com.jiitkiosk.app.ui.theme.TowerMark
+import com.jiitkiosk.app.ui.theme.Steel
 import com.jiitkiosk.app.ui.theme.Violet
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
@@ -84,8 +89,7 @@ private val HeatMax = Color(0xFFB0A0F0)
 // GitHub's ramp runs the crimson family off the same empty tile
 private val GhHeat1 = AccentDeep
 private val GhHeat2 = Color(0xFF8A2438)
-// the GitHub hero's violet, sampled off board 24
-private val GhHeroViolet = Color(0xFF241A3E)
+// the GitHub hero's violet is retired: board 16 smokes the basilica off Cursed
 
 /**
  * The Code tab: the LeetCode and GitHub boards, one chip apart. Numbers come
@@ -169,9 +173,23 @@ private fun LeetBoard(vm: KioskViewModel, prefs: CodePrefs, source: Int, onSourc
             return@LazyColumn
         }
         item {
-            Card2(Modifier.entrance(2)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    SolvedRing(easy = stats.easy, medium = stats.medium, hard = stats.hard, total = stats.total, size = 124.dp)
+            HeroPanel(
+                height = 160.dp,
+                angle = 160f,
+                stops = arrayOf(0f to Steel, 0.9f to Ink),
+                modifier = Modifier.entrance(2),
+                art = {
+                    // the sword runs off the bottom-right corner, faint behind the numbers
+                    Box(Modifier.align(Alignment.BottomEnd).offset(x = 30.dp, y = 24.dp).alpha(0.5f)) {
+                        LongswordMark(size = 150.dp)
+                    }
+                },
+            ) {
+                Row(
+                    Modifier.align(Alignment.CenterStart).padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SolvedRing(easy = stats.easy, medium = stats.medium, hard = stats.hard, total = stats.total, size = 130.dp)
                     Column(Modifier.weight(1f).padding(start = 14.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             MonoText("EASY", color = Bone)
@@ -193,7 +211,6 @@ private fun LeetBoard(vm: KioskViewModel, prefs: CodePrefs, source: Int, onSourc
                         }
                         StreakChip(stats.streak, Modifier.padding(top = 12.dp))
                     }
-                    LongswordMark(size = 84.dp, modifier = Modifier.padding(start = 4.dp))
                 }
             }
         }
@@ -230,9 +247,9 @@ private fun LeetBoard(vm: KioskViewModel, prefs: CodePrefs, source: Int, onSourc
 private fun SolvedRing(easy: Int, medium: Int, hard: Int, total: Int, size: Dp) {
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
-            val u = this.size.minDimension / 100f
-            val stroke = 11f * u
-            val r = 40f * u
+            val u = this.size.minDimension / 80f
+            val stroke = 10f * u
+            val r = 26f * u
             val c = Offset(this.size.width / 2f, this.size.height / 2f)
             drawCircle(Line, r, c, style = Stroke(stroke))
             if (total > 0) {
@@ -254,7 +271,7 @@ private fun SolvedRing(easy: Int, medium: Int, hard: Int, total: Int, size: Dp) 
                 }
             }
         }
-        D("$total", (size.value * 36f / 132f).sp)
+        D("$total", (size.value * 25f / 100f).sp)
     }
 }
 
@@ -400,18 +417,17 @@ private fun GitHubBoard(vm: KioskViewModel, prefs: CodePrefs, source: Int, onSou
 @Composable
 private fun GitHubHero(stats: GitHubStats, modifier: Modifier = Modifier) {
     HeroPanel(
-        height = 172.dp,
-        angle = 135f,
-        stops = arrayOf(0f to GhHeroViolet, 0.9f to Ink),
+        height = 150.dp,
+        angle = 160f,
+        stops = arrayOf(0f to Cursed, 0.9f to Ink),
         modifier = modifier,
+        art = {
+            // the basilica runs off the bottom-right corner, as on the board
+            Box(Modifier.align(Alignment.BottomEnd).offset(x = 24.dp, y = 26.dp)) {
+                BasilicaMark(size = 180.dp)
+            }
+        },
     ) {
-        TowerMark(
-            size = 168.dp,
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp),
-            color = Bone,
-            accent = Crimson,
-            cut = AccentDeep,
-        )
         Column(Modifier.align(Alignment.CenterStart).padding(start = 16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(30.dp)) {
                 Column {
