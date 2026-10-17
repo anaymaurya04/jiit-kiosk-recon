@@ -361,6 +361,34 @@ fun ChipRow(labels: List<String>, selected: Int, modifier: Modifier = Modifier, 
 }
 
 /**
+ * The Class tab's three-way switch: one bone frame, three equal panes, the
+ * taken one filled crimson — board 09, verbatim.
+ */
+@Composable
+fun SegmentedSwitch(
+    labels: List<String>,
+    selected: Int,
+    modifier: Modifier = Modifier,
+    onSelect: (Int) -> Unit,
+) {
+    Row(modifier.fillMaxWidth().border(2.dp, Bone)) {
+        labels.forEachIndexed { i, label ->
+            val on = i == selected
+            Box(
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
+                    .background(if (on) Crimson else Color.Transparent)
+                    .tap { onSelect(i) },
+                contentAlignment = Alignment.Center,
+            ) {
+                D(label, 20.sp)
+            }
+        }
+    }
+}
+
+/**
  * The hero panels: a CSS gradient, the halftone over it, a line-art mark, then
  * content, with the 2px frame drawn last so nothing bleeds over it.
  */
@@ -807,7 +835,7 @@ fun EmptyState(
     }
 }
 
-private fun Modifier.dashedBorder(color: Color, width: Dp = 2.dp): Modifier = drawBehind {
+fun Modifier.dashedBorder(color: Color, width: Dp = 2.dp): Modifier = drawBehind {
     val stroke = width.toPx()
     drawRect(
         color = color,

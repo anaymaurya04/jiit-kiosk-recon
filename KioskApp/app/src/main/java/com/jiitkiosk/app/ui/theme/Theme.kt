@@ -92,9 +92,15 @@ enum class Verdict(val stamp: String, val color: Color) {
     Low("Low", Bad),
 }
 
-fun verdictOf(percent: Double): Verdict = when {
-    percent >= 80.0 -> Verdict.Safe
-    percent >= 70.0 -> Verdict.Close
+/**
+ * The user's own line, from Settings: at or above [target] is Safe, within
+ * [band] per cent under it Close, anything lower Low. The mockups' sample
+ * numbers (86 up, 74 close, 61 low) are exactly the defaults, 75 with a
+ * five-wide band.
+ */
+fun verdictOf(percent: Double, target: Int, band: Int): Verdict = when {
+    percent >= target -> Verdict.Safe
+    percent >= target - band -> Verdict.Close
     else -> Verdict.Low
 }
 

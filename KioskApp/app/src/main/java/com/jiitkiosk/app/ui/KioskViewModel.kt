@@ -108,6 +108,22 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
         pureBlack = value
     }
 
+    /** the attendance line, remembered between launches; see [Graph.attendTarget] */
+    var attendTarget by mutableStateOf(graph.attendTarget)
+        private set
+    var attendBand by mutableStateOf(graph.attendBand)
+        private set
+
+    fun applyAttendTarget(value: Int) {
+        graph.attendTarget = value
+        attendTarget = graph.attendTarget
+    }
+
+    fun applyAttendBand(value: Int) {
+        graph.attendBand = value
+        attendBand = graph.attendBand
+    }
+
     // ---- sign in ----
 
     suspend fun config(): PortalConfig = graph.auth.config()
@@ -167,6 +183,9 @@ class KioskViewModel(app: Application) : AndroidViewModel(app) {
     // ---- Classroom (and later the Code tab's sources) ----
 
     val classroom get() = graph.classroom
+
+    /** local, non-portal data (the class schedule) lives here and outlives sign-out */
+    val dataDir get() = graph.dataDir
 
     /**
      * [cached] for calls that never touch the portal. Same disk behavior, with

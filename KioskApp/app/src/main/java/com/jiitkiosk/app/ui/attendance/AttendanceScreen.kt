@@ -78,9 +78,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlin.math.roundToInt
 
-/** JIIT asks for 75 per cent, and every count on this screen is about that line */
-const val TARGET = 75
-
 /**
  * One subject with its class-by-class list. The portal's attendance table only
  * carries percentages, so the counts and the calendar come from the per-subject
@@ -160,6 +157,8 @@ fun AttendanceScreen(vm: KioskViewModel) {
                     sheet = sheet,
                     semesters = semesters,
                     semIndex = semIndex,
+                    target = vm.attendTarget,
+                    band = vm.attendBand,
                     onSemester = { semIndex = it },
                     onRetry = { attempt++ },
                     onOpen = { openId = it },
@@ -176,6 +175,8 @@ private fun AttendanceList(
     sheet: Load<Sheet>,
     semesters: List<Semester>,
     semIndex: Int,
+    target: Int,
+    band: Int,
     onSemester: (Int) -> Unit,
     onRetry: () -> Unit,
     onOpen: (String) -> Unit,
@@ -248,7 +249,7 @@ private fun AttendanceList(
                             }
                         }
                         itemsIndexed(subjects, key = { _, s -> s.subjectId }) { index, subject ->
-                            SubjectCard(subject, sheet.value.tallyOf(subject), index) { onOpen(subject.subjectId) }
+                            SubjectCard(subject, sheet.value.tallyOf(subject), index, target, band) { onOpen(subject.subjectId) }
                         }
                     }
 
@@ -289,9 +290,17 @@ private fun Overall(average: Double, index: Int, offset: () -> Float, modifier: 
 }
 
 @Composable
-private fun SubjectCard(subject: SubjectAttendance, tally: Tally, index: Int, onClick: () -> Unit) {
+private fun SubjectCard(
+    subject: SubjectAttendance,
+    tally: Tally,
+    index: Int,
+    target: Int,
+    band: Int,
+    onClick: () -> Unit,
+) {
     val shown = subject.percent ?: tally.percent
-    val verdict = verdictOf(shown)
+    // the line Settings sets, shared with the Class schedule's marks
+    val verdict = verdictOf(shown, target, band)
     // one stagger step for the card and a later one for its ring, so the number
     // arrives after the card it belongs to is on screen
     val step = (index + 3).coerceAtMost(Motion.MAX_STAGGER)
@@ -328,9 +337,9 @@ private fun SubjectCard(subject: SubjectAttendance, tally: Tally, index: Int, on
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Stamp(verdict.stamp, background = verdict.color)
-                    val canMiss = tally.canMiss(TARGET)
+                    val canMiss = tally.canMiss(target)
                     MonoText(
-                        if (canMiss > 0) "Can miss $canMiss" else "Attend ${tally.mustAttend(TARGET)} more",
+                        if (canMiss > 0) "Can miss $canMiss" else "Attend ${tally.mustAttend(target)} more",
                         color = Bone,
                     )
                 }

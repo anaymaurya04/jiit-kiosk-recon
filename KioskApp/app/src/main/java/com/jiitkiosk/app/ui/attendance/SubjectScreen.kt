@@ -99,7 +99,7 @@ fun SubjectScreen(
     val facts = rememberFacts(vm, semester, attempt)
     val tally = sheet.tallyOf(subject)
     val shown = subject.percent ?: tally.percent
-    val verdict = verdictOf(shown)
+    val verdict = verdictOf(shown, vm.attendTarget, vm.attendBand)
     val classes = sheet.daily[subject.subjectId]?.classes.orEmpty()
     val list = rememberLazyListState()
 
@@ -138,9 +138,9 @@ fun SubjectScreen(
                 )
                 Column {
                     Stamp(verdict.stamp, background = verdict.color)
-                    val canMiss = tally.canMiss(TARGET)
+                    val canMiss = tally.canMiss(vm.attendTarget)
                     BodyText(
-                        if (canMiss > 0) "Can miss $canMiss more" else "Attend ${tally.mustAttend(TARGET)} more",
+                        if (canMiss > 0) "Can miss $canMiss more" else "Attend ${tally.mustAttend(vm.attendTarget)} more",
                         modifier = Modifier.padding(top = 8.dp),
                     )
                     MonoText("${tally.attended}/${tally.total} classes")

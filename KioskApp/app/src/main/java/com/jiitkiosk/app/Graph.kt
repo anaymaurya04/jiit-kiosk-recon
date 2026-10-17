@@ -38,12 +38,28 @@ class Graph(context: Context) {
     val cache = Cache(context.filesDir)
     val classroom = ClassroomStore(context)
 
+    /** the phone's own copy: the class schedule and other local data live here, outside the portal cache */
+    val dataDir = context.filesDir
+
     private val prefs = context.getSharedPreferences("kiosk", Context.MODE_PRIVATE)
 
     /** pure-black mode: the only appearance setting, and it is remembered */
     var pureBlack: Boolean
         get() = prefs.getBoolean("pure_black", false)
         set(value) = prefs.edit().putBoolean("pure_black", value).apply()
+
+    /**
+     * The attendance line, the user's own: the Attendance tab flags subjects by
+     * it and the Class schedule marks its classes by it. The defaults are the
+     * mockups' own samples — 75 with a 5-wide close band.
+     */
+    var attendTarget: Int
+        get() = prefs.getInt("attend_target", 75).coerceIn(50, 100)
+        set(value) = prefs.edit().putInt("attend_target", value.coerceIn(50, 100)).apply()
+
+    var attendBand: Int
+        get() = prefs.getInt("attend_band", 5).coerceIn(0, 25)
+        set(value) = prefs.edit().putInt("attend_band", value.coerceIn(0, 25)).apply()
 
     /**
      * The server session's health, remembered across process deaths: when true

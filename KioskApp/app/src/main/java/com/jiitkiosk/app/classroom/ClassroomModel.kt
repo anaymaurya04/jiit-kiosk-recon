@@ -27,8 +27,36 @@ data class Work(
     val link: String? = null,
 )
 
+/** the file kind a material is badged with on the Notes board */
 @Serializable
-data class ClassroomData(val courses: List<Course>, val work: List<Work>) {
+enum class MaterialKind { Pdf, Slides, Docs, Link }
+
+/**
+ * One published material post's first attachment. A post with nothing attached
+ * has no row on the Notes board, so it is not carried at all.
+ */
+@Serializable
+data class Material(
+    val id: String,
+    val courseId: String,
+    val courseName: String,
+    val title: String,
+    /** the unit/topic name Google groups it under, when it does */
+    val topic: String? = null,
+    val kind: MaterialKind = MaterialKind.Link,
+    /** where a tap opens it; null only when Classroom offered no link at all */
+    val link: String? = null,
+    val createdAt: Long = 0,
+    val updatedAt: Long = 0,
+)
+
+@Serializable
+data class ClassroomData(
+    val courses: List<Course>,
+    val work: List<Work>,
+    /** empty for data cached before materials existed */
+    val materials: List<Material> = emptyList(),
+) {
     val unsubmitted: Int get() = work.count { it.submitted == false }
 
     companion object {

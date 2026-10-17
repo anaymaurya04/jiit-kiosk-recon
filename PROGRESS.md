@@ -128,19 +128,27 @@ No screenshot-test framework exists (checked) → emulator screenshots stand in.
 - [x] SPEC-vector crypto test + midnight-rollover test (`PortalCipherTest` 5 + `SessionStateTest`
       4, all green — SPEC §9 LocalName vector included)
 
-### §5 Class section — [R2]
+### §5 Class section — [R2a done; R2b day view open; R2c card lines + Reminders entry open]
 - [x] Classroom connect, assignments, filters, hero, add-to-calendar, silent re-auth (existing)
 - [x] Reminders engine + screen (Settings entry), boot/update receivers (existing)
-- [ ] 3-way switch + `Classroom` top per board 09
-- [ ] card reminder line per board 09
-- [ ] Notes (materials) per board 13 — new client calls, models, badges, NEW tag, search
-- [ ] Schedule: first run / builder / day view per boards 10–12, hours tracking, markers, linking
-- [ ] Reminders entry from the Assignments screen
+- [x] 3-way switch + `Classroom` top per board 09 (R2a — freshness line hoisted above the switch;
+      header fixed, each pane scrolls under it)
+- [ ] card reminder line per board 09 — R2c
+- [x] Notes (materials) per board 13 — per-course materials + topics calls, `Material`/`MaterialKind`,
+      badges, NEW tag (`NotesPrefs` seen ids), search + kind chips, course→topic groups (R2a)
+- [x] Schedule first run (board 10) + builder (board 11) (R2a) — `schedule/` package, day chips, dashed
+      add box, subject picker off the attendance sheet, copy-to, one-step undo
+- [ ] Schedule day view per board 12 + hours tracking + SAFE/CLOSE/LOW markers — R2b
+- [x] attendance line user-settable in Settings; one `verdictOf(percent, target, band)` drives the
+      Attendance stamps (+ subject screen) and will drive the r2b markers — defaults 75 ± 5
+- [ ] one-time Classroom↔subject link confirm (deferred; builder stores subjectId when picked)
+- [ ] Reminders entry from the Assignments screen — R2c
 
 ### §6 Calendar — [x] built from the official PDF asset + user events; [ ] delta pass (R3)
 ### §7 Code — [x] LeetCode + GitHub built and cross-checked; [ ] re-verify vs boards 15/16 (R6)
 ### §8 Build order — theme [x]; art [ ] R4; components [x main set, ] R5 leftovers; motion [x];
-screens [x previous set, ] R6 pass; Class [ ] R2; Code [x]; screenshot tests [none exist — ledger]
+screens [x previous set, ] R6 pass; Class [R2a done: switch + Notes + Schedule first-run/builder;
+R2b: day view]; Code [x]; screenshot tests [none exist — ledger]
 ### §9 Motion — [x] `Motion.kt` + wiring (the bank digit-roll was never shipped — ledger)
 ### §10 States — [x] for the existing screens (Phase 6 pass); [ ] for all new screens (R6)
 ### §11 Method — branch `feature/redesign` [x]; commits per step; this file kept current
@@ -159,6 +167,22 @@ screens [x previous set, ] R6 pass; Class [ ] R2; Code [x]; screenshot tests [no
   (`signin/PortalWeb.kt` over the portal's pages) with the portal's client id — Android
   Credential Manager cannot mint a Google ID token for a client id the app does not own, so the
   current flow is the correct one and stays. (Brief: "find out and tell me".)
+- 2026-10-17 (R2a): schedule stored as JSON in `files/schedule.json` — deliberately NOT the portal
+  cache, because sign-out (even the clearing kind) wipes the cache and the schedule is the phone's own
+  data. One active version; every save rotates the old one into `schedule.prev.json`; `UNDO LAST SAVE`
+  swaps them (so the undo itself is undoable). `ScheduleStore` unit-tested via round-trip.
+- 2026-10-17 (R2a): Notes row shows the date alone where board 13 shows `[SIZE] · [DATE]` — the
+  Classroom REST API exposes no file size. Badge from the file's own extension (pdf / ppt / doc
+  families); anything else is badged URL because the tap opens it as a link anyway. A material post
+  with no attachment gets no row (the board has no text-only shape).
+- 2026-10-17 (R2a): board 11's "Repeat every week" toggle is omitted — every entry is day-of-week and
+  therefore weekly by construction; an OFF state would have to mean dated one-offs, which the model
+  cannot honestly express yet. Entry rows use mono EDIT / REMOVE instead of the board's pencil/× icons
+  (no icon set; text reads clearer). Both are for the R6 match pass once the art library (R4) is in.
+- 2026-10-17 (R2a): builder subject picker reads the attendance sheet through the same `rememberSheet`
+  cache path (attempt 0, never blocks the builder, works offline from cache); picking stores the
+  subjectId so the R2b markers can find that subject's percentage. Typed-in subjects carry no id and
+  no marker — honest by design.
 - Carried from earlier rounds (still true): debug-key release signing; no screenshot-test infra;
   notification timing under Doze not assertable headlessly; GitHub token path not device-run
   with a live PAT.
@@ -174,3 +198,14 @@ screens [x previous set, ] R6 pass; Class [ ] R2; Code [x]; screenshot tests [no
   New tests green: `PortalCipherTest` (SPEC §9 vector, key derivation, 32-byte nonce, IST
   midnight rollover) and `SessionStateTest`. No device was attached, so the banner's visual
   pass is pending. Next: R2 (Class switch / Notes / Schedule).
+- 2026-10-17 (R2a): Class tab rebuilt around the board-09 switch (fixed header; panes below).
+  Assignments = the old body verbatim behind it. Notes pane live: per-course materials + topics
+  fetched by the same client/worker (one cache, one freshness line), `Material`/`MaterialKind`,
+  `NotesPrefs` seen ids, crimson NEW-this-week hero, search, kind chips, course→topic groups, legend.
+  Schedule pane live: first run (board 10) + builder (board 11) — day chips, dashed add box, subject
+  picker off the attendance sheet, LECTURE/TUTORIAL/LAB chips, copy-to, one-step undo, save to
+  `files/schedule.json`. Attendance line user-settable in Settings; `verdictOf(percent, target, band)`
+  (defaults 75 ± 5 = the mockup samples) now drives the Attendance tab and subject screen. New
+  components: `SegmentedSwitch`, public `dashedBorder`; `design-system.md` §15 documents the family.
+  Tests: 66 green (ScheduleTest 5 + VerdictTest 3 new). No device attached — visual pass still pending.
+  Next: R2b day view (board 12) + hours + markers.

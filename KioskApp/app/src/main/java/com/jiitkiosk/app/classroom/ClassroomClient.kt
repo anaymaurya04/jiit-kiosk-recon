@@ -9,6 +9,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
+import java.util.Locale
 
 /**
  * The Classroom REST v1 reads behind the three read-only scopes: active
@@ -59,8 +60,83 @@ class ClassroomClient(private val token: String) {
         }
         // nearest deadline first, the undated last
         work.sortWith(compareBy({ it.dueAt == null }, { it.dueAt ?: Long.MAX_VALUE }))
-        return ClassroomData(courses, work)
+
+        val materials = ArrayList<Material>()
+        for (course in courses) {
+            // topic names are a nicety for the Notes tab; never fail a sync over them
+            val topics = runCatching {
+                page("courses/${course.id}/topics?pageSize=100", "topic")
+                    .associate { it.optString("topicId") to it.optString("name").ifBlank { "Untitled topic" } }
+            }.getOrDefault(emptyMap())
+            val posts = page(
+                "courses/${course.id}/courseWorkMaterials?courseWorkMaterialStates=PUBLISHED" +
+                    "&orderBy=creationTime+desc&pageSize=100",
+                "courseWorkMaterial",
+            )
+            for (raw in posts) {
+                val id = raw.optString("id")
+                if (id.isBlank()) continue
+                val attached = firstAttachment(raw) ?: continue
+                materials += Material(
+                    id = id,
+                    courseId = course.id,
+                    courseName = course.name,
+                    title = raw.optString("title").ifBlank { attached.first },
+                    topic = raw.optString("topicId").takeIf { it.isNotBlank() }?.let(topics::get),
+                    kind = attached.second,
+                    link = attached.third,
+                    createdAt = time(raw.optString("creationTime")) ?: 0,
+                    updatedAt = time(raw.optString("updateTime")) ?: 0,
+                )
+            }
+        }
+        return ClassroomData(courses, work, materials)
     }
+
+    /** the first attachment of a material post as (name, kind, link); a bare post has no row on the board */
+    private fun firstAttachment(raw: JSONObject): Triple<String, MaterialKind, String?>? {
+        val list = raw.optJSONArray("materials") ?: return null
+        for (i in 0 until list.length()) {
+            val m = list.optJSONObject(i) ?: continue
+            m.optJSONObject("driveFile")?.let { outer ->
+                // the REST API nests the file once more: {"driveFile": {"driveFile": {...}}}
+                val file = outer.optJSONObject("driveFile") ?: outer
+                val name = file.optString("title").ifBlank { "File" }
+                return Triple(name, kindOf(name), file.optString("alternateLink").ifBlank { null })
+            }
+            m.optJSONObject("youtubeVideo")?.let {
+                return Triple(
+                    it.optString("title").ifBlank { "Video" },
+                    MaterialKind.Link,
+                    it.optString("alternateLink").ifBlank { null },
+                )
+            }
+            m.optJSONObject("link")?.let {
+                return Triple(
+                    it.optString("title").ifBlank { "Link" },
+                    MaterialKind.Link,
+                    it.optString("url").ifBlank { null },
+                )
+            }
+            m.optJSONObject("form")?.let {
+                return Triple(
+                    it.optString("title").ifBlank { "Form" },
+                    MaterialKind.Link,
+                    it.optString("formUrl").ifBlank { null },
+                )
+            }
+        }
+        return null
+    }
+
+    /** the badge from the file's own name; anything we cannot name opens as a link anyway */
+    private fun kindOf(name: String): MaterialKind =
+        when (name.substringAfterLast('.', "").lowercase(Locale.ROOT)) {
+            "pdf" -> MaterialKind.Pdf
+            "ppt", "pptx", "key" -> MaterialKind.Slides
+            "doc", "docx", "odt", "rtf", "txt" -> MaterialKind.Docs
+            else -> MaterialKind.Link
+        }
 
     /** every submission of mine in one course, keyed by coursework id; empty on a non-auth failure */
     private fun submissions(courseId: String): Map<String, Pair<Boolean?, Long?>> {

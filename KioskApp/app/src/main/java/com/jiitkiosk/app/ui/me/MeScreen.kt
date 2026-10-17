@@ -784,6 +784,36 @@ private fun HostelScreen(vm: KioskViewModel, attempt: Int, onRetry: () -> Unit, 
     }
 }
 
+/** one row of the attendance line: the number with a − and a + */
+@Composable
+private fun StepperRow(label: String, value: String, onMinus: () -> Unit, onPlus: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MonoText(label.uppercase(), modifier = Modifier.weight(1f))
+        StepTap("−", onMinus)
+        Box(Modifier.width(52.dp), contentAlignment = Alignment.Center) {
+            MonoText(value, color = Bone, medium = true)
+        }
+        StepTap("+", onPlus)
+    }
+}
+
+@Composable
+private fun StepTap(sign: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(44.dp)
+            .border(2.dp, Line)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        MonoText(sign, color = Bone, medium = true)
+    }
+}
+
 @Composable
 private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit, onReminders: () -> Unit) {
     val context = LocalContext.current
@@ -816,6 +846,35 @@ private fun SettingsScreen(vm: KioskViewModel, onBack: () -> Unit, onReminders: 
                     .entrance(2),
                 trailing = { Toggle(vm.pureBlack) },
             )
+        }
+
+        // The attendance line: the same numbers flag subjects on the Attendance
+        // tab and will mark classes on the Class schedule.
+        item {
+            Column(Modifier.padding(top = 18.dp).entrance(2)) {
+                SectionHead("Attendance line", Modifier.padding(bottom = 8.dp))
+                StepperRow(
+                    label = "Safe at or above",
+                    value = "${vm.attendTarget}%",
+                    onMinus = { vm.applyAttendTarget(vm.attendTarget - 1) },
+                    onPlus = { vm.applyAttendTarget(vm.attendTarget + 1) },
+                )
+                StepperRow(
+                    label = "Close within",
+                    value = "${vm.attendBand}%",
+                    onMinus = { vm.applyAttendBand(vm.attendBand - 1) },
+                    onPlus = { vm.applyAttendBand(vm.attendBand + 1) },
+                )
+                val low = (vm.attendTarget - vm.attendBand).coerceAtLeast(0)
+                MonoText(
+                    "SAFE ≥ ${vm.attendTarget}% · CLOSE $low–${vm.attendTarget - 1}% · LOW BELOW $low%",
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                MonoText(
+                    "BOTH COUNTS ON THE ATTENDANCE TAB AND THE SCHEDULE MARKS READ THIS LINE.",
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
         }
 
         item {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +47,7 @@ import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.PrimaryButton
 import com.jiitkiosk.app.ui.components.ScreenTitle
+import com.jiitkiosk.app.ui.components.SegmentedSwitch
 import com.jiitkiosk.app.ui.components.SkeletonScreen
 import com.jiitkiosk.app.ui.components.Stamp
 import com.jiitkiosk.app.ui.components.rememberKept
@@ -85,6 +88,7 @@ fun ClassroomScreen(vm: KioskViewModel) {
     val context = LocalContext.current
     var attempt by remember { mutableIntStateOf(0) }
     var filter by remember { mutableIntStateOf(0) }
+    var pane by rememberSaveable { mutableIntStateOf(0) }
 
     val state = rememberKept(
         vm,
@@ -119,13 +123,46 @@ fun ClassroomScreen(vm: KioskViewModel) {
         if (fresh != null) withContext(Dispatchers.IO) { ReminderSync.refresh(context, fresh) }
     }
 
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp)) {
+            ScreenTitle("Classroom", modifier = Modifier.entrance(0))
+            (state as? Load.Ok)?.let { ok ->
+                FreshnessLine(
+                    ok.at,
+                    ok.stale,
+                    refreshing = ok.refreshing,
+                    extra = "GOOGLE CLASSROOM",
+                    modifier = Modifier.entrance(1),
+                )
+            }
+            SegmentedSwitch(
+                listOf("Assignments", "Schedule", "Notes"),
+                pane,
+                Modifier.entrance(2).padding(top = 12.dp, bottom = 12.dp),
+            ) { pane = it }
+        }
+        when (pane) {
+            1 -> SchedulePane(vm)
+            2 -> NotesPane(vm, state, connect, onRetry = { attempt++ })
+            else -> AssignmentsPane(connect, state, now, filter, onRetry = { attempt++ }, onFilter = { filter = it })
+        }
+    }
+}
+
+@Composable
+private fun AssignmentsPane(
+    connect: ClassroomConnect,
+    state: Load<ClassroomData>,
+    now: Long,
+    filter: Int,
+    onRetry: () -> Unit,
+    onFilter: (Int) -> Unit,
+) {
     LazyColumn(
-        Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp),
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { ScreenTitle("Classroom", modifier = Modifier.entrance(0)) }
-
         if (!connect.connected) {
             item {
                 EmptyState(
@@ -189,7 +226,7 @@ fun ClassroomScreen(vm: KioskViewModel) {
                         medium = true,
                         modifier = Modifier
                             .background(Bone)
-                            .tap { attempt++ }
+                            .tap { onRetry() }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     )
                 }
@@ -197,9 +234,6 @@ fun ClassroomScreen(vm: KioskViewModel) {
 
             state is Load.Ok -> {
                 val data = state.value
-                item {
-                    FreshnessLine(state.at, state.stale, extra = "GOOGLE CLASSROOM", modifier = Modifier.entrance(1))
-                }
                 if (data.work.isEmpty()) {
                     item {
                         EmptyState(
@@ -211,7 +245,7 @@ fun ClassroomScreen(vm: KioskViewModel) {
                 } else {
                     item { ClassroomHero(data, now, Modifier.entrance(2)) }
                     item {
-                        ChipRow(listOf("All", "Missing", "Due soon", "Done"), filter, Modifier.entrance(3)) { filter = it }
+                        ChipRow(listOf("All", "Missing", "Due soon", "Done"), filter, Modifier.entrance(3)) { onFilter(it) }
                     }
                     val visible = data.work.filter { filterMatch(it, filter, now) }
                     if (visible.isEmpty()) {
