@@ -35,14 +35,15 @@ object ReminderSync {
             .read(ClassroomData.CACHE_KEY, ClassroomData.serializer())?.value
         return source?.work?.map { it.asReminderWork() } ?: emptyList()
     }
-
-    private fun Work.asReminderWork() = ReminderWork(
-        id = id,
-        courseId = courseId,
-        courseName = courseName,
-        title = title,
-        dueAt = dueAt,
-        submitted = submitted,
-        link = link,
-    )
 }
+
+/** the one mapping, so the alarms and the card's reminder line can never drift */
+internal fun Work.asReminderWork() = ReminderWork(
+    id = id,
+    courseId = courseId,
+    courseName = courseName,
+    title = title,
+    dueAt = dueAt,
+    submitted = submitted,
+    link = link,
+)

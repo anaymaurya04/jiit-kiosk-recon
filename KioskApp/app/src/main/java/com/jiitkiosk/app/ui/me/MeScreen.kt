@@ -164,11 +164,19 @@ private fun rememberMe(vm: KioskViewModel, attempt: Int): Load<MeData> {
 private enum class MePage { Overview, Profile, Fees, Hostel, Grades, Calendar, Settings, Feedback, Reminders }
 
 @Composable
-fun MeScreen(vm: KioskViewModel) {
+fun MeScreen(vm: KioskViewModel, openReminders: Boolean, onRemindersOpened: () -> Unit) {
     var page by remember { mutableStateOf(MePage.Overview) }
     // one counter for the whole tab: every Me screen reads the same cached record
     var attempt by remember { mutableStateOf(0) }
     val retry: () -> Unit = { attempt++ }
+
+    // the Assignments pane's Reminders button lands here
+    LaunchedEffect(openReminders) {
+        if (openReminders) {
+            page = MePage.Reminders
+            onRemindersOpened()
+        }
+    }
 
     // the system back button goes up a level before it leaves the app
     BackHandler(enabled = page != MePage.Overview) { page = MePage.Overview }

@@ -59,6 +59,38 @@ object ReminderPlanner {
             .distinctBy { it.work.id to it.fireAt }
     }
 
+    /**
+     * For one card's line: (next ping, last ping). The "next" answer is exactly
+     * what [plan] would lay — a shifted ping is left out because the plan is
+     * re-laid every 15 minutes and a moved ping only survives when nothing
+     * re-plans before it, which is too conditional for a promise on a card.
+     *
+     * shortcut: a past ping is shown as sent from its instant alone — an item
+     * first seen after that instant never actually pinged; source the card from
+     * a fired-ping log if that ever stops being true in practice
+     */
+    fun timeline(
+        w: ReminderWork,
+        values: ReminderPrefs.Values,
+        now: Long,
+        zone: ZoneId,
+    ): Pair<Long?, Long?> {
+        val due = w.dueAt ?: return null to null
+        if (!values.enabled || values.leads.isEmpty()) return null to null
+        if (w.submitted != false) return null to null
+        if (!values.courseOn(w.courseId)) return null to null
+
+        var next: Long? = null
+        var last: Long? = null
+        for (lead in values.leads) {
+            val fire = due - lead * 3_600_000L
+            if (quietAdjusted(fire, values, zone) != fire) continue
+            if (fire > now) next = next?.let { minOf(it, fire) } ?: fire
+            else last = last?.let { maxOf(it, fire) } ?: fire
+        }
+        return next to last
+    }
+
     /** the quiet window pushes a ping to its end; DST-correct via wall-clock arithmetic */
     private fun quietAdjusted(fireAt: Long, values: ReminderPrefs.Values, zone: ZoneId): Long {
         if (!values.quietEnabled) return fireAt

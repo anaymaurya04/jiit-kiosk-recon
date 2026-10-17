@@ -46,6 +46,9 @@ class ReminderPlannerTest {
     private fun local(at: Long, zone: ZoneId = ist): LocalDateTime =
         LocalDateTime.ofInstant(Instant.ofEpochMilli(at), zone)
 
+    private fun at(d: LocalDateTime, zone: ZoneId = ist): Long =
+        d.atZone(zone).toInstant().toEpochMilli()
+
     @Test
     fun `quiet off gives all three leads at their true instants`() {
         val due = LocalDateTime.of(2030, 3, 10, 12, 0)
@@ -131,5 +134,50 @@ class ReminderPlannerTest {
         assertTrue(
             ReminderPlanner.plan(listOf(work(due = due)), values(enabled = false, quiet = false), now, ist).isEmpty(),
         )
+    }
+
+    @Test
+    fun `the card line walks from next ping to sent`() {
+        val w = work(due = LocalDateTime.of(2030, 3, 10, 12, 0))
+
+        // nothing has passed yet: the 24h ping is the one to promise
+        val (n1, l1) = ReminderPlanner.timeline(w, values(), now, ist)
+        assertEquals(LocalDateTime.of(2030, 3, 9, 12, 0), n1?.let { local(it) })
+        assertEquals(null, l1)
+
+        // the 24h ping has gone out; the 1h ping is the one still ahead
+        val (n2, l2) = ReminderPlanner.timeline(w, values(), at(LocalDateTime.of(2030, 3, 10, 10, 0)), ist)
+        assertEquals(LocalDateTime.of(2030, 3, 10, 11, 0), n2?.let { local(it) })
+        assertEquals(LocalDateTime.of(2030, 3, 9, 12, 0), l2?.let { local(it) })
+
+        // all daytime pings are in the past: the last one is the freshest story
+        val (n3, l3) = ReminderPlanner.timeline(w, values(), at(LocalDateTime.of(2030, 3, 10, 13, 0)), ist)
+        assertEquals(null, n3)
+        assertEquals(LocalDateTime.of(2030, 3, 10, 11, 0), l3?.let { local(it) })
+    }
+
+    @Test
+    fun `pings the quiet window moves stay off the card even when the alarm still stands`() {
+        // due 06:30: every lead lands in quiet hours and shifts to a 07:00 that the
+        // next re-plan may already take away, so the card shows nothing while the
+        // 24h alarm (still before the deadline) is real
+        val w = work(due = LocalDateTime.of(2030, 3, 10, 6, 30))
+        assertEquals(1, ReminderPlanner.plan(listOf(w), values(), now, ist).size)
+        assertEquals(null to null, ReminderPlanner.timeline(w, values(), now, ist))
+    }
+
+    @Test
+    fun `the card line is silent for anything the planner is silent about`() {
+        val due = LocalDateTime.of(2030, 3, 10, 12, 0)
+        for (w in listOf(
+            work(id = "a", due = due, submitted = true),
+            work(id = "b", due = due, submitted = null),
+            work(id = "c", due = null),
+            work(id = "d", courseId = "off", due = due),
+        )) {
+            assertEquals(null to null, ReminderPlanner.timeline(w, values(off = setOf("off")), now, ist))
+        }
+        assertEquals(null to null, ReminderPlanner.timeline(work(due = due), values(enabled = false), now, ist))
+        assertEquals(null to null, ReminderPlanner.timeline(work(due = due), values(leads = emptySet()), now, ist))
     }
 }

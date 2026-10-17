@@ -128,12 +128,14 @@ No screenshot-test framework exists (checked) → emulator screenshots stand in.
 - [x] SPEC-vector crypto test + midnight-rollover test (`PortalCipherTest` 5 + `SessionStateTest`
       4, all green — SPEC §9 LocalName vector included)
 
-### §5 Class section — [R2a done; R2b day view open; R2c card lines + Reminders entry open]
+### §5 Class section — [R2 family built (R2a/R2b/R2c); device visual pass pending]
 - [x] Classroom connect, assignments, filters, hero, add-to-calendar, silent re-auth (existing)
 - [x] Reminders engine + screen (Settings entry), boot/update receivers (existing)
 - [x] 3-way switch + `Classroom` top per board 09 (R2a — freshness line hoisted above the switch;
       header fixed, each pane scrolls under it)
-- [ ] card reminder line per board 09 — R2c
+- [x] card third line per board 09 (R2c) — `NEXT REMINDER IN [n]H` / `REMINDER SENT [n]H AGO` / submitted
+      date from one pure `ReminderPlanner.timeline`; 8dp warning-window bar (100% crimson missing,
+      elapsed share of the 72h window due-soon, 0 submitted)
 - [x] Notes (materials) per board 13 — per-course materials + topics calls, `Material`/`MaterialKind`,
       badges, NEW tag (`NotesPrefs` seen ids), search + kind chips, course→topic groups (R2a)
 - [x] Schedule first run (board 10) + builder (board 11) (R2a) — `schedule/` package, day chips, dashed
@@ -145,13 +147,14 @@ No screenshot-test framework exists (checked) → emulator screenshots stand in.
 - [x] attendance line user-settable in Settings; one `verdictOf(percent, target, band)` drives the
       Attendance stamps (+ subject screen) and the schedule's markers — defaults 75 ± 5
 - [ ] one-time Classroom↔subject link confirm (deferred; builder stores subjectId when picked)
-- [ ] Reminders entry from the Assignments screen — R2c
+- [x] Reminders entry from the Assignments screen (R2c) — footer action jumps to the Me tab's Reminders
+      page (board 09 has no such element; brief requirement)
 
 ### §6 Calendar — [x] built from the official PDF asset + user events; [ ] delta pass (R3)
 ### §7 Code — [x] LeetCode + GitHub built and cross-checked; [ ] re-verify vs boards 15/16 (R6)
 ### §8 Build order — theme [x]; art [ ] R4; components [x main set, ] R5 leftovers; motion [x];
-screens [x previous set, ] R6 pass; Class [R2a + R2b done: switch, Schedule (first run / builder /
-day view), Notes; R2c: card reminder lines + Reminders entry]; Code [x]; screenshot tests
+screens [x previous set, ] R6 pass; Class [R2a–R2c done: switch, Schedule (first run / builder /
+day view), Notes, card reminder line + bar, Reminders entry]; Code [x]; screenshot tests
 [none exist — ledger]
 ### §9 Motion — [x] `Motion.kt` + wiring (the bank digit-roll was never shipped — ledger)
 ### §10 States — [x] for the existing screens (Phase 6 pass); [ ] for all new screens (R6)
@@ -187,6 +190,18 @@ day view), Notes; R2c: card reminder lines + Reminders entry]; Code [x]; screens
   cache path (attempt 0, never blocks the builder, works offline from cache); picking stores the
   subjectId so the R2b markers can find that subject's percentage. Typed-in subjects carry no id and
   no marker — honest by design.
+- 2026-10-17 (R2c): board 09's card completes — the third line is reminder-centric and the 8px bar is the
+  warning-window fill (missing 100% crimson; due-soon the elapsed share of the 72h window, which is what
+  the board's own 70% sample shows; submitted 0). `REMINDER SENT [n]H AGO` prints the scheduled instant,
+  not a delivery receipt — the app keeps no fired-ping log (shortcut note in `ReminderPlanner.timeline`).
+  A ping the quiet window would move is left off the card entirely: the plan is re-laid every 15 minutes
+  and a moved ping only survives when nothing re-plans before it, so promising it would be a lie. The
+  card falls back to the old status line (`MISSING · NOT SUBMITTED` etc.) whenever reminders are off, the
+  course is muted, or no ping qualifies.
+- 2026-10-17 (R2c): the Assignments footer sentence ("…set up in Settings") is replaced by a real
+  `REMINDERS` action — board 09 has no such element; this is the brief's "entry from Assignments". It
+  crosses tabs via a one-shot flag in `AppShell` (no nav-framework change): the Me tab opens its
+  Reminders page; back then walks Settings → Overview as usual.
 - Carried from earlier rounds (still true): debug-key release signing; no screenshot-test infra;
   notification timing under Doze not assertable headlessly; GitHub token path not device-run
   with a live PAT.
@@ -221,3 +236,9 @@ day view), Notes; R2c: card reminder lines + Reminders entry]; Code [x]; screens
   line as Settings and the Attendance tab. Grid fits the day's span (floor/ceil to the hour, 4h min;
   9AM–5PM when empty). Build + 66 tests green. Still no device — visual pass pending. Next: R2c
   (card reminder lines, Reminders entry from Assignments), then R3.
+- 2026-10-17 (R2c): board 09 cards finished — third line from the new pure `ReminderPlanner.timeline`
+  (`NEXT REMINDER IN [n]H`, `REMINDER SENT [n]H AGO`, else the old status text; submitted keeps its
+  date) and the 8dp warning-window bar. `REMINDERS` footer action on Assignments jumps to the Me tab's
+  Reminders page (one-shot `AppShell` flag + `MeScreen` params). `asReminderWork()` lifted to file level
+  so the alarms and the card share one mapping. Build + 69 tests green (3 new timeline tests). No
+  device — visual pass pending. Next: R3 (boards 04/05 exam + calendar delta).

@@ -41,6 +41,9 @@ import com.jiitkiosk.app.ui.theme.Line
 fun AppShell(vm: KioskViewModel) {
     // the design opens on Attendance: there is no home tab in it
     var tab by rememberSaveable { mutableStateOf(Tab.Attendance) }
+    // one-shot: the Assignments pane's Reminders button must land on the Me tab's
+    // Reminders page, which MeScreen owns
+    var openReminders by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -69,9 +72,9 @@ fun AppShell(vm: KioskViewModel) {
                         when (shown) {
                             Tab.Attendance -> AttendanceScreen(vm)
                             Tab.Exams -> ExamsScreen(vm)
-                            Tab.Class -> ClassroomScreen(vm)
+                            Tab.Class -> ClassroomScreen(vm) { openReminders = true; tab = Tab.Me }
                             Tab.Code -> CodeScreen(vm)
-                            Tab.Me -> MeScreen(vm)
+                            Tab.Me -> MeScreen(vm, openReminders) { openReminders = false }
                         }
                     }
                 }

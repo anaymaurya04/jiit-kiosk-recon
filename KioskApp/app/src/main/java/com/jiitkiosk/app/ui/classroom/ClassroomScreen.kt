@@ -34,7 +34,10 @@ import com.jiitkiosk.app.classroom.ClassroomClient
 import com.jiitkiosk.app.classroom.ClassroomData
 import com.jiitkiosk.app.classroom.Work
 import com.jiitkiosk.app.data.HttpError
+import com.jiitkiosk.app.reminders.ReminderPlanner
+import com.jiitkiosk.app.reminders.ReminderPrefs
 import com.jiitkiosk.app.reminders.ReminderSync
+import com.jiitkiosk.app.reminders.asReminderWork
 import com.jiitkiosk.app.ui.KioskViewModel
 import com.jiitkiosk.app.ui.components.BodyText
 import com.jiitkiosk.app.ui.components.Card2
@@ -60,7 +63,6 @@ import com.jiitkiosk.app.ui.theme.CrimsonDeep
 import com.jiitkiosk.app.ui.theme.DossierMark
 import com.jiitkiosk.app.ui.theme.Ink
 import com.jiitkiosk.app.ui.theme.Line
-import com.jiitkiosk.app.ui.theme.LineStrong
 import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.PlanetMark
 import com.jiitkiosk.app.ui.theme.TomeMark
@@ -83,7 +85,7 @@ private const val SOON_MS = 72L * 3_600_000
  * fixes it.
  */
 @Composable
-fun ClassroomScreen(vm: KioskViewModel) {
+fun ClassroomScreen(vm: KioskViewModel, onReminders: () -> Unit) {
     val connect = rememberClassroomConnect(vm)
     val context = LocalContext.current
     var attempt by remember { mutableIntStateOf(0) }
@@ -144,7 +146,7 @@ fun ClassroomScreen(vm: KioskViewModel) {
         when (pane) {
             1 -> SchedulePane(vm)
             2 -> NotesPane(vm, state, connect, onRetry = { attempt++ })
-            else -> AssignmentsPane(connect, state, now, filter, onRetry = { attempt++ }, onFilter = { filter = it })
+            else -> AssignmentsPane(connect, state, now, filter, onReminders, onRetry = { attempt++ }, onFilter = { filter = it })
         }
     }
 }
@@ -155,6 +157,7 @@ private fun AssignmentsPane(
     state: Load<ClassroomData>,
     now: Long,
     filter: Int,
+    onReminders: () -> Unit,
     onRetry: () -> Unit,
     onFilter: (Int) -> Unit,
 ) {
@@ -256,10 +259,22 @@ private fun AssignmentsPane(
                     }
                 }
                 item {
-                    MonoText(
-                        "Refreshes when this tab opens. Reminders for unsubmitted work are set up in Settings.",
-                        modifier = Modifier.entrance(5),
-                    )
+                    Row(
+                        Modifier.entrance(5).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        MonoText("Refreshes when this tab opens.", modifier = Modifier.weight(1f))
+                        // the brief wants reminders reachable from here, not only Settings
+                        MonoText(
+                            "REMINDERS",
+                            color = Crimson,
+                            medium = true,
+                            modifier = Modifier
+                                .background(Line)
+                                .tap { onReminders() }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                        )
+                    }
                 }
             }
         }
@@ -305,6 +320,7 @@ private fun WorkCard(work: Work, now: Long, modifier: Modifier = Modifier) {
     var noCal by remember { mutableStateOf(false) }
     val missing = work.submitted == false && work.dueAt != null && work.dueAt < now
     val soon = work.submitted == false && work.dueAt != null && work.dueAt >= now && work.dueAt - now <= SOON_MS
+    val reminders = remember { ReminderPrefs(context).values() }
     Card2(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             MonoText(work.courseName.uppercase(), modifier = Modifier.weight(1f), medium = true)
@@ -320,34 +336,42 @@ private fun WorkCard(work: Work, now: Long, modifier: Modifier = Modifier) {
         Spacer(Modifier.height(6.dp))
         MonoText(dueText(work))
         Spacer(Modifier.height(10.dp))
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    when {
-                        work.submitted == true -> Bone
-                        missing -> Crimson
-                        soon -> LineStrong
-                        else -> Line
-                    },
-                ),
-        )
-        Spacer(Modifier.height(8.dp))
+        // board 09: the fill is how much of the warning window has run out
+        val window = work.dueAt
+        val fill = when {
+            missing -> 1f
+            // soon already implies a deadline; this is the compiler's own proof
+            soon -> 1f - (window - now).toFloat() / SOON_MS
+            else -> 0f
+        }
+        Box(Modifier.fillMaxWidth().height(8.dp).background(Line)) {
+            Box(
+                Modifier
+                    .fillMaxWidth(fill.coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .background(if (missing) Crimson else Bone),
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        val line = reminderLine(work, reminders, now)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            MonoText(statusText(work, now), color = if (missing) Bad else Muted, modifier = Modifier.weight(1f))
-            if (work.dueAt != null && work.submitted != true) {
+            MonoText(
+                line ?: statusText(work, now),
+                color = if (line == null && missing) Bad else Muted,
+                modifier = Modifier.weight(1f),
+            )
+            val dueAt = work.dueAt
+            if (dueAt != null && work.submitted != true) {
                 MonoText(
                     "ADD TO CALENDAR",
                     color = Crimson,
                     modifier = Modifier.tap {
-                        val at = work.dueAt ?: return@tap
                         // a due day without a time becomes an all-day entry in the
                         // same zone the card prints it in
                         val took = if (work.dueHasTime) {
-                            CalInsert.moment(context, work.title, at, work.courseName)
+                            CalInsert.moment(context, work.title, dueAt, work.courseName)
                         } else {
-                            val day = Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault()).toLocalDate()
+                            val day = Instant.ofEpochMilli(dueAt).atZone(ZoneId.systemDefault()).toLocalDate()
                             CalInsert.span(context, work.title, day, day, work.courseName)
                         }
                         noCal = !took
@@ -385,6 +409,24 @@ private fun statusText(work: Work, now: Long): String = when {
     work.submitted == null -> "SUBMISSION STATE UNKNOWN · REFRESH TO CHECK"
     work.dueAt != null && work.dueAt < now -> "MISSING · NOT SUBMITTED"
     else -> "NOT SUBMITTED"
+}
+
+/** board 09's third line: the reminder story when there is one, else the raw status */
+private fun reminderLine(work: Work, values: ReminderPrefs.Values, now: Long): String? {
+    val (next, last) = ReminderPlanner.timeline(work.asReminderWork(), values, now, ZoneId.systemDefault())
+    return when {
+        next != null -> "NEXT REMINDER IN ${spanText(next - now, ahead = true)}"
+        last != null -> "REMINDER SENT ${spanText(now - last, ahead = false)} AGO"
+        else -> null
+    }
+}
+
+/** [n]H per the board; sub-hour falls to minutes, and what it awaits is rounded up, never down */
+private fun spanText(ms: Long, ahead: Boolean): String {
+    val minutes = ms / 60_000
+    if (minutes < 60) return "${minutes.coerceAtLeast(1)}M"
+    val whole = minutes / 60
+    return "${if (ahead && minutes % 60 != 0L) whole + 1 else whole}H"
 }
 
 private fun countdown(ms: Long): String {
