@@ -87,8 +87,10 @@ extracted from the rendered board; literal colours kept as parameters over theme
 tablet = Schedule first-run art (board 10). Family tints + rules recorded in `design-system.md` §17;
 remaining swaps (pigeon/bolt/glitch/…) come with the R6 match pass.
 
-**R5 — Kit leftovers (§8.2/8.4).** Verify every component named in §8.4 exists; add the small
-missing ones (`SegmentedSwitch`, `ScheduleBlock`; check the Donut/AttendanceRing naming).
+**R5 — Kit leftovers (§8.2/8.4). [done]** Every component §8.4 names exists under an honest name —
+`SegmentedSwitch` (built in R2a), the schedule block as `TimelineCard` (private to the day view, its
+only caller), the attendance donut as `Ring` with the one `verdictOf(...)` driving all verdicts.
+Nothing was missing, so no kit code changed; the name map is `design-system.md` §18.
 
 **R6 — Match pass (§12 + §10).** Every board against the emulator with screenshots; the new
 screens carry all §10 states from the start (skeleton, cached-refreshing, empty, failed,
@@ -155,7 +157,7 @@ No screenshot-test framework exists (checked) → emulator screenshots stand in.
 ### §6 Calendar — [x] rebuilt to board 05 (R3): exam papers merged with the official asset + user events;
 device visual pass pending
 ### §7 Code — [x] LeetCode + GitHub built and cross-checked; [ ] re-verify vs boards 15/16 (R6)
-### §8 Build order — theme [x]; art [x] R4; components [x main set, ] R5 leftovers; motion [x];
+### §8 Build order — theme [x]; art [x] R4; components [x all, R5 check done]; motion [x];
 screens [x previous set, ] R6 pass; Class [R2a–R2c done: switch, Schedule (first run / builder /
 day view), Notes, card reminder line + bar, Reminders entry]; Exams/Calendar [R3: board 04 no delta,
 board 05 rebuilt on exam data]; Code [x]; screenshot tests
@@ -276,3 +278,8 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   `Theme.kt`. Cassette = Notes hero art, tablet = Schedule first-run art (was dossier). Build + 73 tests
   green; only the 7 pre-existing warnings. Still no device — visual pass pending. Next: R5 (kit leftovers,
   §8.4 inventory).
+- 2026-10-17 (R5): kit inventory checked against §8.4 — every named component exists (SegmentedSwitch
+  from R2a; ScheduleBlock as the day view's private `TimelineCard`; the Donut as `Ring` + the shared
+  `verdictOf`), so no kit code changed. Name map in `design-system.md` §18. Next: R6 (board-by-board
+  match pass + §10 states; nits already queued: Exams `9h` vs board `9H`, BackRow icon, chip/stamp
+  min-heights, CalendarScreen slot line, Ghost cycle re-check, motif swaps for the new library).
