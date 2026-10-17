@@ -150,11 +150,13 @@ No screenshot-test framework exists (checked) → emulator screenshots stand in.
 - [x] Reminders entry from the Assignments screen (R2c) — footer action jumps to the Me tab's Reminders
       page (board 09 has no such element; brief requirement)
 
-### §6 Calendar — [x] built from the official PDF asset + user events; [ ] delta pass (R3)
+### §6 Calendar — [x] rebuilt to board 05 (R3): exam papers merged with the official asset + user events;
+device visual pass pending
 ### §7 Code — [x] LeetCode + GitHub built and cross-checked; [ ] re-verify vs boards 15/16 (R6)
 ### §8 Build order — theme [x]; art [ ] R4; components [x main set, ] R5 leftovers; motion [x];
 screens [x previous set, ] R6 pass; Class [R2a–R2c done: switch, Schedule (first run / builder /
-day view), Notes, card reminder line + bar, Reminders entry]; Code [x]; screenshot tests
+day view), Notes, card reminder line + bar, Reminders entry]; Exams/Calendar [R3: board 04 no delta,
+board 05 rebuilt on exam data]; Code [x]; screenshot tests
 [none exist — ledger]
 ### §9 Motion — [x] `Motion.kt` + wiring (the bank digit-roll was never shipped — ledger)
 ### §10 States — [x] for the existing screens (Phase 6 pass); [ ] for all new screens (R6)
@@ -202,6 +204,19 @@ day view), Notes, card reminder line + bar, Reminders entry]; Code [x]; screensh
   `REMINDERS` action — board 09 has no such element; this is the brief's "entry from Assignments". It
   crosses tabs via a one-shot flag in `AppShell` (no nav-framework change): the Me tab opens its
   Reminders page; back then walks Settings → Overview as usual.
+- 2026-10-17 (R3): board 04 vs `ExamsScreen` diffed detail by detail — no delta beyond R6 nits (the screen
+  already carries the NEXT PAPER hero, week strip, Then cards, room/seat line and the caption). Board 05
+  vs `CalendarScreen` was a real rebuild, done: exam papers now feed the calendar (grid outlines + dots,
+  rows with `Subject · Test` and a mono time, the day card, ADD TO CALENDAR as a timed event) through the
+  *same cache keys the Exams tab uses*, so one fetch feeds both; the registration asked about is the one
+  today falls in (nearest when between, first when the portal dates are missing). Rows became board-shaped
+  (52dp bone day box, 26sp day, 1px bottom rule, no kind tag); the grid went 46dp / mono numbers / weekend
+  days muted / single 6dp dot; today stays crimson-filled with a bone border; the hero is 110dp with the
+  hourglass running off the bottom-right corner; the week track marks the present week with a crimson
+  outline on a dark tile; the axis is one mono line `START ————— TODAY ————— END`. Kept deliberately:
+  official-asset rows (the board samples none but dropping them would drop the official calendar), the two-tap
+  REMOVE on the student's own rows, and ADD TO CALENDAR on the day card. New `CalendarRowsTest` pins the
+  row mapping and the registration pick. 73 tests green.
 - Carried from earlier rounds (still true): debug-key release signing; no screenshot-test infra;
   notification timing under Doze not assertable headlessly; GitHub token path not device-run
   with a live PAT.
@@ -242,3 +257,7 @@ day view), Notes, card reminder line + bar, Reminders entry]; Code [x]; screensh
   Reminders page (one-shot `AppShell` flag + `MeScreen` params). `asReminderWork()` lifted to file level
   so the alarms and the card share one mapping. Build + 69 tests green (3 new timeline tests). No
   device — visual pass pending. Next: R3 (boards 04/05 exam + calendar delta).
+- 2026-10-17 (R3): board 04 needed nothing (screen already matches; nits for R6). Board 05: `CalendarScreen`
+  rebuilt — exam papers merged in from the same cache the Exams tab fills, board-row/grid/hero/track/axis
+  styling applied, weekend days muted, day card and ADD TO CALENDAR cover exams. `CalendarRowsTest` (4)
+  pins the mapping + registration pick. Build + 73 tests green. Next: R4 (19 missing motifs from board 27).

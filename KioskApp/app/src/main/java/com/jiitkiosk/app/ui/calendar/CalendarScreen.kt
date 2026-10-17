@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -45,9 +47,13 @@ import com.jiitkiosk.app.ui.components.ChipRow
 import com.jiitkiosk.app.ui.components.D
 import com.jiitkiosk.app.ui.components.EmptyState
 import com.jiitkiosk.app.ui.components.HeroPanel
+import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
 import com.jiitkiosk.app.ui.components.PrimaryButton
+import com.jiitkiosk.app.ui.components.rememberCached
 import com.jiitkiosk.app.ui.entrance
+import com.jiitkiosk.app.ui.exams.ExamSheet
+import com.jiitkiosk.app.ui.exams.Paper
 import com.jiitkiosk.app.ui.me.MeData
 import com.jiitkiosk.app.ui.tap
 import com.jiitkiosk.app.ui.theme.Bad
@@ -60,17 +66,82 @@ import com.jiitkiosk.app.ui.theme.LineStrong
 import com.jiitkiosk.app.ui.theme.Mono
 import com.jiitkiosk.app.ui.theme.Muted
 import com.jiitkiosk.app.ui.theme.Sans
+import com.jiitkiosk.app.ui.theme.Surface1
 import com.jiitkiosk.app.ui.theme.Violet
+import `in`.codelif.ktjiit.model.Semester
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.builtins.ListSerializer
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 private val SHORT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH)
 private val DAY_MONTH = DateTimeFormatter.ofPattern("dd", Locale.ENGLISH)
+private val CLOCK_AMPM = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
+private val LIST_OF_SEMESTER = ListSerializer(Semester.serializer())
+
+/** the kind an exam paper's row carries; it is not one of the asset's own kinds */
+internal const val EXAM = "exam"
+
+/**
+ * One rendered calendar line: an official entry, the student's own note, or an
+ * exam paper. [note] is the mono second line (a span, or a paper's time);
+ * nothing is invented to fill it.
+ */
+internal data class DayRow(
+    val from: LocalDate,
+    val to: LocalDate,
+    val title: String,
+    val note: String?,
+    val kind: String,
+    /** an exam's start, when the portal gave one — the moment handed to the phone's calendar */
+    val at: LocalTime? = null,
+) {
+    fun inMonth(month: YearMonth): Boolean =
+        YearMonth.from(from) <= month && month <= YearMonth.from(to)
+}
+
+/** every source on one list; exams carry their subject · event and their time */
+internal fun dayRows(exams: List<Paper>, official: List<CalEvent>, user: List<CalEvent>): List<DayRow> {
+    val rows = ArrayList<DayRow>(official.size + user.size + exams.size)
+    for (e in official) rows += DayRow(e.from, e.to, e.title, rangeNote(e), e.kind)
+    for (e in user) rows += DayRow(e.from, e.to, e.title, null, e.kind)
+    for (p in exams) {
+        val day = p.slot.day ?: continue
+        val who = p.slot.subjectName.ifBlank { p.slot.code }
+        val title = listOfNotNull(who.takeIf { it.isNotBlank() }, p.event.trim().takeIf { it.isNotEmpty() })
+            .joinToString(" · ")
+        if (title.isBlank()) continue
+        rows += DayRow(day, day, title, p.slot.start?.format(CLOCK_AMPM), EXAM, p.slot.start)
+    }
+    return rows
+}
+
+/** only a span needs its range spelled out; a single day says it with its own cell */
+private fun rangeNote(e: CalEvent): String? =
+    if (e.single) null
+    else "${e.from.format(SHORT).uppercase(Locale.ENGLISH)} — ${e.to.format(SHORT).uppercase(Locale.ENGLISH)}"
+
+/** the portal registration today falls in; the nearest one when today is between two */
+internal fun portalSemester(sems: List<Semester>, today: LocalDate): Semester? {
+    val zone = ZoneId.systemDefault()
+    val zoned = sems.mapNotNull { s ->
+        val from = s.from ?: return@mapNotNull null
+        val to = s.to ?: return@mapNotNull null
+        Triple(s, Instant.ofEpochMilli(from).atZone(zone).toLocalDate(), Instant.ofEpochMilli(to).atZone(zone).toLocalDate())
+    }
+    return zoned.firstOrNull { today >= it.second && today <= it.third }?.first
+        ?: zoned.minByOrNull { kotlin.math.abs(ChronoUnit.DAYS.between(today, it.second)) }?.first
+        ?: sems.firstOrNull()
+}
 
 /**
  * Board 22: the semester at a glance. Week count, days left and the week track
@@ -118,6 +189,29 @@ fun CalendarScreen(vm: KioskViewModel, onExit: () -> Unit) {
         return
     }
 
+    // the exams the Exams tab already caches — the same keys, so one fetch feeds
+    // both screens; a failure here just leaves the calendar without exam rows
+    val token = vm.session?.token.orEmpty()
+    val periods = rememberCached(vm, "exam-sems/$token", LIST_OF_SEMESTER) { it.examSemesters() }
+    val term = portalSemester((periods as? Load.Ok)?.value.orEmpty(), today)
+    val sheet = rememberCached(
+        vm,
+        key = "exams/$token/${term?.id.orEmpty()}",
+        ser = ExamSheet.serializer(),
+        enabled = term != null,
+    ) { portal ->
+        val picked = requireNotNull(term)
+        val papers = coroutineScope {
+            portal.examEvents(picked)
+                .map { e -> async { portal.examSchedule(e).map { Paper(e.description, it) } } }
+                .flatMap { it.await() }
+        }
+        // sorted here because the Exams screen reads this record back and its
+        // "first future paper" only makes sense on an ordered list
+        ExamSheet(papers.sortedWith(compareBy({ it.slot.day?.toEpochDay() }, { it.slot.start?.toSecondOfDay() })))
+    }
+    val exams = (sheet as? Load.Ok)?.value?.papers.orEmpty()
+
     val months = semester.months.mapNotNull { runCatching { YearMonth.parse(it) }.getOrNull() }
     // the semester's tab strip opens on the current month, wherever in the semester today is
     var monthIndex by remember { mutableIntStateOf(months.indexOf(YearMonth.from(today)).coerceAtLeast(0)) }
@@ -151,11 +245,15 @@ fun CalendarScreen(vm: KioskViewModel, onExit: () -> Unit) {
         item {
             Column(Modifier.entrance(3)) {
                 WeekTrack(week = week, total = totalWeeks)
-                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    MonoText(semester.from.format(SHORT).uppercase(Locale.ENGLISH))
-                    MonoText("TODAY")
-                    MonoText(semester.to.format(SHORT).uppercase(Locale.ENGLISH))
-                }
+                // board 05's one-line axis: start ——— TODAY ——— end
+                MonoText(
+                    listOfNotNull(
+                        semester.from.format(SHORT).uppercase(Locale.ENGLISH),
+                        "TODAY".takeIf { today >= semester.from && today <= semester.to },
+                        semester.to.format(SHORT).uppercase(Locale.ENGLISH),
+                    ).joinToString(" ————— "),
+                    modifier = Modifier.padding(top = 6.dp),
+                )
             }
         }
 
@@ -167,28 +265,45 @@ fun CalendarScreen(vm: KioskViewModel, onExit: () -> Unit) {
             ) { monthIndex = it; selected = null }
         }
 
-        item { MonthGrid(focusMonth, today, selected, official + user) { day -> selected = if (selected == day) null else day } }
+        item {
+            MonthGrid(focusMonth, today, selected, official + user, exams.mapNotNull { it.slot.day }.toSet()) { day ->
+                selected = if (selected == day) null else day
+            }
+        }
         item { MonoText("OUTLINED = EXAM / EVENT · RED = TODAY", modifier = Modifier.entrance(5)) }
 
+        val all = dayRows(exams, official, user)
         val onDay = selected
         if (onDay != null) {
-            val dayEvents = (official + user).filter { it.on(onDay) }.sortedBy { it.title }
+            val dayEvents = all.filter { onDay >= it.from && onDay <= it.to }.sortedBy { it.title }
             item {
                 Card2(Modifier.entrance(5)) {
                     if (dayEvents.isNotEmpty()) {
                         MonoText("ON THIS DAY")
                         Spacer(Modifier.height(6.dp))
-                        dayEvents.forEach { event ->
+                        dayEvents.forEach { row ->
                             Row(
                                 Modifier.fillMaxWidth().padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                BodyText(event.title, modifier = Modifier.weight(1f), maxLines = 2)
+                                Column(Modifier.weight(1f)) {
+                                    BodyText(row.title, maxLines = 2)
+                                    row.note?.let { MonoText(it) }
+                                }
                                 MonoText(
                                     "ADD TO CALENDAR",
                                     color = Crimson,
                                     modifier = Modifier.tap {
-                                        noCal = !CalInsert.span(context, event.title, event.from, event.to)
+                                        val took = if (row.at != null) {
+                                            CalInsert.moment(
+                                                context,
+                                                row.title,
+                                                row.from.atTime(row.at).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                                            )
+                                        } else {
+                                            CalInsert.span(context, row.title, row.from, row.to)
+                                        }
+                                        noCal = !took
                                     },
                                 )
                             }
@@ -230,7 +345,7 @@ fun CalendarScreen(vm: KioskViewModel, onExit: () -> Unit) {
             }
         }
 
-        val rows = (official + user).filter { it.inMonth(focusMonth) }.sortedWith(compareBy({ it.from }, { it.title }))
+        val rows = all.filter { it.inMonth(focusMonth) }.sortedWith(compareBy({ it.from }, { it.title }))
         if (rows.isEmpty()) {
             item {
                 MonoText(
@@ -239,14 +354,15 @@ fun CalendarScreen(vm: KioskViewModel, onExit: () -> Unit) {
                 )
             }
         } else {
-            items(rows, key = { "${it.from}/${it.kind}/${it.title}" }) { event ->
+            items(rows, key = { "${it.from}/${it.kind}/${it.title}" }) { row ->
                 CalendarRow(
-                    event = event,
-                    pending = pendingRemove == "${event.from}/${event.title}",
+                    row = row,
+                    pending = pendingRemove == "${row.from}/${row.title}",
                     onRemove = {
-                        val key = "${event.from}/${event.title}"
+                        // only the student's own rows can be removed
+                        val key = "${row.from}/${row.title}"
                         if (pendingRemove == key) {
-                            store.remove(event)
+                            store.remove(CalEvent(row.from, row.to, row.title, row.kind))
                             user = store.user()
                             pendingRemove = null
                         } else {
@@ -270,19 +386,18 @@ private fun CalendarHero(
     modifier: Modifier = Modifier,
 ) {
     HeroPanel(
-        height = 168.dp,
-        angle = 118f,
-        stops = arrayOf(0f to Violet, 0.75f to Ink),
+        height = 110.dp,
+        angle = 160f,
+        stops = arrayOf(0f to Violet, 0.85f to Ink),
         modifier = modifier,
         art = {
-            Box(Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(150.dp)) {
-                Box(Modifier.align(Alignment.Center)) {
-                    HourglassMark(size = 130.dp, color = Bone, accent = Crimson, sand = Violet)
-                }
+            // the hourglass runs off the panel's bottom-right corner, as on the board
+            Box(Modifier.align(Alignment.BottomEnd).offset(x = 6.dp, y = 24.dp)) {
+                HourglassMark(size = 150.dp, color = Bone, accent = Crimson, sand = Violet)
             }
         },
     ) {
-        Column(Modifier.align(Alignment.TopStart).padding(14.dp)) {
+        Column(Modifier.align(Alignment.TopStart).padding(start = 14.dp, top = 12.dp)) {
             MonoText(
                 when {
                     today < semester.from -> "STARTS ${semester.from.format(SHORT).uppercase(Locale.ENGLISH)}"
@@ -298,41 +413,36 @@ private fun CalendarHero(
                     daysLeft > 0 -> "$daysLeft DAYS LEFT"
                     else -> "SEMESTER OVER"
                 },
-                40.sp,
+                44.sp,
             )
         }
     }
 }
 
-/** one tile per teaching week; the current week is crimson */
+/** one tile per teaching week; the present week is the dark tile with a crimson outline */
 @Composable
 private fun WeekTrack(week: Int, total: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         for (i in 1..total) {
             Box(
                 Modifier
                     .weight(1f)
-                    .height(12.dp)
-                    .background(
-                        when {
-                            i == week -> Crimson
-                            week == 0 -> LineStrong
-                            i < week -> Bone
-                            else -> Line
-                        },
-                    ),
+                    .height(14.dp)
+                    .background(if (i < week) Bone else Line)
+                    .then(if (i == week) Modifier.border(2.dp, Crimson) else Modifier),
             )
         }
     }
 }
 
-/** the month, Sunday first; today is filled, event days are outlined, dots mark their first day */
+/** the month, Sunday first; today is filled, event days are outlined with a dot, weekends muted */
 @Composable
 private fun MonthGrid(
     month: YearMonth,
     today: LocalDate,
     selected: LocalDate?,
     events: List<CalEvent>,
+    examDays: Set<LocalDate>,
     onPick: (LocalDate) -> Unit,
 ) {
     val first = month.atDay(1)
@@ -355,37 +465,37 @@ private fun MonthGrid(
                 for (col in 0 until 7) {
                     val day = row * 7 + col - offset + 1
                     if (day < 1 || day > days) {
-                        Box(Modifier.weight(1f).height(52.dp))
+                        Box(Modifier.weight(1f).height(46.dp))
                         continue
                     }
                     val date = month.atDay(day)
-                    val starts = events.count { it.from == date }
-                    val covered = events.any { it.on(date) }
+                    val covered = date in examDays || events.any { it.on(date) }
                     val isToday = date == today
                     val isPicked = date == selected
+                    val weekend = date.dayOfWeek.value >= 6
                     Box(
                         Modifier
                             .weight(1f)
-                            .height(52.dp)
-                            .background(if (isToday) Crimson else androidx.compose.ui.graphics.Color.Transparent)
+                            .height(46.dp)
+                            .background(if (isToday) Crimson else Surface1)
                             .border(
                                 2.dp,
                                 when {
-                                    isToday || isPicked -> Bone
-                                    covered -> LineStrong
+                                    isToday || covered || isPicked -> Bone
                                     else -> Line
                                 },
                             )
                             .tap { onPick(date) }
-                            .padding(5.dp),
+                            .padding(horizontal = 5.dp, vertical = 3.dp),
                     ) {
-                        D("$day", 18.sp, maxLines = 1)
-                        Row(
-                            Modifier.align(Alignment.BottomStart),
-                            horizontalArrangement = Arrangement.spacedBy(3.dp),
-                        ) {
-                            repeat(starts.coerceAtMost(3)) {
-                                Box(Modifier.size(5.dp).background(Bone))
+                        Column {
+                            MonoText(
+                                "$day",
+                                color = if (covered || isToday || !weekend) Bone else Muted,
+                            )
+                            if (covered) {
+                                Spacer(Modifier.height(6.dp))
+                                Box(Modifier.size(6.dp).background(Bone))
                             }
                         }
                     }
@@ -395,41 +505,43 @@ private fun MonthGrid(
     }
 }
 
-/** one calendar row: a boxed day, the title, and what kind of entry it is */
+/** one calendar row: a boxed day, the title and its mono note; only your own rows offer REMOVE */
 @Composable
-private fun CalendarRow(event: CalEvent, pending: Boolean, onRemove: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+private fun CalendarRow(row: DayRow, pending: Boolean, onRemove: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .drawBehind { drawLine(Line, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) }
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Column(
-            Modifier.width(58.dp).border(2.dp, if (event.kind == CalendarStore.YOURS) Violet else Bone).padding(vertical = 6.dp),
+            Modifier.width(52.dp).border(2.dp, Bone).padding(vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            D(event.from.format(DAY_MONTH), 24.sp, maxLines = 1)
-            MonoText(event.from.month.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH).uppercase(Locale.ENGLISH))
+            D(row.from.format(DAY_MONTH), 26.sp, maxLines = 1)
+            MonoText(row.from.month.getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH).uppercase(Locale.ENGLISH))
         }
         Column(Modifier.weight(1f).padding(start = 12.dp)) {
-            BodyText(event.title)
-            // a single day's kind is the trailing tag; only a range needs its span spelled out
-            val detail = when {
-                event.kind == CalendarStore.YOURS -> "YOURS"
-                event.single -> null
-                else -> "${event.from.format(SHORT).uppercase(Locale.ENGLISH)} — ${event.to.format(SHORT).uppercase(Locale.ENGLISH)}"
-            }
-            if (detail != null) MonoText(detail, modifier = Modifier.padding(top = 2.dp))
+            BodyText(row.title)
+            row.note?.let { MonoText(it, modifier = Modifier.padding(top = 2.dp)) }
         }
-        when {
-            event.kind != CalendarStore.YOURS -> MonoText(event.kind.uppercase(Locale.ENGLISH))
-            pending -> Text(
-                "TAP AGAIN",
-                style = Mono.copy(fontWeight = FontWeight.Medium),
-                color = Bad,
-                modifier = Modifier.tap(onRemove),
-            )
-            else -> Text(
-                "REMOVE",
-                style = Mono.copy(fontWeight = FontWeight.Medium),
-                color = Muted,
-                modifier = Modifier.tap(onRemove),
-            )
+        if (row.kind == CalendarStore.YOURS) {
+            if (pending) {
+                Text(
+                    "TAP AGAIN",
+                    style = Mono.copy(fontWeight = FontWeight.Medium),
+                    color = Bad,
+                    modifier = Modifier.tap(onRemove),
+                )
+            } else {
+                Text(
+                    "REMOVE",
+                    style = Mono.copy(fontWeight = FontWeight.Medium),
+                    color = Muted,
+                    modifier = Modifier.tap(onRemove),
+                )
+            }
         }
     }
 }
