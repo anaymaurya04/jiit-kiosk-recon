@@ -475,3 +475,16 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   StateBox, gaining R6b's per-failure art, with a new optional message param so the box still speaks
   Classroom's own sentences (classroomFriendly); a two-arg StateBox overload keeps every existing
   trailing-lambda call site compiling. Green: assembleDebug + 17 suites / 98 tests as before.
+- 2026-10-18 (W3): the board-33 config screen. One WidgetConfigActivity for all six providers: the
+  launcher passes the widget id through APPWIDGET_CONFIGURE, the screen proves the id is one of this
+  app's own registered widgets before anything is read or written (back/pre-crash pre-sets
+  RESULT_CANCELED, Done answers RESULT_OK with the id). The board's columns verbatim - Widget settings
+  52sp, PREVIEW UPDATES AS YOU CHANGE, the Show rows (Next class / Attendance / Pending assignments with
+  mono subs), Classes shown 1-2-3 square chips, MATCH APP/TRANSPARENT pills, Hide subject names row, the
+  updates note, the bone Done bar - with a message-style ruling: a section a provider never reads
+  never shows on it (Today gets the board's Show rows; wide schedule tiles the Classes chips; the three
+  2x2 tiles appearance only, so no toggle lies), pinned by WidgetConfigTest (18 suites / 101 tests).
+  Preview = WidgetRender.build(...).apply() inside the screens' own AndroidView at the boards' card
+  geometry, so a flip repaints the home screen immediately and the preview tracks it. android:configure
+  added to all six info XMLs. Not yet verified on a launcher: the picker's configure handoff on the
+  emulator pass rides W5.

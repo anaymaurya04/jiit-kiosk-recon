@@ -57,3 +57,12 @@ object WidgetPrefs {
         edit.apply()
     }
 }
+
+/** the board-33 sections; a section its widget never reads never shows on it */
+enum class ConfigSection { NEXT, ATTENDANCE, PENDING, CLASSES, APPEARANCE }
+
+fun configSections(kind: WidgetKind): List<ConfigSection> = when (kind) {
+    WidgetKind.Today -> listOf(ConfigSection.NEXT, ConfigSection.ATTENDANCE, ConfigSection.PENDING, ConfigSection.APPEARANCE)
+    WidgetKind.Classes, WidgetKind.Dashboard -> listOf(ConfigSection.CLASSES, ConfigSection.APPEARANCE)
+    else -> listOf(ConfigSection.APPEARANCE)
+}

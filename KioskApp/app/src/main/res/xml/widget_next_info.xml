@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- board 28, next class 2x2: resizable per the board note; W4's alarms repaint -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="com.jiitkiosk.app.widget.WidgetConfigActivity"
     android:description="@string/widget_next_description"
     android:initialLayout="@layout/widget_next"
     android:minHeight="110dp"

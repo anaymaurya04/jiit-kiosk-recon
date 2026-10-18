@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- board 30, dashboard 4x5: horizontal only, W4's alarms repaint -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="com.jiitkiosk.app.widget.WidgetConfigActivity"
     android:description="@string/widget_dashboard_description"
     android:initialLayout="@layout/widget_dashboard"
     android:minHeight="320dp"
