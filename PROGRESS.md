@@ -466,3 +466,12 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   screen, W4 the driven-update scheduler (until then widgets repaint when the app is opened or its
   syncs run), W5 the full state pass against boards 28â€"33, the three small design nits, and the
   phone window for the session-banner fix.
+
+- 2026-10-18 (NI): the three standing nits cleared against the boards. Me hub: board 17's file grid
+  opens Grades+Calendar (CGPA - SGPA - MARKS / SEMESTER + EXAMS, Grades wearing the board's 5A1522),
+  then Profile+Fees, Hostel+Bank, Feedback+Settings; the no-Me-title finding resolves against the
+  board itself - board 17 draws no hub title (the STUDENT FILE card is the head), so none was added.
+  Classroom's Class and Notes panes drop their hand-rolled COULDN'T LOAD cards for the screens'
+  StateBox, gaining R6b's per-failure art, with a new optional message param so the box still speaks
+  Classroom's own sentences (classroomFriendly); a two-arg StateBox overload keeps every existing
+  trailing-lambda call site compiling. Green: assembleDebug + 17 suites / 98 tests as before.

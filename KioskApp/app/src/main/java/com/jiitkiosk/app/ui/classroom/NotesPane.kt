@@ -45,6 +45,7 @@ import com.jiitkiosk.app.ui.components.EmptyState
 import com.jiitkiosk.app.ui.components.HeroPanel
 import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
+import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.PrimaryButton
 import com.jiitkiosk.app.ui.components.SkeletonScreen
 import com.jiitkiosk.app.ui.components.Stamp
@@ -114,21 +115,8 @@ fun NotesPane(vm: KioskViewModel, state: Load<ClassroomData>, connect: Classroom
             is Load.Loading -> item { SkeletonScreen() }
 
             is Load.Failed -> item {
-                Card2(Modifier.entrance(0)) {
-                    MonoText("COULDN'T LOAD", color = Bad, medium = true)
-                    Spacer(Modifier.height(6.dp))
-                    MonoText("THE CLASSROOM READ DID NOT GO THROUGH. RETRY IN A MOMENT.", color = Muted)
-                    Spacer(Modifier.height(12.dp))
-                    MonoText(
-                        "RETRY",
-                        color = Ink,
-                        medium = true,
-                        modifier = Modifier
-                            .background(Bone)
-                            .tap(onRetry)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                    )
-                }
+                // the one StateBox every screen uses; the copy stays Classroom's own
+                StateBox(state, onRetry, message = classroomFriendly(state.error))
             }
 
             is Load.Ok -> {

@@ -49,6 +49,7 @@ import com.jiitkiosk.app.ui.components.FreshnessLine
 import com.jiitkiosk.app.ui.components.HeroPanel
 import com.jiitkiosk.app.ui.components.Load
 import com.jiitkiosk.app.ui.components.MonoText
+import com.jiitkiosk.app.ui.components.StateBox
 import com.jiitkiosk.app.ui.components.PrimaryButton
 import com.jiitkiosk.app.ui.components.ScreenTitle
 import com.jiitkiosk.app.ui.components.SegmentedSwitch
@@ -226,21 +227,8 @@ private fun AssignmentsPane(
             state is Load.Loading -> item { SkeletonScreen() }
 
             state is Load.Failed -> item {
-                Card2(Modifier.entrance(1)) {
-                    MonoText("COULDN'T LOAD", color = Bad, medium = true)
-                    Spacer(Modifier.height(6.dp))
-                    BodyText(classroomFriendly(state.error), color = Muted)
-                    Spacer(Modifier.height(12.dp))
-                    MonoText(
-                        "RETRY",
-                        color = Ink,
-                        medium = true,
-                        modifier = Modifier
-                            .background(Bone)
-                            .tap { onRetry() }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                    )
-                }
+                // the one StateBox every screen uses; the copy stays Classroom's own
+                StateBox(state, onRetry, message = classroomFriendly(state.error))
             }
 
             state is Load.Ok -> {

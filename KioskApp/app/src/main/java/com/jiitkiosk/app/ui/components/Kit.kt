@@ -630,7 +630,7 @@ fun friendly(e: Throwable): String = when (e) {
 }
 
 @Composable
-fun StateBox(state: Load<*>, onRetry: (() -> Unit)? = null) {
+fun StateBox(state: Load<*>, onRetry: (() -> Unit)? = null, message: String? = null) {
     when (state) {
         is Load.Loading -> SkeletonScreen()
 
@@ -663,7 +663,7 @@ fun StateBox(state: Load<*>, onRetry: (() -> Unit)? = null) {
                 34.sp,
             )
             Spacer(Modifier.height(6.dp))
-            BodyText(friendly(state.error), color = Muted)
+            BodyText(message ?: friendly(state.error), color = Muted)
             if (onRetry != null) {
                 Spacer(Modifier.height(12.dp))
                 Text(
@@ -681,6 +681,10 @@ fun StateBox(state: Load<*>, onRetry: (() -> Unit)? = null) {
         is Load.Ok -> Unit
     }
 }
+
+/** the trailing-lambda style the other screens use binds to this two-arg shape */
+@Composable
+fun StateBox(state: Load<*>, onRetry: () -> Unit) = StateBox(state, onRetry, message = null)
 
 /** the full-screen version, for when there is nothing to show behind it */
 @Composable
