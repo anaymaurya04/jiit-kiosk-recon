@@ -502,3 +502,12 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   UPDATING tile reads honestly. 18 suites / 107 tests green, assembleDebug green. Not verified live:
   Doze deferral on hardware remains the phone window's business; alarm exactness is the documented
   setAndAllowWhileIdle drift.
+- 2026-10-18 (W5): the board-conditioned closes, statically. Wide Classes caps at two rows as board
+  29 draws it (the third Classes-shown row was the 4x5's alone; the +more line carries the rest), the
+  dashboard yields its +N MORE hint when the expired strip shows (the strip costs ~24dp the 376dp
+  interior doesn't have at three rows; the count is derivable, nothing real is hidden), and the state
+  ghosts sit at the board's own 0.15 opacity. 18 suites / 107 tests green, assembleDebug green.
+  NOT verified on a launcher (the user's pass): all six config screens over their live paints, and
+  the board-31 states per widget (expired strip, no schedule, all clear, updating skeleton). Also
+  open since R8: the pending widget's no-session copy reads muted 'Nothing due.' - board 31 has no
+  such sample; ruling needed when the user is ready.

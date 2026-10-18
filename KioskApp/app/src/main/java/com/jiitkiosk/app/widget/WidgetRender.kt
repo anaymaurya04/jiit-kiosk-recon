@@ -389,7 +389,9 @@ object WidgetRender {
             remaining.isEmpty() -> 2
             else -> 0
         }
-        val shown = remaining.take(s.classes.coerceIn(1, 3))
+        // board 29 is a two-rows-tall tile: the third "Classes shown" row is the 4x5's alone,
+        // and the +more line carries the rest honestly
+        val shown = remaining.take(minOf(s.classes.coerceAtLeast(1), 2))
         for (i in 0 until 3) {
             v.setViewVisibility(classesRowId(i), if (state == 0 && i < shown.size) View.VISIBLE else View.GONE)
         }
@@ -468,7 +470,9 @@ object WidgetRender {
             if (state == 1) v.setOnClickPendingIntent(R.id.widget_root, intent(context, id * 10, OPEN_SCHEDULE))
         }
         val more = snap.rows.size - shownRows.size
-        if (state == 0 && more > 0) {
+        // the expired strip costs ~24dp this card doesn't have to spare at three rows;
+        // the count is derivable from the rows shown, so the hint yields before the bottom clips
+        if (state == 0 && more > 0 && !snap.expired) {
             v.setTextViewText(R.id.dash_more, "+$more MORE TODAY")
             v.setViewVisibility(R.id.dash_more, View.VISIBLE)
         } else {
@@ -641,5 +645,5 @@ object WidgetRender {
 
 /** the ghost art sits at the boards' faintness; one constant, tuned on the emulator pass */
 private object Ghost {
-    const val ALPHA = 0.10f
+    const val ALPHA = 0.15f
 }
