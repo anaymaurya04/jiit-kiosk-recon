@@ -450,3 +450,19 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   flag, deep links on a real launcher, and the full data states without the account. Ledgered
   deviations: per-widget settings live in the `kiosk` prefs file (not DataStore, same reasoning as
   before), and the dashboard reuses the state card compactly where no board pins it.
+- 2026-10-18 (W2.1 emulator pass): the launcher pass caught three real bugs and the user hand-verified
+  all six widgets on the emulator. (1) RemoteViews only inflates `@RemoteView`-annotated classes:
+  the layouts' `<View>` spacers errored to "Can't load widget", and the obvious `<Space>` fix is
+  rejected too on this build â€" every spacer/divider is now a plain `<LinearLayout>` (5 layouts),
+  and the shared tag audit shows only Frame/LinearLayout, TextView, ImageView in the six layouts.
+  (2) Launcher3 silently hides app widget providers whose min sizes cannot fit its grid: the 2A-2s
+  at `minHeight=160dp` dropped as 2A-3 and the dashboard vanished from the picker whole at 360dp;
+  the documented 70Â·nâˆ'30 formula fixes both (2 rows â€' 110dp, 5 rows â€' 320dp), and the picker now
+  enumerates all six ("Attendance, Classes, Dashboard, Next class, Pending, Today") with spans
+  2A-2, 4A-2 verified in the picker labels and by real drops. (3) Board-31 anatomy corrections
+  (footer rule, state-card restructure, 1dp column dividers in every state) that were painted after
+  stitching the board shot ride in this commit. 17 suites / 98 tests green, assembleDebug green.
+  Shipped as a debug APK for the user's phone test; what remains for Feature E: W3 per-widget config
+  screen, W4 the driven-update scheduler (until then widgets repaint when the app is opened or its
+  syncs run), W5 the full state pass against boards 28â€"33, the three small design nits, and the
+  phone window for the session-banner fix.

@@ -83,7 +83,7 @@
                 android:minHeight="41dp"
                 android:orientation="horizontal">
 
-                <View
+                <LinearLayout
                     android:id="@+id/dash_bar1"
                     android:layout_width="4dp"
                     android:layout_height="match_parent"
@@ -134,7 +134,7 @@
                 android:minHeight="41dp"
                 android:orientation="horizontal">
 
-                <View
+                <LinearLayout
                     android:id="@+id/dash_bar2"
                     android:layout_width="4dp"
                     android:layout_height="match_parent"
@@ -186,7 +186,7 @@
                 android:minHeight="41dp"
                 android:orientation="horizontal">
 
-                <View
+                <LinearLayout
                     android:id="@+id/dash_bar3"
                     android:layout_width="4dp"
                     android:layout_height="match_parent"
@@ -241,43 +241,38 @@
                 android:textColor="#A09DA6"
                 android:textSize="10sp" />
 
-            <LinearLayout
+            <FrameLayout
                 android:id="@+id/dash_state"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
                 android:visibility="gone">
 
-                <FrameLayout
+                <ImageView
+                    android:id="@+id/dash_state_ghost"
                     android:layout_width="84dp"
-                    android:layout_height="84dp">
+                    android:layout_height="84dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="-4dp"
+                    android:layout_marginEnd="-4dp"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/widget_ghost_moon" />
 
-                    <ImageView
-                        android:id="@+id/dash_state_ghost"
-                        android:layout_width="84dp"
-                        android:layout_height="84dp"
-                        android:layout_gravity="center"
-                        android:importantForAccessibility="no"
-                        android:scaleType="fitXY"
-                        android:src="@drawable/widget_ghost_moon" />
-
-                    <ImageView
-                        android:id="@+id/dash_state_tablet"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_gravity="center_vertical|start"
-                        android:importantForAccessibility="no"
-                        android:scaleType="fitXY"
-                        android:src="@drawable/widget_ghost_tablet"
-                        android:visibility="gone" />
-                </FrameLayout>
+                <ImageView
+                    android:id="@+id/dash_state_tablet"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="top|start"
+                    android:layout_marginStart="6dp"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/widget_ghost_tablet"
+                    android:visibility="gone" />
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:id="@+id/dash_state_body"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
@@ -301,16 +296,6 @@
                         android:textSize="13sp" />
 
                     <TextView
-                        android:id="@+id/dash_state_next"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:fontFamily="@font/ibm_plex_mono_medium"
-                        android:text="NEXT: MON 10:00 AM · SOFTWARE ENGINEERING"
-                        android:textColor="#A09DA6"
-                        android:textSize="10sp" />
-
-                    <TextView
                         android:id="@+id/dash_state_chip"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -325,7 +310,17 @@
                         android:textColor="#0B0B0D"
                         android:textSize="10sp" />
                 </LinearLayout>
-            </LinearLayout>
+
+                <TextView
+                    android:id="@+id/dash_state_next"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|start"
+                    android:fontFamily="@font/ibm_plex_mono_medium"
+                    android:text="NEXT: MON 10:00 AM · SOFTWARE ENGINEERING"
+                    android:textColor="#A09DA6"
+                    android:textSize="10sp" />
+            </FrameLayout>
 
             <TextView
                 android:layout_width="wrap_content"

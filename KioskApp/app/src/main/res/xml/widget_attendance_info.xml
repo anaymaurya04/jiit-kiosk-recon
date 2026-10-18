@@ -3,7 +3,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_attendance_description"
     android:initialLayout="@layout/widget_attendance"
-    android:minHeight="160dp"
+    android:minHeight="110dp"
     android:minWidth="160dp"
     android:previewLayout="@layout/widget_attendance"
     android:resizeMode="horizontal|vertical"

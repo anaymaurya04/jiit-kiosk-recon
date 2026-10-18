@@ -130,11 +130,21 @@ object WidgetRender {
     private fun subjectName(s: WidgetSettings, entry: ClassEntry): String =
         if (s.hideNames) entry.subjectId.orEmpty() else entry.subject
 
-    private fun footer(v: RemoteViews, leftRes: Int, rightRes: Int, snap: WidgetSnapshot, nowMs: Long) {
-        v.setTextViewText(leftRes, dayHeading(snap.date))
+    private fun footer(v: RemoteViews, leftRes: Int, rightRes: Int, snap: WidgetSnapshot, nowMs: Long, dateToo: Boolean) {
         val (text, warn) = syncLine(snap.syncedAt, snap.expired, nowMs)
-        v.setTextViewText(rightRes, text)
-        v.setTextColor(rightRes, if (warn) C.WARN else C.MUTED)
+        if (dateToo) {
+            // board 31, normal state: the date on the left, the age on the right
+            v.setTextViewText(leftRes, dayHeading(snap.date))
+            v.setTextColor(leftRes, C.MUTED)
+            v.setViewVisibility(rightRes, View.VISIBLE)
+            v.setTextViewText(rightRes, text)
+            v.setTextColor(rightRes, if (warn) C.WARN else C.MUTED)
+        } else {
+            // every state that has no day to show keeps only the freshness text, left
+            v.setTextViewText(leftRes, text)
+            v.setTextColor(leftRes, if (warn) C.WARN else C.MUTED)
+            v.setViewVisibility(rightRes, View.GONE)
+        }
     }
 
     // ------------------------------------------------------------- 2x2 tiles
@@ -300,9 +310,9 @@ object WidgetRender {
         v.setViewVisibility(R.id.today_cols, if (state == 0) View.VISIBLE else View.GONE)
         v.setViewVisibility(R.id.today_state, if (state == 0) View.GONE else View.VISIBLE)
         if (state != 0) {
-            stateBlock(v, snap, s, noSchedule = state == 1, compact = false)
+            stateBlock(v, snap, s, noSchedule = state == 1, compact = false, ids = TODAY_STATE, bodyPadPx = dp(context, 64))
             if (state == 1) v.setOnClickPendingIntent(R.id.widget_root, intent(context, id * 10, OPEN_SCHEDULE))
-            footer(v, R.id.today_footer_left, R.id.today_footer_right, snap, nowMs)
+            footer(v, R.id.today_footer_left, R.id.today_footer_right, snap, nowMs, dateToo = false)
             return
         }
 
@@ -363,7 +373,7 @@ object WidgetRender {
             }
         }
 
-        footer(v, R.id.today_footer_left, R.id.today_footer_right, snap, nowMs)
+        footer(v, R.id.today_footer_left, R.id.today_footer_right, snap, nowMs, dateToo = !strip)
     }
 
     private fun classesWide(context: Context, v: RemoteViews, id: Int, s: WidgetSettings, snap: WidgetSnapshot, nowMs: Long) {
@@ -386,7 +396,7 @@ object WidgetRender {
         v.setViewVisibility(R.id.classes_state, if (state == 0) View.GONE else View.VISIBLE)
         if (state != 0) {
             v.setViewVisibility(R.id.classes_more, View.GONE)
-            stateBlock(v, snap, s, noSchedule = state == 1, compact = true, tabletId = R.id.classes_state_tablet)
+            stateBlock(v, snap, s, noSchedule = state == 1, compact = true, ids = CLASSES_STATE, bodyPadPx = dp(context, 64))
             if (state == 1) v.setOnClickPendingIntent(R.id.widget_root, intent(context, id * 10, OPEN_SCHEDULE))
             return
         }
@@ -453,9 +463,7 @@ object WidgetRender {
             v.setViewVisibility(R.id.dash_state, View.VISIBLE)
             stateBlock(
                 v, snap, s, noSchedule = state == 1, compact = true,
-                ghostId = R.id.dash_state_ghost, tabletId = R.id.dash_state_tablet,
-                titleId = R.id.dash_state_title, subId = R.id.dash_state_sub,
-                nextId = R.id.dash_state_next, chipId = R.id.dash_state_chip,
+                ids = DASH_STATE, bodyPadPx = dp(context, 56),
             )
             if (state == 1) v.setOnClickPendingIntent(R.id.widget_root, intent(context, id * 10, OPEN_SCHEDULE))
         }
@@ -549,37 +557,63 @@ object WidgetRender {
         s: WidgetSettings,
         noSchedule: Boolean,
         compact: Boolean,
-        ghostId: Int = R.id.today_state_ghost,
-        tabletId: Int = R.id.today_state_tablet,
-        titleId: Int = R.id.today_state_title,
-        subId: Int = R.id.today_state_sub,
-        nextId: Int = R.id.today_state_next,
-        chipId: Int = R.id.today_state_chip,
+        ids: StateIds,
+        bodyPadPx: Int,
     ) {
         if (noSchedule) {
-            stateArt(v, tabletId, ghostId, R.drawable.widget_ghost_tablet)
-            v.setTextViewText(titleId, "No schedule")
-            v.setTextViewTextSize(titleId, TypedValue.COMPLEX_UNIT_SP, if (compact) 20f else 24f)
-            v.setViewVisibility(subId, View.GONE)
-            v.setViewVisibility(nextId, View.GONE)
-            chip(v, chipId, "TAP TO CREATE", C.BONE, C.INK)
+            // the tablet sits above the title, so the body starts below it
+            stateArt(v, ids.tablet, ids.ghost, R.drawable.widget_ghost_tablet)
+            v.setViewPadding(ids.body, 0, bodyPadPx, 0, 0)
+            v.setTextViewText(ids.title, "No schedule")
+            v.setTextViewTextSize(ids.title, TypedValue.COMPLEX_UNIT_SP, if (compact) 22f else 26f)
+            v.setViewVisibility(ids.sub, View.GONE)
+            v.setViewVisibility(ids.next, View.GONE)
+            chip(v, ids.chip, "TAP TO CREATE", C.BONE, C.INK)
         } else {
-            stateArt(v, ghostId, tabletId, R.drawable.widget_ghost_moon)
-            v.setTextViewText(titleId, "All clear")
-            v.setTextViewTextSize(titleId, TypedValue.COMPLEX_UNIT_SP, if (compact) 26f else 34f)
-            v.setTextViewText(subId, "No more classes today. Nothing due.")
-            v.setViewVisibility(subId, View.VISIBLE)
+            // the moon keeps the card's top-right corner; the text runs top-left
+            stateArt(v, ids.ghost, ids.tablet, R.drawable.widget_ghost_moon)
+            v.setViewPadding(ids.body, 0, 0, 0, 0)
+            v.setTextViewText(ids.title, "All clear")
+            v.setTextViewTextSize(ids.title, TypedValue.COMPLEX_UNIT_SP, if (compact) 26f else 34f)
+            v.setTextViewText(ids.sub, "No more classes today. Nothing due.")
+            v.setViewVisibility(ids.sub, View.VISIBLE)
             val later = snap.next as? NextUp.Later
             if (later != null) {
                 val name = subjectName(s, later.entry).uppercase()
-                v.setTextViewText(nextId, "NEXT: ${dayShort(later.entry.day)} ${clockLabel(later.startMin)} · $name")
-                v.setViewVisibility(nextId, View.VISIBLE)
+                v.setTextViewText(ids.next, "NEXT: ${dayShort(later.entry.day)} ${clockLabel(later.startMin)} · $name")
+                v.setViewVisibility(ids.next, View.VISIBLE)
             } else {
-                v.setViewVisibility(nextId, View.GONE)
+                v.setViewVisibility(ids.next, View.GONE)
             }
-            v.setViewVisibility(chipId, View.GONE)
+            v.setViewVisibility(ids.chip, View.GONE)
         }
     }
+
+    /** the state card's ids, one row per widget whose board pins a card */
+    private data class StateIds(
+        val body: Int,
+        val ghost: Int,
+        val tablet: Int,
+        val title: Int,
+        val sub: Int,
+        val next: Int,
+        val chip: Int,
+    )
+
+    private val TODAY_STATE = StateIds(
+        R.id.today_state_body, R.id.today_state_ghost, R.id.today_state_tablet,
+        R.id.today_state_title, R.id.today_state_sub, R.id.today_state_next, R.id.today_state_chip,
+    )
+
+    private val CLASSES_STATE = StateIds(
+        R.id.classes_state_body, R.id.classes_state_ghost, R.id.classes_state_tablet,
+        R.id.classes_state_title, R.id.classes_state_sub, R.id.classes_state_next, R.id.classes_state_chip,
+    )
+
+    private val DASH_STATE = StateIds(
+        R.id.dash_state_body, R.id.dash_state_ghost, R.id.dash_state_tablet,
+        R.id.dash_state_title, R.id.dash_state_sub, R.id.dash_state_next, R.id.dash_state_chip,
+    )
 
     // ------------------------------------------------------------- id tables
 
