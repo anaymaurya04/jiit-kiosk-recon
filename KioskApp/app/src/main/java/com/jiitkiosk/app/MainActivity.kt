@@ -23,6 +23,7 @@ import com.jiitkiosk.app.ui.KioskViewModel
 import com.jiitkiosk.app.ui.theme.KioskTheme
 import com.jiitkiosk.app.ui.theme.LocalPureBlack
 import com.jiitkiosk.app.widget.KioskWidget
+import com.jiitkiosk.app.widget.WidgetAlarms
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -46,6 +47,8 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         KioskWidget.refresh(this)
+        // catch up on any class edge the alarms missed while the process was dead
+        runCatching { WidgetAlarms.sync(this) }
         lifecycleScope.launch { vm.revive() }
     }
 

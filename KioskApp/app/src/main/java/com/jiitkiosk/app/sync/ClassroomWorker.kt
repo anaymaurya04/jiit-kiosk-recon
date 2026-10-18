@@ -30,23 +30,32 @@ import java.util.concurrent.TimeUnit
 class ClassroomWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        // the portal's own token rides along: one 15-minute worker, both clocks
-        runCatching { (applicationContext as KioskApplication).graph.refreshPortal() }
-        val store = ClassroomStore(applicationContext)
-        val token = store.token() ?: return Result.success()
-        return try {
-            val data = withContext(Dispatchers.IO) { ClassroomClient(token).fetch() }
-            Cache(applicationContext.filesDir)
-                .write(ClassroomData.CACHE_KEY, ClassroomData.serializer(), data)
-            ReminderSync.refresh(applicationContext, data)
-            KioskWidget.refresh(applicationContext)
-            Result.success()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Throwable) {
-            // an expired authorization is the tab's business, not a retry loop's;
-            // everything else (offline, Google down) keeps the cache and the plan
-            if (e is HttpError && (e.code == 401 || e.code == 403)) Result.success() else Result.retry()
+        val app = applicationContext
+        // board 31's updating tile: a fetch is running from now until this returns
+        app.getSharedPreferences("kiosk", Context.MODE_PRIVATE)
+            .edit().putBoolean("widget_updating", true).apply()
+        try {
+            // the portal's own token rides along: one 15-minute worker, both clocks
+            runCatching { (app as KioskApplication).graph.refreshPortal() }
+            val store = ClassroomStore(app)
+            val token = store.token() ?: return Result.success()
+            return try {
+                val data = withContext(Dispatchers.IO) { ClassroomClient(token).fetch() }
+                Cache(app.filesDir)
+                    .write(ClassroomData.CACHE_KEY, ClassroomData.serializer(), data)
+                ReminderSync.refresh(app, data)
+                KioskWidget.refresh(app)
+                Result.success()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                // an expired authorization is the tab's business, not a retry loop's;
+                // everything else (offline, Google down) keeps the cache and the plan
+                if (e is HttpError && (e.code == 401 || e.code == 403)) Result.success() else Result.retry()
+            }
+        } finally {
+            app.getSharedPreferences("kiosk", Context.MODE_PRIVATE)
+                .edit().putBoolean("widget_updating", false).apply()
         }
     }
 

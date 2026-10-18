@@ -488,3 +488,17 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   geometry, so a flip repaints the home screen immediately and the preview tracks it. android:configure
   added to all six info XMLs. Not yet verified on a launcher: the picker's configure handoff on the
   emulator pass rides W5.
+- 2026-10-18 (W4): driven updates land. updatePeriodMillis stays 0 on every provider; instead
+  WidgetPlanner names the exact instants a repaint can change what the paint shows - every remaining
+  class start and end of today, plus the next seven midnights (tomorrow's times are tomorrow's
+  midnight problem; each tick re-lays the plan through the one entry point, so a missed alarm costs a
+  day, not forever - everything after the sorted-deduped plan is strictly ahead, DST-correct via
+  wall-clock instants in the zone; pinned by WidgetPlannerTest: live replicates at its end only,
+  upcoming at both ends, count to seven midnights, no past instants, coalesced shared minutes).
+  WidgetAlarms lays/cancels exactly like ReminderScheduler (record committed, not applied); the tick
+  receiver repaints all six and re-lays; boot re-lays and unsticks a dead fetch's updating flag; the
+  app open re-lays as catch-up; TIME_SET/DATE_CHANGED/TIMEZONE_CHANGED join the tick action. The
+  ClassroomWorker owns widget_updating: true from fetch start, false in finally, so board 31's
+  UPDATING tile reads honestly. 18 suites / 107 tests green, assembleDebug green. Not verified live:
+  Doze deferral on hardware remains the phone window's business; alarm exactness is the documented
+  setAndAllowWhileIdle drift.
