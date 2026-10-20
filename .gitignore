@@ -19,3 +19,5 @@ captures/
 
 # verification screenshots land at the app root between passes
 KioskApp/*.png
+
+graphify-out/
