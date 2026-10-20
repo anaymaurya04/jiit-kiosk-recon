@@ -210,7 +210,10 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
 
 ## Ledger (this round; older entries live in `docs/PROGRESS.md`)
 
-- 2026-10-17: boards re-extracted from the new master file (27, up from 25) — `design/boards/`
+- 2026-10-20: v0.2.5 released via Actions (tag push, signed APK from the shared
+  keystore) - nits + W3 widget config + W4 driven updates + W5 state fixes. Public
+  docs added: README.md, ARCHITECTURE.md, PRIVACY.md.
+- 2026-10-17: boards re-extracted from the new master file (27, up from 25) - `design/boards/`
   is the canonical pixel reference now; boards win over `design-system.md` (its own rule).
 - 2026-10-17: `design-system.md` on disk is the older copy (14 sections, 4-tab examples); the
   brief's "sections 1–17" version is not on disk. Following the copy + the boards.
