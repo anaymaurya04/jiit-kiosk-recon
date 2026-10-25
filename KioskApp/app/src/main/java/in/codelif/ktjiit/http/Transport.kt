@@ -1,5 +1,6 @@
 package `in`.codelif.ktjiit.http
 
+import android.util.Log
 import `in`.codelif.ktjiit.crypto.PortalCipher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -31,7 +32,10 @@ public open class Transport(
     /**
      * posts to [path] (relative to [baseUrl], or absolute) and unwraps the
      * {status, response} envelope. [encrypt] sends the payload as the portal's
-     * aes blob instead of json, which endpoint wants which is in the bundle.
+     * aes blob instead of json. Oct 2026: the student portal stopped decrypting
+     * request bodies — its own SPA posts plain JSON and keeps AES only for the
+     * LocalName header — so every call site passes false now. The flag stays
+     * for the day the portal swings back.
      * pass [retry] false for anything that writes.
      */
     // the body is built per attempt, a retry needs it keyed to the corrected clock
@@ -122,6 +126,9 @@ public open class Transport(
                     val s = if (conn.contentEncoding.equals("gzip", ignoreCase = true)) GZIPInputStream(it) else it
                     s.use { x -> x.readBytes() }
                 } ?: ByteArray(0)
+                if (code >= 400 || data.isEmpty()) {
+                    Log.w("kiosk-net", "$method $url -> $code (${data.size}B ${conn.contentType ?: "-"})")
+                }
                 Raw(code, data, conn.contentType)
             } catch (e: PortalException) {
                 throw e
@@ -141,6 +148,7 @@ public open class Transport(
         }
         val text = raw.body.decodeToString()
         val shape = "${raw.contentType ?: "no type"}, ${raw.body.size} bytes"
+        if (raw.code >= 500) Log.w("kiosk-net", "body(${raw.code}): ${text.take(200).replace('\n', ' ')}")
         if (text.isBlank()) {
             if (raw.code >= 500) throw PortalException.ServerUnavailable(raw.code, shape)
             if (raw.code >= 400) throw PortalException.PortalError(emptyList(), raw.code)
