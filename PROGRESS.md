@@ -514,3 +514,11 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   the board-31 states per widget (expired strip, no schedule, all clear, updating skeleton). Also
   open since R8: the pending widget's no-session copy reads muted 'Nothing due.' - board 31 has no
   such sample; ruling needed when the user is ready.
+- 2026-10-25 (v0.2.6): the Oct 2026 portal update stopped decrypting request bodies — its own Angular
+  SPA now posts plain JSON and keeps AES only for the LocalName header, so our encrypted bodies were
+  parsed as a JSON string and answered 500 (Gson: Expected BEGIN_OBJECT but was STRING). All 18 data
+  calls now post plain JSON; AES still seals LocalName, and the encrypt flag stays for a one-line
+  revert if JIIT swings back. Verified live on the phone (same token, same requests): Attend, Exams,
+  Class and Me all 200 with real data; the hostel 417 is the portal's no-hostel answer and already
+  reads as empty. Diagnostics: kiosk-net logs only non-2xx/empty responses, plus a 200-char 5xx body
+  prefix — never tokens or PII. Tests + assembleDebug green.
