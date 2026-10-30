@@ -522,3 +522,15 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   Class and Me all 200 with real data; the hostel 417 is the portal's no-hostel answer and already
   reads as empty. Diagnostics: kiosk-net logs only non-2xx/empty responses, plus a 200-char 5xx body
   prefix — never tokens or PII. Tests + assembleDebug green.
+- 2026-10-30 (session-week, branch `fix/session-week`): the portal token is a 2-hour JWT; the portal's own
+  `/token/refreshTokenRequest` answers 200 `{"msg":"Error"}` for an aged token, so every refresh after ~2h
+  failed and the app fell back to the sign-in screen. The browser attaches its HttpOnly `SJWT` cookie to
+  that call; our native transport now lends it the WebView jar (correctness; it did not revive a 5-day-old
+  token). The durable fix is `signin/SilentReauth.kt`: when a session exists and the token was rejected, the
+  existing `mode=silent` Google One Tap page runs in a hidden WebView behind the shell, the credential is
+  exchanged for a fresh portal session and saved. One attempt per expiry plus one per resume after a failed
+  try, 30s timeout, never after an explicit sign-out; manual sign-in remains the fallback. Proof: with a
+  fresh Google session, a forced-expiry debug hook (debug source-set only, removed after the test) produced
+  `silent reauth ok` in ~4.5s, the banner cleared and Attendance resynced. Clean debug build reinstalled on
+  the phone; tests + assembleDebug green. Real 2-hour boundary NOT yet observed (token valid until 23:52 IST
+  2026-10-30); unverified until one resume after it. Logs carry no tokens, cookies or PII.
