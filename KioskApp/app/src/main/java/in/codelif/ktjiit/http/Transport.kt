@@ -26,6 +26,8 @@ public open class Transport(
     private val connectTimeoutMs: Int = 15_000,
     private val readTimeoutMs: Int = 45_000,
     private val retryDelaysMs: List<Long> = listOf(500, 1500),
+    /** the portal's session cookie, when the caller has a cookie store to lend */
+    private val cookie: ((String) -> String?)? = null,
 ) {
     internal class Raw(val code: Int, val body: ByteArray, val contentType: String?)
 
@@ -112,6 +114,8 @@ public open class Transport(
                 conn.setRequestProperty("Accept-Encoding", "gzip")
                 conn.setRequestProperty("Authorization", "Bearer ${token.orEmpty()}")
                 conn.setRequestProperty("LocalName", PortalCipher.localName(clock.now()))
+                val cookieHeader = cookie?.invoke(url).orEmpty()
+                if (cookieHeader.isNotEmpty()) conn.setRequestProperty("Cookie", cookieHeader)
                 userAgent?.let { conn.setRequestProperty("User-Agent", it) }
                 if (body != null) {
                     conn.doOutput = true
@@ -126,6 +130,9 @@ public open class Transport(
                     val s = if (conn.contentEncoding.equals("gzip", ignoreCase = true)) GZIPInputStream(it) else it
                     s.use { x -> x.readBytes() }
                 } ?: ByteArray(0)
+                if (url.contains("/token/refreshTokenRequest")) {
+                    Log.i("kiosk-auth", "refresh request: cookie=${cookieHeader.isNotEmpty()} -> $code (${data.size}B)")
+                }
                 if (code >= 400 || data.isEmpty()) {
                     Log.w("kiosk-net", "$method $url -> $code (${data.size}B ${conn.contentType ?: "-"})")
                 }

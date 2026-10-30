@@ -3,6 +3,7 @@ package com.jiitkiosk.app
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import android.webkit.CookieManager
 import com.jiitkiosk.app.classroom.ClassroomStore
 import com.jiitkiosk.app.data.Cache
 import com.jiitkiosk.app.reminders.Notifications
@@ -33,7 +34,15 @@ class Graph(context: Context) {
 
     private val store = SessionStore(context)
 
-    val transport = Transport()
+    /**
+     * The portal's own refresh call runs inside its page, so the browser
+     * attaches the HttpOnly SJWT cookie. Our native call had no cookie at all;
+     * lend it the WebView's jar, or the server may read the request as a
+     * stranger holding a stale token.
+     */
+    val transport = Transport(cookie = { url ->
+        runCatching { CookieManager.getInstance().getCookie(url) }.getOrNull()
+    })
     val auth = Auth(transport)
     val cache = Cache(context.filesDir)
     val classroom = ClassroomStore(context)

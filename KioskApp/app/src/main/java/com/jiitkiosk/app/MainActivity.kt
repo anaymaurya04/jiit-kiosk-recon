@@ -8,16 +8,19 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.jiitkiosk.app.signin.SignInScreen
+import com.jiitkiosk.app.signin.SilentReauth
 import com.jiitkiosk.app.ui.AppShell
 import com.jiitkiosk.app.ui.KioskViewModel
 import com.jiitkiosk.app.ui.theme.KioskTheme
@@ -33,6 +36,9 @@ class MainActivity : ComponentActivity() {
     /** where a widget tap asked to land; the shell consumes it once */
     private var open by mutableStateOf<String?>(null)
 
+    /** bumps on every resume so a failed silent renewal gets one more try */
+    private var resumeTick by mutableIntStateOf(0)
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -46,6 +52,7 @@ class MainActivity : ComponentActivity() {
      */
     override fun onResume() {
         super.onResume()
+        resumeTick++
         KioskWidget.refresh(this)
         // catch up on any class edge the alarms missed while the process was dead
         runCatching { WidgetAlarms.sync(this) }
@@ -69,7 +76,11 @@ class MainActivity : ComponentActivity() {
                             BackHandler(enabled = vm.reconnecting) { vm.cancelReconnect() }
                             SignInScreen(vm)
                         } else {
-                            AppShell(vm, open) { open = null }
+                            Box(Modifier.fillMaxSize()) {
+                                // behind the shell: silent re-auth lives here
+                                SilentReauth(vm, resumeTick)
+                                AppShell(vm, open) { open = null }
+                            }
                         }
                     }
                 }
