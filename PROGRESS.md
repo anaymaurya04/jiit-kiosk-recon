@@ -533,4 +533,8 @@ board 05 rebuilt on exam data]; Code [x]; screenshot tests
   fresh Google session, a forced-expiry debug hook (debug source-set only, removed after the test) produced
   `silent reauth ok` in ~4.5s, the banner cleared and Attendance resynced. Clean debug build reinstalled on
   the phone; tests + assembleDebug green. Real 2-hour boundary NOT yet observed (token valid until 23:52 IST
-  2026-10-30); unverified until one resume after it. Logs carry no tokens, cookies or PII.
+  2026-10-30); unverified until one resume after it. Logs carry no tokens, cookies or PII.- 2026-10-30 (ci/pipeline, PR #4): CI/CD activated. `ci.yml` runs `testDebugUnitTest assembleDebug` on every
+  pull request and every push to main. `release.yml` now also runs after a green ci run on main and publishes
+  only when versionName has no tag yet (gate: `git ls-remote --tags`), so a merge that bumps the version ships
+  itself while a normal merge is a no-op; the manual v* tag flow is unchanged. Proof: PR #4 ci green, merge ci
+  green, release workflow_run green with every build/publish step skipped because v0.2.6 already exists.
